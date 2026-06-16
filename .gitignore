@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+
+# Build/scratch space for agents — never ships
+workspace/

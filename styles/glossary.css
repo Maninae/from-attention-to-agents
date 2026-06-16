@@ -1,0 +1,92 @@
+/* ============================================================
+   Glossary — inline "insight" terms + right-hand sidebar panel
+   Click a term -> a panel slides in from the right with a quick
+   nugget + resources. Non-modal on wide screens (content reflows
+   beside it so you can keep reading/scrolling); overlay + scrim
+   on narrower screens.
+   ============================================================ */
+
+/* Inline clickable term */
+.gloss {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--accent-border);
+  border-radius: 2px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.gloss:hover, .gloss:focus-visible {
+  border-bottom-color: var(--accent);
+  background: var(--accent-light);
+  outline: none;
+}
+.gloss.active { background: var(--accent-light); border-bottom-color: var(--accent); }
+
+/* Scrim (only visible on narrower screens, where the panel overlays) */
+.gloss-scrim {
+  position: fixed; inset: 0;
+  background: rgba(28, 24, 19, 0.18);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 125;
+}
+body.gloss-open .gloss-scrim { opacity: 1; pointer-events: auto; }
+@media (min-width: 1200px) { .gloss-scrim { display: none; } }
+
+/* Panel */
+.glossary-panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 384px; max-width: 92vw;
+  display: flex; flex-direction: column;
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--rule-strong);
+  box-shadow: -10px 0 40px rgba(40, 36, 30, 0.10);
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 130;
+}
+.glossary-panel.open { transform: translateX(0); }
+
+.gp-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 24px 22px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.gp-eyebrow {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--accent); margin-bottom: 6px;
+}
+.gp-title { font-family: var(--serif); font-weight: 600; font-size: 22px; line-height: 1.2; color: var(--text-primary); }
+.gp-close {
+  flex: none; width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--rule); background: var(--bg-surface);
+  color: var(--text-secondary); font-size: 19px; line-height: 1; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.gp-close:hover { color: var(--text-primary); border-color: var(--accent-border); }
+
+.gp-body { flex: 1; overflow-y: auto; padding: 18px 22px 28px; }
+.gp-summary { font-size: 15.5px; line-height: 1.65; color: var(--text-secondary); }
+.gp-summary strong { color: var(--text-primary); }
+.gp-summary em { color: var(--text-primary); font-style: italic; }
+
+.gp-resources { margin-top: 22px; border-top: 1px solid var(--rule); padding-top: 16px; }
+.gp-resources-label {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px;
+}
+.gp-res {
+  display: block; padding: 9px 12px; margin-bottom: 8px;
+  border: 1px solid var(--rule); border-radius: 8px;
+  background: var(--bg-surface); font-size: 14px; color: var(--text-secondary);
+  transition: border-color 0.15s, color 0.15s;
+}
+.gp-res:hover { border-color: var(--accent-border); color: var(--text-primary); }
+.gp-res-arrow { color: var(--accent); float: right; }
+
+/* Reflow the content beside the panel on wide screens (no overlap, keep reading) */
+.main { transition: margin-right 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+@media (min-width: 1200px) {
+  body.gloss-open .main { margin-right: 384px; }
+}
+@media (max-width: 768px) {
+  .glossary-panel { width: 100%; max-width: 100%; }
+}

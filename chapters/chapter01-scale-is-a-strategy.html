@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scale is a strategy - From Attention to Agents · Chapter 1</title>
+<meta name="description" content="2020 to 2022: GPT-3 turned a frozen model into a programmable interface, Kaplan and Chinchilla turned bigger-is-better into a budget calculation, and the architecture from Chapter 0 quietly absorbed vision through ViT and CLIP.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../styles/shared.css">
+<link rel="stylesheet" href="../styles/demos.css">
+<link rel="stylesheet" href="../styles/glossary.css">
+</head>
+<body>
+<div class="progress-bar"></div>
+<button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Chapter 1 &middot; 2020 &ndash; 2022</div>
+    <div class="sidebar-subtitle">Scale is a strategy</div>
+    <a class="sidebar-home" href="../index.html">&larr; All chapters</a>
+    <nav class="nav-toc"></nav>
+  </aside>
+
+  <main class="main">
+    <div class="container">
+
+      <nav class="lecture-nav-top" aria-label="Chapter navigation">
+        <a href="chapter00-where-you-left-off.html">&larr; Ch 0 &middot; Where you left off</a>
+        <a href="chapter02-teaching-it-to-be-helpful.html">Ch 2 &middot; Teaching it to be helpful &rarr;</a>
+      </nav>
+
+      <header class="lecture-header">
+        <span class="eyebrow">Chapter 1 &middot; Pretraining / scale &middot; 2020 &ndash; 2022</span>
+        <h1>Scale is a strategy</h1>
+        <p class="desc">
+          Push the same transformer harder and three things happen at once. The model
+          starts learning new tasks at inference time from examples in the prompt. The
+          loss curve becomes a power law you can read off like a price tag. And the
+          architecture quietly walks into vision, because patches turn out to be tokens.
+        </p>
+        <div class="tags">
+          <span class="tag">GPT-3</span><span class="tag">Scaling laws</span>
+          <span class="tag">Chinchilla</span><span class="tag">Foundation models</span>
+          <span class="tag">ViT / CLIP</span>
+        </div>
+      </header>
+
+      <article class="article">
+
+        <p class="lecture-roadmap">
+          Chapter 0 ended with a bet: one architecture plus pretraining could replace the
+          zoo of bespoke models. This chapter is what happens when you press the "more"
+          button on that bet for three years. The deliverable is not a smarter model - 
+          it is a <em>smarter way to plan</em>. By the end, prompting has replaced fine-tuning
+          as the default interface, capability has a power-law graph, Chinchilla has caught
+          the field undertraining its giants, and the transformer has crossed into vision.
+          The chapter closes on the gap that triggers Chapter 2: GPT-3 is powerful and
+          deeply unhelpful.
+        </p>
+
+        <h2><span class="section-number">1.</span> The shift in posture</h2>
+        <p>
+          The headline finding of <a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">Brown et al. 2020</a>
+          is buried in one line of their abstract: GPT-3 "is applied without any gradient
+          updates or fine-tuning, with tasks and few-shot demonstrations specified purely
+          via text interaction with the model." Read that twice. The model is
+          <span class="gloss" data-gloss="frozen-model">frozen</span>. The task is described
+          in English. The training signal - if you can still call it that - is a
+          handful of examples typed into the context window. This is
+          <span class="gloss" data-gloss="in-context-learning">in-context learning</span>,
+          and it broke the loop everyone had been running since the BERT era.
+        </p>
+        <p>
+          Before GPT-3, the recipe for a new task was: take a pretrained model, fine-tune
+          it on your labels, ship the per-task checkpoint. After GPT-3, the recipe was:
+          take the one model, describe the task in English, paste a few examples in front of
+          your input, read the output. The verb changed. You no longer
+          <strong>train</strong> a model to do a task. You <strong>prompt</strong> one.
+        </p>
+
+        <div class="callout insight">
+          <div class="callout-label">The interface shift</div>
+          <p>
+            Programming a model became writing for a model. That is the
+            sentence the rest of this course is a slow-motion reaction to. Once the prompt
+            is the interface, "the prompt" becomes something worth studying, something
+            worth optimizing, eventually something worth searching over. Chapters 2, 4,
+            and 7 all live in this consequence.
+          </p>
+        </div>
+
+        <h3><span class="section-number">1.1</span> In-context learning, on one screen</h3>
+        <p>
+          Same instruction, same query, three different prompts - the only thing that
+          changes is how many demonstrations sit in the context. The model output is
+          canned for this widget; the point is the shape of the conditioning, not a live
+          inference.
+        </p>
+
+        <div class="demo-wrap">
+          <div class="demo-head">
+            <span class="demo-label">In-context learning &middot; 0, 1, 3 shots</span>
+            <span class="demo-hint">click a shot count</span>
+          </div>
+          <div class="demo-body"><div id="icl-demo"></div></div>
+        </div>
+
+        <p>
+          Few-shot prompting is not "the model memorized this in pretraining." Brown et al.
+          showed the effect grows monotonically with the number of demonstrations and with
+          model scale, on tasks engineered to be novel. The base model already contains the
+          competence; the demonstrations choose which competence to evoke. Think of the
+          prompt as a <em>selector</em> over a huge superposition of latent capabilities.
+        </p>
+
+        <h2><span class="section-number">2.</span> The shape of the bet</h2>
+        <p>
+          The shock of GPT-3 was not just what it could do - it was that the result was
+          <em>predictable</em>. Six months earlier,
+          <a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener">Kaplan et al. 2020</a>
+          had published the curves. Loss as a power law in compute. Loss as a power law in
+          parameters. Loss as a power law in data. Each clean, each spanning multiple
+          orders of magnitude. From the abstract, verbatim: "The loss scales as a power-law
+          with model size, dataset size, and the amount of compute used for training, with
+          some trends spanning more than seven orders of magnitude."
+        </p>
+
+        <div class="callout definition">
+          <div class="callout-label">Definition &middot; <span class="gloss" data-gloss="power-law">power law</span></div>
+          <p>
+            A relationship of the form $L(C) = A \cdot C^{-\alpha}$ - a straight line on
+            log-log axes. The exponent $\alpha$ tells you how much loss drops per decade of
+            compute. Kaplan reports $\alpha_C \approx 0.05$ for compute, $\alpha_N \approx 0.076$
+            for parameters, $\alpha_D \approx 0.095$ for data, fit across more than seven
+            orders of magnitude.
+          </p>
+        </div>
+
+        <p>
+          What is load-bearing here is not the specific exponent. It is the
+          <em>existence</em> of the line. Before scaling laws, "make the model smarter" was
+          research alchemy: try things, see what works, publish. After scaling laws, it is a
+          budget calculation. Pick a compute budget, read the corresponding loss off the
+          line, decide if the gain is worth the money. Capability becomes
+          <span class="gloss" data-gloss="compute-optimal">a function you can plan against</span>.
+        </p>
+        <p>
+          GPT-3 was the existence proof attached to that line. 175 billion parameters - 
+          "10x more than any previous non-sparse language model," in the paper's own
+          framing - trained on hundreds of billions of tokens, sampled with weighting from
+          a corpus of roughly 570B tokens. The compute bill was on the order of thousands
+          of petaflop/s-days. Numbers that would have sounded absurd in 2019 read, in
+          retrospect, as exactly the dose Kaplan's exponents predicted.
+        </p>
+
+        <h3><span class="section-number">2.1</span> The line, on log-log axes</h3>
+        <p>
+          Slide the budget. Both curves obey the same power law - 
+          $L = A \cdot C^{-\alpha}$ - with the same exponent. They differ only in
+          their prefactor $A$, which is set by <em>how</em> you spend the budget across
+          parameters and tokens.
+        </p>
+
+        <div class="demo-wrap">
+          <div class="demo-head">
+            <span class="demo-label">Loss vs compute &middot; Kaplan vs Chinchilla allocation</span>
+            <span class="demo-hint">drag the slider</span>
+          </div>
+          <div class="demo-body"><div id="scaling-demo"></div></div>
+        </div>
+
+        <p>
+          The orange curve traces Kaplan's prescription: pour most of the budget into
+          parameters, keep data modest, stop before convergence. The teal curve traces what
+          Chinchilla would later find is actually compute-optimal: scale params and tokens
+          together. Same exponent, lower prefactor, lower loss at every budget. The gap is
+          the chapter's pivot - and the next section's subject.
+        </p>
+
+        <h2><span class="section-number">3.</span> Chinchilla, or: eat your spinach</h2>
+        <p>
+          Two years of giants followed Kaplan. Gopher (280B). Megatron-Turing NLG (530B).
+          Jurassic-1 (178B). All of them training on token counts roughly comparable to
+          GPT-3's. All of them, it turned out,
+          <a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener">undertrained</a>.
+        </p>
+        <p>
+          <a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener">Hoffmann et al. 2022</a>
+          at DeepMind trained more than 400 models across a wide range of (params, tokens)
+          combinations, fit a joint scaling law to all of them, and read off the
+          compute-optimal frontier. Their punchline: <strong>for every doubling of model
+          size, the number of training tokens should also double</strong>. Params and data
+          scale together. Kaplan's "spend on params, hold data modest" was an artifact of
+          the corner of the budget surface he had sampled.
+        </p>
+
+        <p>
+          The proof was a model named Chinchilla: <strong>70B params, 1.4T
+          tokens</strong> - same compute budget as Gopher's 280B params on 300B tokens.
+          Quarter the parameters, four times the data. Same money. The 70B model
+          <em>uniformly and significantly outperformed</em> Gopher (280B), GPT-3 (175B),
+          Jurassic-1 (178B), and Megatron-Turing (530B), including 67.5% on
+          <span class="gloss" data-gloss="mmlu">MMLU</span> - seven points above Gopher.
+        </p>
+
+        <div class="callout insight">
+          <div class="callout-label">What Chinchilla actually changed</div>
+          <p>
+            Not the existence of the scaling law. Just the ratio. The 2020 giants had been
+            overweighting params and underweighting data. Re-anchored on the right ratio,
+            the same hardware buys a noticeably better model. After Chinchilla, every
+            serious lab refits its data pipeline first and its parameter count second.
+            LLaMA 1, Mistral, and the whole open-weights wave from Chapter 3 all live
+            downstream of this single number.
+          </p>
+        </div>
+
+        <h3><span class="section-number">3.1</span> The two prescriptions, side by side</h3>
+
+        <table style="width:100%; border-collapse: collapse; margin: 18px 0 28px; font-size: 15px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--rule-strong); text-align: left;">
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Rule</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent);">Kaplan (2020)</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--teal);">Chinchilla (2022)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Where to spend compute</td>
+              <td style="padding: 10px 12px;">Mostly parameters</td>
+              <td style="padding: 10px 12px;">Parameters and tokens equally</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Train to convergence?</td>
+              <td style="padding: 10px 12px; color: var(--neg); font-weight: 600;">No - stop early</td>
+              <td style="padding: 10px 12px; color: var(--pos); font-weight: 600;">Yes - feed more tokens</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Reference 70B model would use</td>
+              <td style="padding: 10px 12px;">~140B tokens</td>
+              <td style="padding: 10px 12px;">~1.4T tokens</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 12px;">Verdict, in hindsight</td>
+              <td style="padding: 10px 12px;">Undertrained</td>
+              <td style="padding: 10px 12px;">Compute-optimal</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          A subtle but important thing the table does not show: Chinchilla did not refute
+          Kaplan, it refit him. The power-law form survives. The mistake was in the
+          corner of (N, D) space that had been sampled. The lesson is methodological as
+          much as numerical - if your scaling law was fit on undertrained models, do not
+          extrapolate it.
+        </p>
+
+        <h2><span class="section-number">4.</span> Naming the noun: foundation models</h2>
+        <p>
+          By mid-2021, a strange thing had happened. The same pretrained model was being
+          adapted - via fine-tuning, prompting, or both - for translation, summarization,
+          code generation, search, classification, and a long tail of bespoke tasks.
+          One model underneath, hundreds of applications on top. The field needed a
+          noun for that thing.
+        </p>
+        <p>
+          The Stanford CRFM report
+          (<a href="https://arxiv.org/abs/2108.07258" target="_blank" rel="noopener">Bommasani et al. 2021</a>,
+          114 authors) crystallized it. From the opening line: "AI is undergoing a paradigm
+          shift with the rise of models (e.g., BERT, DALL-E, GPT-3) that are trained on
+          broad data at scale and are adaptable to a wide range of downstream tasks. We
+          call these models <span class="gloss" data-gloss="foundation-model">foundation
+          models</span> to underscore their critically central yet incomplete character."
+          The label has stuck.
+        </p>
+        <div class="callout note">
+          <div class="callout-label">A naming caveat</div>
+          <p>
+            "Foundation model" was popularized, not coined, by the CRFM report - the term
+            had appeared in adjacent contexts before. Safer phrasing for the historical
+            record: the noun was <em>crystallized</em> by Stanford in August 2021. What
+            mattered for the field was less the etymology and more that everyone now had
+            the same word for the substrate.
+          </p>
+        </div>
+
+        <h2><span class="section-number">5.</span> The transformer walks into vision</h2>
+        <p>
+          The same two years quietly settled an older debate. Convolutions had ruled
+          vision since 2012; attention had ruled NLP since 2017. Two papers stapled them
+          together by noticing that the staple was unnecessary.
+        </p>
+        <p>
+          <a href="https://arxiv.org/abs/2010.11929" target="_blank" rel="noopener">ViT (Dosovitskiy et al. 2020)</a>:
+          split an image into 16x16 pixel
+          <span class="gloss" data-gloss="vit-patches">patches</span>, treat each patch as a
+          token, feed them into a vanilla transformer encoder. From the paper: "a pure
+          transformer applied directly to sequences of image patches can perform very
+          well on image classification tasks." With enough pretraining data, ViT matched
+          or beat the best CNNs - using none of the convolutional inductive bias people
+          had spent a decade engineering in.
+        </p>
+        <p>
+          <a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">CLIP (Radford et al. 2021)</a>
+          went further. Scrape 400 million (image, caption) pairs from the web. Train one
+          encoder for images and one for text using a
+          <span class="gloss" data-gloss="contrastive-learning">contrastive</span>
+          objective - pull matching pairs together in a shared embedding space, push
+          mismatched ones apart. The result was
+          <span class="gloss" data-gloss="zero-shot-transfer">zero-shot ImageNet at
+          ResNet-50 accuracy</span>, without ever seeing the 1.28M ImageNet training
+          images. Vision had learned to speak the same prompt-able dialect.
+        </p>
+
+        <div class="callout insight">
+          <div class="callout-label">For the CV reader</div>
+          <p>
+            If your last touchpoint with vision was 2019 ResNets and EfficientNets, this
+            is the era where the convnet stops being the only game. ViT does not retire
+            the CNN - convolutions remain excellent on small-data regimes - but it
+            shows the same architecture from Chapter 0 generalizes across modalities once
+            you give it enough data. Multimodality is a recurring thread, not a separate
+            chapter. It returns in Chapter 7 when the native-multimodal frontier shows up.
+          </p>
+        </div>
+
+        <h2><span class="section-number">6.</span> The gap that opens Chapter 2</h2>
+        <p>
+          GPT-3 is a 175-billion-parameter document completer. That is the precise framing
+          to carry into the next chapter. Ask it "explain photosynthesis to a child" and,
+          half the time, you do not get an explanation - you get a continuation that
+          looks like a textbook table of contents, or a Q&amp;A list, or someone else's
+          half-finished essay. The model has not been trained to be helpful. It has been
+          trained to predict the next token of arbitrary internet text, and helpful text
+          is a small fraction of that distribution.
+        </p>
+        <p>
+          The gap has a name: the <span class="gloss" data-gloss="intent-alignment-gap">intent-alignment gap</span>.
+          The capability is there. The behavior is not. Closing that gap is the work of
+          Chapter 2 - it is the work of <em>alignment</em>, and the first solution will be
+          a three-stage pipeline called RLHF.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">Chapter pivot &middot; the levers so far</div>
+          <p>
+            Chapter 0 turned the <strong>architecture</strong> lever - one stack of
+            self-attention replaced a zoo. Chapter 1 turned the <strong>scale</strong> lever
+            - pretraining harder unlocked in-context learning and made capability a
+            budget calculation. Chapter 2 turns the <strong>alignment</strong> lever - 
+            shaping a knowledgeable but unhelpful base model into an assistant.
+            Same model. New behavior. No new architecture.
+          </p>
+        </div>
+
+        <h2><span class="section-number">7.</span> What to take with you</h2>
+        <ul>
+          <li><strong>Prompting replaced fine-tuning as the default interface.</strong> Few-shot examples in the context window steer a frozen model. The verb changed from "train" to "prompt."</li>
+          <li><strong>Capability became predictable.</strong> Loss is a power law in compute, params, and data. Bigger-is-better stops being a hunch; it is a graph you can read.</li>
+          <li><strong>The ratio matters.</strong> Chinchilla showed that the 2020-era giants were undertrained - data and params should scale together, not just params.</li>
+          <li><strong>One model became the substrate.</strong> "Foundation model" is the noun the field needed once everything downstream was a thin wrapper on the same pretrained backbone.</li>
+          <li><strong>Vision joined.</strong> ViT and CLIP show the transformer is not a text architecture - it is a token architecture. Patches are tokens.</li>
+          <li><strong>The villain enters.</strong> A powerful base model is not a helpful one. Chapter 2 fixes that.</li>
+        </ul>
+
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 28px;">
+          Sources: Brown et al. 2020 (<a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">arXiv:2005.14165</a>);
+          Kaplan et al. 2020 (<a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener">arXiv:2001.08361</a>);
+          Hoffmann et al. 2022 (<a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener">arXiv:2203.15556</a>);
+          Bommasani et al. 2021 (<a href="https://arxiv.org/abs/2108.07258" target="_blank" rel="noopener">arXiv:2108.07258</a>);
+          Dosovitskiy et al. 2020 (<a href="https://arxiv.org/abs/2010.11929" target="_blank" rel="noopener">arXiv:2010.11929</a>);
+          Radford et al. 2021 (<a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">arXiv:2103.00020</a>).
+        </p>
+
+        <nav class="lecture-nav" aria-label="Chapter navigation">
+          <a class="nav-card prev" href="chapter00-where-you-left-off.html">
+            <div class="label">&larr; Previous &middot; Chapter 0</div>
+            <div class="title">Where you left off</div>
+          </a>
+          <a class="nav-card next" href="chapter02-teaching-it-to-be-helpful.html">
+            <div class="label">Next &middot; Chapter 2 &rarr;</div>
+            <div class="title">Teaching it to be helpful</div>
+          </a>
+        </nav>
+
+      </article>
+
+      <footer class="site-footer">
+        <p>From Attention to Agents &middot; <a href="../index.html">All chapters</a> &middot; <a href="https://github.com/" target="_blank" rel="noopener">Source</a></p>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script defer src="../scripts/shared.js"></script>
+<script defer src="../scripts/glossaryData.js"></script>
+<script defer src="../scripts/glossary.js"></script>
+<script defer src="../scripts/icl.js"></script>
+<script defer src="../scripts/scalingLaw.js"></script>
+</body>
+</html>

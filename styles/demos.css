@@ -1,0 +1,126 @@
+/* ============================================================
+   From Attention to Agents — interactive demo widgets
+   Styles for embedded canvas/SVG/DOM demos. Kept separate from
+   shared.css (the learning-site system) so demo chrome evolves
+   independently. References the same :root tokens.
+   ============================================================ */
+
+/* ---------- Demo frame ---------- */
+.demo-wrap {
+  margin: 32px 0;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+.demo-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--rule);
+}
+.demo-label {
+  font-family: var(--mono);
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--teal);
+}
+.demo-hint { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+.demo-body { padding: 22px 18px; }
+
+/* ---------- Generic demo controls ---------- */
+.demo-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 0; }
+.demo-btn {
+  font-family: var(--mono); font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--rule-strong);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.demo-btn:hover { color: var(--text-primary); border-color: var(--accent-border); }
+.demo-btn.primary { color: var(--accent); border-color: var(--accent-border); background: var(--accent-light); }
+.demo-btn.active { color: var(--bg-deep); background: var(--accent); border-color: var(--accent); }
+
+/* ============================================================
+   Two-lane timeline
+   ============================================================ */
+.timeline { position: relative; width: 100%; }
+.timeline svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.tl-lane-label {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.tl-node { cursor: pointer; outline: none; }
+.tl-node circle { transition: r 0.15s, fill 0.15s, stroke 0.15s, stroke-width 0.15s; }
+.tl-node:hover circle, .tl-node.sel circle { r: 9; }
+.tl-node:focus-visible circle, .tl-node.sel circle { stroke: var(--accent); stroke-width: 2.5; }
+.tl-node text {
+  font-family: var(--sans); font-size: 13px; fill: var(--text-secondary);
+  transition: fill 0.15s;
+}
+.tl-node:hover text, .tl-node.sel text { fill: var(--text-primary); }
+.tl-year { font-family: var(--mono); font-size: 11px; fill: var(--text-muted); }
+
+.tl-detail {
+  margin-top: 18px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+  min-height: 64px;
+}
+.tl-detail .y { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.tl-detail h4 { margin: 4px 0 6px; font-size: 18px; color: var(--text-primary); }
+.tl-detail p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+.tl-detail .placeholder { color: var(--text-muted); font-style: italic; }
+
+/* ---------- Landing hero ---------- */
+.hero { padding: 100px 0 60px; }
+.hero .eyebrow { display: block; margin-bottom: 18px; }
+.hero h1 {
+  font-family: var(--serif); font-weight: 700;
+  font-size: 52px; line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 24px;
+  max-width: 16ch;
+}
+.hero-hook {
+  font-family: var(--sans); font-weight: 700; font-size: 22px;
+  color: var(--accent); max-width: 30ch; margin: 0 0 20px;
+}
+.hero-lede { font-size: 19px; color: var(--text-secondary); max-width: 56ch; }
+.hero-stats { display: flex; gap: 36px; margin-top: 36px; flex-wrap: wrap; }
+.hero-stat .n { font-family: var(--serif); font-weight: 700; font-size: 32px; color: var(--text-primary); }
+.hero-stat .l { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+
+/* ---------- Part cards (landing) ---------- */
+.parts-grid { display: grid; gap: 18px; margin: 48px 0 80px; }
+.part-card {
+  display: block;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 24px 26px;
+  background: var(--bg-surface);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.part-card::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent); transform: scaleY(0); transform-origin: top;
+  transition: transform 0.2s;
+}
+.part-card:hover { transform: translateY(-3px); border-color: var(--accent-border); }
+.part-card:hover::before { transform: scaleY(1); }
+.part-num {
+  position: absolute; right: 18px; top: 6px;
+  font-family: var(--serif); font-size: 72px; color: var(--text-primary);
+  opacity: 0.06; line-height: 1;
+}
+.part-card .kicker { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); }
+.part-card h3 { font-size: 24px; font-weight: 600; margin: 6px 0 8px; }
+.part-card p { margin: 0; color: var(--text-secondary); font-size: 15px; max-width: 52ch; }
+
+@media (max-width: 768px) {
+  .hero { padding: 80px 0 40px; }
+  .hero h1 { font-size: 40px; }
+  .tl-node text { font-size: 11px; }
+}

@@ -176,12 +176,15 @@
           (<a href="https://blogs.windows.com/windowsexperience/2025/05/19/securing-the-model-context-protocol-building-a-safer-agentic-future-on-windows/" target="_blank" rel="noopener">Windows blog, May 19 2025</a>).
           The spec kept iterating: <code>2025-03-26</code> added OAuth 2.1 and a Streamable HTTP
           transport, <code>2025-06-18</code> added structured tool output and Resource Indicators,
-          <code>2025-11-25</code> added durable tasks and OIDC discovery
-          (<a href="https://modelcontextprotocol.io/specification/2025-11-25/changelog" target="_blank" rel="noopener">MCP changelog</a>).
+          <code>2025-11-25</code> added durable tasks and OIDC discovery, and the current
+          <code>2026-07-28</code> revision replaced the initialization handshake with per-request
+          version negotiation, a mandatory <code>server/discover</code> RPC, and first-class
+          extension points for Tasks, Skills-over-MCP, and inline UI apps
+          (<a href="https://modelcontextprotocol.io/specification/versioning" target="_blank" rel="noopener">MCP versioning</a>).
           A first-party
           <a href="https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/" target="_blank" rel="noopener">MCP Registry preview</a>
           opened on <strong>September 8, 2025</strong>, backed by Anthropic, GitHub, PulseMCP, and
-          Microsoft. In under a year an Anthropic-led standard became the wire format every
+          Microsoft. In under two years an Anthropic-led standard became the wire format every
           frontier lab agreed to speak.
         </p>
         <div class="callout note">
@@ -296,9 +299,15 @@
           SWE-bench Verified became the headline metric in every frontier-model launch that
           followed - a low-single-digit ceiling in late 2023 turned into
           <strong>74.9%</strong> at GPT-5's launch
-          (<a href="https://openai.com/index/introducing-gpt-5/" target="_blank" rel="noopener">OpenAI, Aug 7 2025</a>)
-          and <strong>74.5%</strong> at Claude Opus 4.1
-          (<a href="https://www.anthropic.com/news/claude-opus-4-1" target="_blank" rel="noopener">Anthropic, Aug 5 2025</a>).
+          (<a href="https://openai.com/index/introducing-gpt-5/" target="_blank" rel="noopener">OpenAI, Aug 7 2025</a>),
+          <strong>74.5%</strong> at Claude Opus 4.1
+          (<a href="https://www.anthropic.com/news/claude-opus-4-1" target="_blank" rel="noopener">Anthropic, Aug 5 2025</a>),
+          and <strong>76.2%</strong> at Gemini 3 Pro's launch three months later
+          (<a href="https://blog.google/products/gemini/gemini-3/" target="_blank" rel="noopener">Google, Nov 18 2025</a>).
+          Headline numbers on the Verified subset kept climbing through 2026 and are now less
+          informative than they used to be; Chapter 10 covers the held-out
+          <a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noopener">SWE-bench Pro</a>
+          and Terminal-Bench families that took over as the harder scoreboards.
         </p>
         <p>
           And here the eval-shadow thread bites. A benchmark of self-contained "fix this issue,
@@ -314,11 +323,16 @@
           <strong class="gloss" data-gloss="metr-horizon">METR</strong> proposed a different metric
           in March 2025: the <em>50%-success time horizon</em>, meaning the length of task
           (measured by how long an expert human takes) at which the agent succeeds half the time.
-          Over five years of frontier releases they fit a doubling of roughly <strong>seven
-          months</strong>; the more recent slope is faster. As of the Jan 2026 update, GPT-5 sat
-          around <strong>214 minutes</strong> and Claude Opus 4.5 around <strong>320 minutes</strong>.
+          Under the Time Horizon 1.1 methodology (Jan 2026, 228 tasks, 31 of them over 8 hours),
+          the post-2023 doubling time is <strong>131 days</strong>, and the post-2024 slope is
+          faster still at <strong>89 days</strong>. That refit put GPT-5 around
+          <strong>214 minutes</strong> and Claude Opus 4.5 around <strong>320 minutes</strong>
+          at the same lineup's snapshot.
           (<a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">Kwa et al., Mar 2025</a>;
           <a href="https://metr.org/blog/2026-1-29-time-horizon-1-1/" target="_blank" rel="noopener">METR, Jan 2026</a>.)
+          Since then, METR has been publishing per-launch pre-deployment reports (Claude Opus 5.5
+          Sep 22 2026, GPT-5.6 Sol Jun 26 2026) rather than a refit of the full curve
+          (<a href="https://metr.org/" target="_blank" rel="noopener">METR blog</a>).
           The number to remember is not the specific horizon on the day you read this. It is that
           the eval landscape now has a moving axis for exactly the thing agents are supposed to
           do: keep working. Chapter 10 tables the rest of the 2026 scoreboard.

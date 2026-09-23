@@ -23,17 +23,17 @@
   // y = vertical center; kind controls the chrome.
   const STEPS = [
     { id: 'embed',  y:  46, label: 'Input embedding + positional encoding',
-      blurb: 'Token ids become 512-dim vectors. Sinusoidal positional encodings are added so the model knows order — without them self-attention is permutation-equivariant.' },
+      blurb: 'Token ids become 512-dim vectors. Sinusoidal positional encodings are added so the model knows order - without them self-attention is permutation-equivariant.' },
     { id: 'qkv',    y: 116, label: 'Linear projections: Q, K, V',
       blurb: 'Three learned linear maps split each token vector into Query, Key, and Value. Each head gets its own slice (d_model / h dims per head, h = 8 in the base model).' },
     { id: 'attn',   y: 186, label: 'Scaled dot-product attention',
-      blurb: 'Attention(Q,K,V) = softmax(QKᵀ / √d_k) · V. Every token aggregates a weighted mix of all other tokens — O(n²·d) per layer but only O(1) sequential steps.' },
+      blurb: 'Attention(Q,K,V) = softmax(QKᵀ / √d_k) · V. Every token aggregates a weighted mix of all other tokens - O(n²·d) per layer but only O(1) sequential steps.' },
     { id: 'concat', y: 256, label: 'Multi-head concat + output projection',
       blurb: 'The 8 heads run in parallel on different subspaces; their outputs are concatenated and passed through one more linear projection back to d_model.' },
     { id: 'an1',    y: 320, label: 'Add & LayerNorm',
       blurb: 'Residual connection from the block input, then LayerNorm. The skip lets gradients flow and lets a layer learn the identity if it has nothing useful to add.' },
     { id: 'ffn',    y: 390, label: 'Position-wise feed-forward (FFN)',
-      blurb: 'Two linear layers with a ReLU in between, applied independently to every position. Inner width d_ff = 2048 in the base model — most of the parameters live here.' },
+      blurb: 'Two linear layers with a ReLU in between, applied independently to every position. Inner width d_ff = 2048 in the base model - most of the parameters live here.' },
     { id: 'an2',    y: 454, label: 'Add & LayerNorm',
       blurb: 'Second residual + LayerNorm. The block output has the same shape as its input, so you can stack N = 6 of them and feed the top into a decoder or a classification head.' },
   ];
@@ -86,7 +86,7 @@
   s += `<text x="${CX}" y="18" text-anchor="middle" font-family="var(--mono)" font-size="11"
           fill="var(--text-muted)">input tokens (n positions)</text>`;
   s += `<text x="${CX}" y="${H - 8}" text-anchor="middle" font-family="var(--mono)" font-size="11"
-          fill="var(--text-muted)">block output &mdash; same shape, fed into the next of N=6 layers</text>`;
+          fill="var(--text-muted)">block output - same shape, fed into the next of N=6 layers</text>`;
 
   s += `</svg>`;
 

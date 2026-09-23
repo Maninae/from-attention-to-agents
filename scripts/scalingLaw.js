@@ -184,7 +184,7 @@
     lossKEl.textContent = lk.toFixed(3);
     lossCEl.textContent = lc.toFixed(3);
     const saved = ((lk - lc) / lk * 100);
-    gapEl.innerHTML = `Same compute, two allocations &mdash; Chinchilla's curve lies <strong>${saved.toFixed(1)}% lower in loss</strong>. Or read it sideways: matching Kaplan's loss takes less compute when you scale data with params.`;
+    gapEl.innerHTML = `Same compute, two allocations - Chinchilla's curve lies <strong>${saved.toFixed(1)}% lower in loss</strong>. Or read it sideways: matching Kaplan's loss takes less compute when you scale data with params.`;
   }
   range.addEventListener('input', update);
   update();

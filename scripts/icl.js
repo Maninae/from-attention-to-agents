@@ -25,11 +25,11 @@
   // base-LM-as-document-completer shape Ch1 wants to plant for Ch2.
   const OUTPUTS = {
     0: { text: '...into Pig Latin, a children’s word game in which English syllables are rearranged according to a set of simple rules.',
-         right: false, note: 'no demos &mdash; the base model continues the document instead of doing the task.' },
+         right: false, note: 'no demos - the base model continues the document instead of doing the task.' },
     1: { text: 'pencil-way',
-         right: false, note: '1 demo &mdash; the model copied the surface form of "apple-way" instead of inferring the rule.' },
+         right: false, note: '1 demo - the model copied the surface form of "apple-way" instead of inferring the rule.' },
     3: { text: 'encil-pay',
-         right: true,  note: '3 demos &mdash; with enough examples the underlying rule (move first consonant cluster to the end + "ay") snaps into place. No weights changed.' },
+         right: true,  note: '3 demos - with enough examples the underlying rule (move first consonant cluster to the end + "ay") snaps into place. No weights changed.' },
   };
 
   const css = `

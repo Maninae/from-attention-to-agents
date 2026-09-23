@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chapter 6 · Learning to act - From Attention to Agents</title>
-<meta name="description" content="From chatbot to agent: tool use, the ReAct loop, computer use, and the long-horizon coding agents of 2024–2026. SWE-bench as the eval shadow.">
+<title>Chapter 9 · Learning to act - From Attention to Agents</title>
+<meta name="description" content="From chatbot to agent: the ReAct loop, MCP through 2026, agentic RL environments, computer use, context engineering, and prompt injection as the security problem.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-title">Chapter 6</div>
+    <div class="sidebar-title">Chapter 9 · 2024 – 2026</div>
     <div class="sidebar-subtitle">Learning to act</div>
     <a href="../index.html" class="sidebar-home">← all chapters</a>
     <nav class="nav-toc"></nav>
@@ -29,32 +29,39 @@
     <div class="container">
 
       <nav class="lecture-nav-top">
-        <a href="chapter05-learning-to-think.html">‹ Ch 5 · Learning to think</a>
-        <a href="chapter07-computational-cognition.html">Ch 7 · Computational cognition ›</a>
+        <a href="chapter08-paying-for-thought.html">‹ Ch 8 · Paying for thought</a>
+        <a href="chapter10-measuring-what-we-built.html">Ch 10 · Measuring what we built ›</a>
       </nav>
 
       <header class="lecture-header">
-        <p class="eyebrow">Chapter 6 · 2024 – 2026 · lever: agency</p>
+        <p class="eyebrow">Chapter 9 · 2024 – 2026 · lever: agency</p>
         <h1>Learning to act</h1>
-        <p class="desc">A model that can think still can’t <em>do</em> anything in the world. This is the move from chatbot to agent - tools, loops, environments, errors.</p>
+        <p class="desc">A model that can think, and that we can now serve cheaply, still can't <em>do</em> anything in the world. This is the move from chatbot to agent - tools, loops, environments, errors, and the security problem that comes with all of them.</p>
         <div class="tags">
           <span class="tag">ReAct</span>
-          <span class="tag">Tool use</span>
           <span class="tag">MCP</span>
-          <span class="tag">SWE-bench</span>
+          <span class="tag">Agentic RL</span>
           <span class="tag">Computer use</span>
+          <span class="tag">Context engineering</span>
+          <span class="tag">Prompt injection</span>
         </div>
       </header>
 
       <article class="article">
         <p class="lecture-roadmap">
-          A reasoning model can run a chain of thought all day and still not move a pixel. To
-          affect the world it needs two missing pieces - a way to call out (<strong>tools</strong>)
-          and a way to listen back (<strong>observations</strong>). Wire those into a loop and the
-          chatbot becomes an <span class="gloss" data-gloss="agent">agent</span>. This chapter is
-          that wiring: the ReAct loop as the spine, three answers to "how do tools work" (research,
-          API, open standard), the wild 2023 wave of long-horizon autonomy, an eval that grew up
-          alongside it, and the moment the model got a mouse and keyboard.
+          Chapter 8 taught the model to think cheaply enough to keep the meter running. Now it
+          needs to act. A reasoning model can run a chain of thought all day and still not move a
+          pixel. To affect the world it needs two missing pieces - a way to call out
+          (<strong>tools</strong>) and a way to listen back (<strong>observations</strong>). Wire
+          those into a loop and the chatbot becomes an
+          <span class="gloss" data-gloss="agent">agent</span>. This chapter is that wiring: the
+          ReAct loop as the spine, three answers to "how do tools work" (research, API, open
+          standard), the wild 2023 wave of autonomy, the moment the model got a mouse and
+          keyboard, then the three things frontier labs added in 2025-26 to make agents useful for
+          real work - a training pipeline of executable environments, a measurable notion of
+          long-horizon competence, and the discipline of engineering their context. It closes on
+          the security problem the whole stack inherits when text from the world can steer text
+          into the model.
         </p>
 
         <h2><span class="section-number">1.</span>The loop that defines an agent</h2>
@@ -67,8 +74,8 @@
         </p>
         <p>
           The trick is that the "thought" step is just chain-of-thought reused inside a control
-          loop - the same seed planted back in Chapter 2 and trained into the weights in
-          Chapter 5, now placed where it does mechanical work: deciding the <em>next action</em>.
+          loop - the same seed planted back in Chapter 3 and trained into the weights in
+          Chapter 6, now placed where it does mechanical work: deciding the <em>next action</em>.
           The "observation" is whatever the world hands back when you act on it: a search result, a
           stack trace, a screenshot. The loop closes because each observation feeds the next
           thought.
@@ -96,8 +103,8 @@
           <div class="callout-label">CoT, third appearance</div>
           <p>
             The same "show your work" move shows up here a third time. As a prompt trick
-            (Chapter 2), as a target for prompt optimization (Chapter 4), as something trained
-            directly into the weights (Chapter 5) - and now as the <em>thought</em> step inside a
+            (Chapter 3), as a target for prompt optimization (Chapter 5), as something trained
+            directly into the weights (Chapter 6) - and now as the <em>thought</em> step inside a
             control loop, where each line of reasoning ends in an action instead of an answer.
           </p>
         </div>
@@ -152,12 +159,42 @@
         <p>
           Eighteen months later, on <strong>November 25, 2024</strong>, Anthropic introduced the
           <strong class="gloss" data-gloss="mcp">Model Context Protocol (MCP)</strong>, an open
-          standard for how LLMs connect to tools and data sources. Python and TypeScript SDKs at
-          launch; reference servers for Google Drive, Slack, GitHub, Git, Postgres, and Puppeteer.
-          The point of a protocol - rather than another vendor API - is that every model can talk
-          to every tool without bespoke glue, and the tool describes itself once.
+          standard (spec version <code>2024-11-05</code>) for how LLMs connect to tools and data
+          sources. Python and TypeScript SDKs at launch; reference servers for Google Drive,
+          Slack, GitHub, Git, Postgres, and Puppeteer. The point of a protocol - rather than
+          another vendor API - is that every model can talk to every tool without bespoke glue,
+          and the tool describes itself once.
           (<a href="https://www.anthropic.com/news/model-context-protocol" target="_blank" rel="noopener">Anthropic, Nov 2024</a>.)
         </p>
+        <p>
+          The interesting thing is not the launch, it is what happened next. On
+          <strong>March 26, 2025</strong> OpenAI shipped MCP support in its Agents SDK
+          (<a href="https://x.com/sama/status/1904957253456941061" target="_blank" rel="noopener">Sam Altman</a>).
+          Two weeks later Google confirmed the same for Gemini
+          (<a href="https://x.com/demishassabis/status/1910107859041271977" target="_blank" rel="noopener">Demis Hassabis, Apr 9 2025</a>);
+          Microsoft announced native MCP for Windows at Build in May
+          (<a href="https://blogs.windows.com/windowsexperience/2025/05/19/securing-the-model-context-protocol-building-a-safer-agentic-future-on-windows/" target="_blank" rel="noopener">Windows blog, May 19 2025</a>).
+          The spec kept iterating: <code>2025-03-26</code> added OAuth 2.1 and a Streamable HTTP
+          transport, <code>2025-06-18</code> added structured tool output and Resource Indicators,
+          <code>2025-11-25</code> added durable tasks and OIDC discovery
+          (<a href="https://modelcontextprotocol.io/specification/2025-11-25/changelog" target="_blank" rel="noopener">MCP changelog</a>).
+          A first-party
+          <a href="https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/" target="_blank" rel="noopener">MCP Registry preview</a>
+          opened on <strong>September 8, 2025</strong>, backed by Anthropic, GitHub, PulseMCP, and
+          Microsoft. In under a year an Anthropic-led standard became the wire format every
+          frontier lab agreed to speak.
+        </p>
+        <div class="callout note">
+          <div class="callout-label">The protocol's own security problem</div>
+          <p>
+            An open ecosystem of third-party tool servers is also an open supply chain. In
+            <strong>April 2025</strong> Invariant Labs documented
+            <a href="https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks" target="_blank" rel="noopener">"tool poisoning"</a>:
+            malicious instructions hidden inside a server's tool description that the model reads
+            and obeys, plus "rug pulls" where a trusted server's manifest is silently changed
+            after install. Section 7 comes back to this.
+          </p>
+        </div>
         <div style="overflow-x:auto">
         <table style="width:100%; border-collapse:collapse; margin:18px 0; font-size:15px">
           <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
@@ -237,18 +274,18 @@
         <h2><span class="section-number">4.</span>The eval shadow grows up</h2>
         <p>
           Every chapter has an eval that defined the scoreboard.
-          <span class="gloss" data-gloss="bbh">BBH</span> defined Chapter 2,
-          <span class="gloss" data-gloss="mmlu">MMLU</span> defined Chapter 3 - Chapter 6’s is
+          <span class="gloss" data-gloss="bbh">BBH</span> defined Chapter 3,
+          <span class="gloss" data-gloss="mmlu">MMLU</span> defined Chapter 4 - Chapter 9's is
           <strong class="gloss" data-gloss="swe-bench">SWE-bench</strong>: <strong>2,294</strong>
-          real GitHub issues across <strong>12</strong> popular Python repos. The task is unglamorous
-          and exactly right for agents - read the issue, edit the codebase, make the project’s
-          hidden tests pass.
+          real GitHub issues across <strong>12</strong> popular Python repos. The task is
+          unglamorous and exactly right for agents - read the issue, edit the codebase, make the
+          project's hidden tests pass.
           (<a href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener">Jimenez et al., ICLR 2024</a>.)
           At publication the best system tested (Claude 2 with a retrieval pipeline) solved
           <span class="neg">just 1.96%</span> of issues. The benchmark was effectively unsolved.
         </p>
         <p>
-          That number didn’t stay there. Within a year the field had to admit a separate problem:
+          That number didn't stay there. Within a year the field had to admit a separate problem:
           some SWE-bench problems were underspecified or had flaky test setups, so headline numbers
           stopped meaning much. On <strong>August 13, 2024</strong> OpenAI released
           <strong class="gloss" data-gloss="swe-bench-verified">SWE-bench Verified</strong>: a
@@ -257,15 +294,34 @@
           Docker environments to make runs reproducible.
           (<a href="https://openai.com/index/introducing-swe-bench-verified/" target="_blank" rel="noopener">OpenAI, Aug 2024</a>.)
           SWE-bench Verified became the headline metric in every frontier-model launch that
-          followed.
+          followed - a low-single-digit ceiling in late 2023 turned into
+          <strong>74.9%</strong> at GPT-5's launch
+          (<a href="https://openai.com/index/introducing-gpt-5/" target="_blank" rel="noopener">OpenAI, Aug 7 2025</a>)
+          and <strong>74.5%</strong> at Claude Opus 4.1
+          (<a href="https://www.anthropic.com/news/claude-opus-4-1" target="_blank" rel="noopener">Anthropic, Aug 5 2025</a>).
         </p>
         <p>
           And here the eval-shadow thread bites. A benchmark of self-contained "fix this issue,
-          pass these tests" tasks is a beautiful target - and a partial one. It doesn’t capture
+          pass these tests" tasks is a beautiful target - and a partial one. It doesn't capture
           long-horizon collaboration, code-review pushback, maintainability, or whether the patch
           would survive a real codebase six months later. Race the metric long enough and you get
-          a model optimized for the metric. The villain across this whole course shows up here
-          wearing a green test bar.
+          a model optimized for the metric. The full <span class="gloss" data-gloss="goodharts-law">Goodhart</span> treatment
+          waits for Chapter 10; here it is enough to note the villain showed up wearing a green
+          test bar.
+        </p>
+        <p>
+          Pass-rate on a fixed task set only tells you so much about an agent, though.
+          <strong class="gloss" data-gloss="metr-horizon">METR</strong> proposed a different metric
+          in March 2025: the <em>50%-success time horizon</em>, meaning the length of task
+          (measured by how long an expert human takes) at which the agent succeeds half the time.
+          Over five years of frontier releases they fit a doubling of roughly <strong>seven
+          months</strong>; the more recent slope is faster. As of the Jan 2026 update, GPT-5 sat
+          around <strong>214 minutes</strong> and Claude Opus 4.5 around <strong>320 minutes</strong>.
+          (<a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">Kwa et al., Mar 2025</a>;
+          <a href="https://metr.org/blog/2026-1-29-time-horizon-1-1/" target="_blank" rel="noopener">METR, Jan 2026</a>.)
+          The number to remember is not the specific horizon on the day you read this. It is that
+          the eval landscape now has a moving axis for exactly the thing agents are supposed to
+          do: keep working. Chapter 10 tables the rest of the 2026 scoreboard.
         </p>
         <div class="callout note">
           <div class="callout-label">A second eval, briefly</div>
@@ -325,14 +381,168 @@
           (<a href="https://www.anthropic.com/news/claude-3-7-sonnet" target="_blank" rel="noopener">Anthropic, Feb 2025</a>.)
         </p>
         <p>
-          If you’re reading this on the site this course is being built with, you already know
+          If you're reading this on the site this course is being built with, you already know
           the shape of the loop. Claude Code is a ReAct agent with file I/O, shell access, MCP
-          tools, and the extended-thinking mode of Chapter 5 dropped in at the "thought" step.
+          tools, and the extended-thinking mode of Chapter 6 dropped in at the "thought" step.
           The metaphor closes in a slightly recursive way - this chapter is being typed by an
           agent of the kind it describes.
         </p>
 
-        <h2><span class="section-number">7.</span>What agency needed that conversation didn’t</h2>
+        <h2><span class="section-number">7.</span>Training the agent, not just prompting it</h2>
+        <p>
+          Everything above assumes the agent's competence comes from the same weights the chatbot
+          uses. Through 2024 that was true - the ReAct trick was that competence sat in the
+          prompt. In 2025 the frontier moved: labs started post-training models specifically to
+          be agents, using the same
+          <span class="gloss" data-gloss="rlvr">RLVR</span> lever Chapter 6 introduced but with
+          real repos as the verifier. The trick was building environments where a training run
+          could roll out an agent, execute its code, run the repo's own test suite, and use the
+          pass/fail signal as reward.
+        </p>
+        <p>
+          The public pipeline arrived quickly.
+          <strong class="gloss" data-gloss="swe-gym">SWE-Gym</strong> (Dec 2024) packaged
+          <strong>2,438</strong> Python tasks, each with an executable environment and a test
+          suite, and reported up to <strong>+19</strong> absolute points on SWE-bench Verified when
+          used to train an open agent - and <strong>32.0%</strong> at inference with a
+          learned verifier.
+          (<a href="https://arxiv.org/abs/2412.21139" target="_blank" rel="noopener">Pan et al., 2024</a>.)
+          <strong>R2E-Gym</strong> (Apr 2025) auto-synthesized <strong>8.7K</strong> tasks with
+          the SWE-Gen pipeline, dropping the reliance on hand-written issues, and reached
+          <strong>34.4%</strong> pass@1 on SWE-bench Verified with a 32B model.
+          (<a href="https://arxiv.org/abs/2504.07164" target="_blank" rel="noopener">Jain et al., 2025</a>.)
+          <strong>SWE-smith</strong> (Apr 2025) turned any Python repo into an executable
+          environment with synthetic test-breaking tasks, released <strong>50K</strong> instances
+          from 128 repos, and its SWE-agent-LM-32B reached <strong>40.2%</strong>.
+          (<a href="https://arxiv.org/abs/2504.21798" target="_blank" rel="noopener">Yang et al., 2025</a>.)
+          <strong>SWE-rebench</strong> (Nebius, May 2025) built a continuously refreshed pipeline
+          of <strong>21K+</strong> tasks from <strong>3,400+</strong> repos as Docker images,
+          aimed at both training and decontamination.
+          (<a href="https://arxiv.org/abs/2505.20411" target="_blank" rel="noopener">Badertdinov et al., 2025</a>.)
+          Berkeley's <strong>SkyRL-Agent</strong> (Nov 2025) put the full training stack together -
+          rollouts, environment, RL trainer - for multi-turn agents and reported
+          <strong>39.4%</strong> at more than 2x cheaper.
+          (<a href="https://arxiv.org/abs/2511.16108" target="_blank" rel="noopener">SkyRL-Agent, 2025</a>.)
+        </p>
+        <div class="callout insight">
+          <div class="callout-label">The shift, in one line</div>
+          <p>
+            Coding agents used to be a scaffold around a chat model. In 2025 they became a class
+            of model trained inside its scaffold, with executable rewards from real repos. This
+            is the RLVR lever from Chapter 6 turned on Chapter 9's problem.
+          </p>
+        </div>
+
+        <h2><span class="section-number">8.</span>Engineering the agent's context</h2>
+        <p>
+          A ReAct loop runs for hours and its context window does not. The engineering problem
+          that ate 2025 was less "which model" and more "which tokens live inside its window at
+          any given step." Andrej Karpathy and Tobi Lutke started calling this
+          <em>context engineering</em> in late June 2025
+          (<a href="https://x.com/karpathy/status/1937902205765607626" target="_blank" rel="noopener">Karpathy, Jun 25 2025</a>;
+          <a href="https://simonwillison.net/2025/jun/27/context-engineering/" target="_blank" rel="noopener">Willison, Jun 27</a>).
+          Anthropic wrote the term into their public engineering practice a few months later:
+          "the delicate art and science of filling the context window with just the right
+          information at each step."
+          (<a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Anthropic, Sept 29 2025</a>.)
+        </p>
+        <p>
+          Three sub-tools emerged, each with a public reference implementation:
+        </p>
+        <ul>
+          <li>
+            <strong>Compaction.</strong> When the conversation nears the context limit, the
+            harness summarizes the older turns on the fly and keeps working. Claude's platform
+            docs describe this as the default long-conversation strategy
+            (<a href="https://platform.claude.com/docs/en/build-with-claude/compaction" target="_blank" rel="noopener">Anthropic docs</a>).
+          </li>
+          <li>
+            <strong>Persistent memory.</strong> A file-system-shaped memory tool (public beta
+            Sept 29 2025) that lets the agent read and write files in a scoped
+            <code>/memories</code> namespace across sessions
+            (<a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool" target="_blank" rel="noopener">memory tool</a>).
+            The MemGPT / Letta line (arXiv Oct 2023) is the prior art for the pattern:
+            OS-style paging between a small live window and a larger store
+            (<a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener">Packer et al., 2023</a>).
+          </li>
+          <li>
+            <strong>Subagents.</strong> Anthropic's June 2025 write-up of its multi-agent research
+            system reported that an orchestrator delegating to parallel workers with
+            <em>independent context windows</em> beat a single-agent baseline by
+            <strong>90.2%</strong> at ~15x the tokens
+            (<a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener">Anthropic, Jun 13 2025</a>).
+            Cognition's Walden Yan pushed back the day before with "Don't build multi-agents,"
+            arguing that parallel workers make coherence impossible unless they share the full
+            trace
+            (<a href="https://cognition.com/blog/dont-build-multi-agents" target="_blank" rel="noopener">Cognition, Jun 12 2025</a>).
+            The two are less opposed than they read: Anthropic's win is on
+            embarrassingly-parallel research; Cognition's warning is about single artifacts that
+            demand a single decision-maker.
+          </li>
+        </ul>
+        <p>
+          A ReAct agent with none of these can act on the world. A ReAct agent with all of them
+          can act for a long time on the world - the METR horizon of the previous section is
+          exactly the axis this section optimizes.
+        </p>
+
+        <h2><span class="section-number">9.</span>Prompt injection: the agent's security problem</h2>
+        <p>
+          There is a cost to putting text from the world into a model that treats text as
+          instructions. Simon Willison named it in September 2022 -
+          <strong class="gloss" data-gloss="prompt-injection">prompt injection</strong>, by
+          analogy with SQL injection: instructions in user-supplied data hijack the model that
+          was supposed to be processing the data
+          (<a href="https://simonwillison.net/2022/Sep/12/prompt-injection/" target="_blank" rel="noopener">Willison, Sep 12 2022</a>).
+          The agent version is worse. Greshake et al. formalized
+          <em>indirect</em> prompt injection in Feb 2023: the attacker doesn't talk to the model
+          at all; they plant instructions in a document, an email, a webpage, a calendar invite,
+          and wait for the agent to read it while executing on the user's behalf
+          (<a href="https://arxiv.org/abs/2302.12173" target="_blank" rel="noopener">Greshake et al., 2023</a>).
+        </p>
+        <p>
+          Two 2025 incidents made the theoretical bite concrete.
+          <strong>EchoLeak</strong> (CVE-2025-32711, Aim Labs, June 2025) was the first documented
+          zero-click indirect-injection exfiltration of a production agent: a crafted email to
+          Microsoft 365 Copilot silently steered it into reading a user's private files and
+          leaking the content
+          (<a href="https://www.aim.security/lp/aim-labs-echoleak-blogpost" target="_blank" rel="noopener">Aim Labs</a>).
+          "<em>Invitation Is All You Need</em>" (SafeBreach, Black Hat 2025) put payloads in
+          Google Calendar invite titles, then asked Gemini to "summarize my week" - the
+          summarizer read the poisoned title as instructions and controlled the user's smart-home
+          devices
+          (<a href="https://www.safebreach.com/blog/invitation-is-all-you-need-hacking-gemini/" target="_blank" rel="noopener">SafeBreach, 2025</a>).
+          The OWASP LLM Top 10's v2025 release keeps prompt injection at LLM01
+          (<a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/" target="_blank" rel="noopener">OWASP, 2024</a>).
+        </p>
+        <div class="callout note" style="--c: var(--neg)">
+          <div class="callout-label" style="color: var(--neg)">The lethal trifecta</div>
+          <p>
+            Simon Willison's June 2025 formulation is worth memorizing: an agent that has
+            <strong>private data</strong>, exposure to <strong>untrusted content</strong>, and
+            the ability to <strong>communicate externally</strong> is exfiltrable by prompt
+            injection - full stop, for any current model
+            (<a href="https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/" target="_blank" rel="noopener">Willison, Jun 16 2025</a>).
+            The defense is to break the trifecta, not to plead with the model.
+          </p>
+        </div>
+        <p>
+          Two defenses have primary-source teeth. Anthropic's
+          <strong>constitutional classifiers</strong>
+          (<a href="https://arxiv.org/abs/2501.18837" target="_blank" rel="noopener">Sharma et al., Jan 2025</a>)
+          run input and output classifiers trained from synthetic data against a written safety
+          spec; 3,000+ hours of red-teaming produced no universal jailbreak, at a 0.38% false
+          refusal rate. Google DeepMind's
+          <strong>CaMeL</strong>
+          (<a href="https://arxiv.org/abs/2503.18813" target="_blank" rel="noopener">Debenedetti et al., Mar 2025</a>)
+          takes the confused-deputy framing seriously: a privileged planner emits a program in a
+          restricted DSL, a quarantined LLM handles untrusted content, and a custom interpreter
+          tracks provenance so untrusted data cannot influence the control flow - <strong>77%</strong>
+          of AgentDojo tasks solved with a provable security bound versus 84% undefended.
+          Neither is a settled solution. They are the shape the field is exploring.
+        </p>
+
+        <h2><span class="section-number">10.</span>What agency needed that conversation didn't</h2>
         <p>
           Pull the chapter back to first principles. A pure chat model needs only enough state to
           finish the next message. An agent needs four things conversation never asked it to have,
@@ -350,7 +560,7 @@
         <p>
           That list is editorial - no single paper to cite - but each item points to a citation
           earlier in the chapter. The reason agency took until 2024–2025 to feel real is that all
-          four ingredients had to land together. A model that could think (Chapter 5) but couldn’t
+          four ingredients had to land together. A model that could think (Chapter 6) but couldn't
           remember, observe, recover, or plan was a clever conversationalist. Wire those in and
           you get the thing on your laptop.
         </p>
@@ -358,21 +568,23 @@
         <div class="callout insight">
           <div class="callout-label">Where the chapter leaves you</div>
           <p>
-            The arc so far: architecture (Ch 0), scale (Ch 1), alignment (Ch 2 – 3), prompt
-            (Ch 4), test-time compute (Ch 5), and now agency. Six levers. The next chapter is the
-            synthesis - what happens when you turn them all at once, and the small voice-tool you
-            woke up wanting.
+            Architecture (Ch 0), scale (Ch 1), a modern pretraining run (Ch 2), alignment
+            (Ch 3-4), prompt (Ch 5), test-time compute (Ch 6), RL at scale (Ch 7), inference
+            systems (Ch 8), and now agency. Nine levers turned. The last two chapters ask what
+            we built: Chapter 10 measures it - the 2026 eval landscape, what the numbers can and
+            can't tell you, and how the field watches its own weights. Chapter 11 pulls the whole
+            arc together and finishes the small voice tool you woke up wanting.
           </p>
         </div>
 
         <nav class="lecture-nav">
-          <a class="nav-card prev" href="chapter05-learning-to-think.html">
+          <a class="nav-card prev" href="chapter08-paying-for-thought.html">
             <div class="label">‹ Previous</div>
-            <div class="title">Ch 5 · Learning to think</div>
+            <div class="title">Ch 8 · Paying for thought</div>
           </a>
-          <a class="nav-card next" href="chapter07-computational-cognition.html">
+          <a class="nav-card next" href="chapter10-measuring-what-we-built.html">
             <div class="label">Next ›</div>
-            <div class="title">Ch 7 · Computational cognition</div>
+            <div class="title">Ch 10 · Measuring what we built</div>
           </a>
         </nav>
       </article>

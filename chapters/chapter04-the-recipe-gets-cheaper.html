@@ -427,10 +427,35 @@
               <td style="padding:9px 12px"><a href="https://openai.com/index/introducing-gpt-oss/" target="_blank" rel="noopener">gpt-oss-120b / 20b</a></td>
               <td style="padding:9px 12px">OpenAI's first open-weights release since GPT-2. Apache-2 MoE, the 120B near o4-mini, fits on one 80 GB H100.</td>
             </tr>
-            <tr>
+            <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; white-space:nowrap">Aug 2025</td>
               <td style="padding:9px 12px"><a href="https://api-docs.deepseek.com/news/news250821/" target="_blank" rel="noopener">DeepSeek-V3.1</a></td>
               <td style="padding:9px 12px">Hybrid think / non-think in one model, 128K context, still open.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Dec 2025</td>
+              <td style="padding:9px 12px"><a href="https://api-docs.deepseek.com/updates" target="_blank" rel="noopener">DeepSeek-V3.2 + V3.2-Speciale</a></td>
+              <td style="padding:9px 12px">V3.2 upgraded both <code>deepseek-chat</code> (non-think) and <code>deepseek-reasoner</code> (think); a separate <code>Speciale</code> variant for reasoning workloads.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Apr 2026</td>
+              <td style="padding:9px 12px"><a href="https://api-docs.deepseek.com/updates" target="_blank" rel="noopener">DeepSeek-V4 (Pro + Flash)</a></td>
+              <td style="padding:9px 12px">The V3 line closes; V4 opens with the same open recipe plus a thinking-effort dial (<code>low</code>/<code>high</code>/<code>max</code>) at the API layer.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Jul 2026</td>
+              <td style="padding:9px 12px"><a href="https://en.wikipedia.org/wiki/Kimi_(chatbot)" target="_blank" rel="noopener">Kimi K3</a></td>
+              <td style="padding:9px 12px">2.8T-parameter Moonshot flagship on Kimi Delta Attention, 1M-token context; the open-weight coding-and-agent option of the summer.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Aug 2026</td>
+              <td style="padding:9px 12px"><a href="https://en.wikipedia.org/wiki/Qwen" target="_blank" rel="noopener">Qwen3.8-Max</a> + Qwen3.8-27B</td>
+              <td style="padding:9px 12px">2.4T sparse-MoE Alibaba flagship (proprietary API tier) plus a 27B Apache-2 checkpoint two weeks later; the open cut still ships alongside the closed one.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px; white-space:nowrap">Sep 2026</td>
+              <td style="padding:9px 12px"><a href="https://api-docs.deepseek.com/news/news260910" target="_blank" rel="noopener">DeepSeek-V4.1-Flash</a></td>
+              <td style="padding:9px 12px">552B asymmetric causal encoder / decoder MoE (8B in, 16B out active); a quarter of the HBM and an eighth of the SSD of V4-Flash for KV cache, at a fraction of the price.</td>
             </tr>
           </tbody>
         </table>

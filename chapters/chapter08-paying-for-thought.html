@@ -86,9 +86,9 @@
         bandwidth - each step must stream the full weights and the full KV cache from memory to
         registers just to produce one token. The
         <a href="https://arxiv.org/abs/2311.18677" target="_blank" rel="noopener">Splitwise paper
-        (Patel et al., Microsoft/UW, Nov 2023)</a> was the first to publish a full
-        characterization: prefill saturates FLOPs, decode saturates bandwidth, and the two
-        happening on the same GPU fight each other for both.
+        (Patel et al., Microsoft/UW, Nov 2023)</a> characterized it cleanly: prefill saturates
+        FLOPs, decode saturates bandwidth, and the two happening on the same GPU fight each
+        other for both.
       </p>
 
       <div class="callout insight">
@@ -264,8 +264,8 @@
       <p>
         The whole trick lives inside two constants: acceptance rate $\alpha$ (fraction
         of drafted tokens the target keeps) and cost ratio $c$ (draft-forward time over
-        target-forward time). Leviathan's Eq. 9 puts the expected speedup over plain decoding
-        at $\htmlData{tip=numerator: expected tokens accepted per verify pass; denominator: cost of one target step plus k draft steps}{\frac{1 - \alpha^{k+1}}{(1 - \alpha)(1 + c k)}}$.
+        target-forward time). Leviathan's Theorem 3.8 puts the expected speedup over plain
+        decoding at $\htmlData{tip=numerator: expected tokens accepted per verify pass; denominator: cost of one target step plus k draft steps}{\frac{1 - \alpha^{k+1}}{(1 - \alpha)(1 + c k)}}$.
         The two failure modes: a draft too slow (large $c$) eats the win; a draft too weak
         (small $\alpha$) rarely gets its predictions accepted. So the practical research has
         been about better drafts.
@@ -277,11 +277,13 @@
           (<a href="https://arxiv.org/abs/2401.15077" target="_blank" rel="noopener">Li et al.,
           Jan 2024</a>;
           <a href="https://arxiv.org/abs/2406.16858" target="_blank" rel="noopener">June 2024</a>;
-          2025). A tiny autoregressive head reused on top of the target's own last-layer hidden
-          states drafts far better than a separate model, because it sees exactly what the
-          target sees. EAGLE-2 adds dynamic tree drafting; EAGLE-3 removes the constraint that
-          the draft head predict features and lets it predict tokens directly. Reported
-          speedups on Llama 3 8B/70B routinely land at 3-5&times; over vanilla decode.
+          <a href="https://arxiv.org/abs/2503.01840" target="_blank" rel="noopener">March 2025</a>).
+          A tiny autoregressive head reused on top of the target's own penultimate-layer hidden
+          features drafts far better than a separate model, because it sees almost exactly what
+          the target sees. EAGLE-2 adds dynamic tree drafting; EAGLE-3 removes the constraint
+          that the draft head predict features and lets it predict tokens directly. Reported
+          speedups climb from ~3&times; on Llama-family targets in EAGLE-1 to ~4&times; in
+          EAGLE-2 and up to ~6&times; in EAGLE-3.
         </li>
         <li>
           <strong>Medusa</strong>
@@ -470,8 +472,10 @@
         <li>
           Anthropic's Claude reasoning API exposes
           <a href="https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking" target="_blank" rel="noopener">extended
-          thinking</a> with an explicit integer <code>budget_tokens</code>, billed at the
-          output-token rate and reported back in <code>usage</code>.
+          thinking</a>: an explicit integer <code>budget_tokens</code> on the Claude 4-era
+          models, and an adaptive-thinking mode with an <code>effort</code> knob on the
+          Claude 5 line. Thinking tokens are billed at the output-token rate and reported
+          back in <code>usage</code>.
         </li>
         <li>
           Google's Gemini 2.5 / 3.x API exposes a

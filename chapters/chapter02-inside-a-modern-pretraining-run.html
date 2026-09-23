@@ -85,9 +85,9 @@
           <span class="gloss" data-gloss="aux-loss-free-balancing">auxiliary-loss-free load balancing</span>
           on the router, <span class="gloss" data-gloss="mtp">multi-token prediction</span> heads
           on top, <span class="gloss" data-gloss="fp8-training">FP8 mixed-precision training</span>
-          throughout, 14.8T pretraining tokens - and the whole run cost <strong>2.664 million
-          H800 GPU-hours</strong>. Every one of those choices is a lever you did not have five
-          years ago.
+          throughout, 14.8T pretraining tokens - and pretraining alone cost <strong>2.664 million
+          H800 GPU-hours</strong> (2.788M total including long-context extension and post-training).
+          Every one of those choices is a lever you did not have five years ago.
         </p>
         <p>
           The point of the chapter is not to catalog names. It is to see the shape of the machine
@@ -300,15 +300,18 @@
         </ul>
 
         <p>
-          The demo below is the arithmetic in one panel: pick a variant, a context length, a
-          layer count, and see the resulting cache. This is the calculation a serving team runs
-          before quoting a token-per-dollar number.
+          The demo below runs the arithmetic on one reference shape - DeepSeek-V3's own
+          (128 heads, head_dim 128, 61 layers, BF16). Drag the context slider; the four
+          bars show per-sequence KV cache under MHA, GQA-8, MQA, and the actual MLA that
+          DeepSeek trained. MHA / GQA / MQA are the counterfactual dense-attention caches
+          on the SAME shape, so the numbers are apples-to-apples. This is the calculation
+          a serving team runs before quoting a token-per-dollar number.
         </p>
 
         <div class="demo-wrap">
           <div class="demo-head">
             <span class="demo-label">KV cache size &middot; MHA vs MQA vs GQA vs MLA</span>
-            <span class="demo-hint">drag the sliders</span>
+            <span class="demo-hint">drag the slider</span>
           </div>
           <div class="demo-body"><div id="kv-demo"></div></div>
         </div>

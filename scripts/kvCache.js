@@ -1,30 +1,37 @@
 /* ============================================================
    KV cache calculator - MHA vs MQA vs GQA vs MLA
-   Deterministic. No PRNG. Same reference model (Llama-70B-shape:
-   64 heads, head_dim 128, 80 layers, BF16 unless noted). Adjust
-   context length, see per-sequence KV memory across variants.
-   Mounts on #kv-demo.
+   Deterministic. No PRNG. One reference model, shared across
+   all four variants: DeepSeek-V3-shape (128 attention heads,
+   head_dim 128, 61 layers, BF16). This is the architecture MLA
+   was actually deployed on, so the MLA number is the value
+   DeepSeek chose for THIS shape rather than a spec pulled from
+   an unrelated reference. MHA/GQA/MQA bars show what the cache
+   would look like if you swapped MLA for each dense variant on
+   the SAME shape (same heads, head_dim, layer count) so the
+   comparison is apples-to-apples.
+   Adjust context length, see per-sequence KV memory across
+   variants. Mounts on #kv-demo.
    ============================================================ */
 (function () {
   const mount = document.getElementById('kv-demo');
   if (!mount) return;
 
-  // Reference model: 64 heads, head_dim 128, 80 layers.
+  // Reference model: DeepSeek-V3-shape (128 heads, head_dim 128, 61 layers).
   // Bytes: BF16 = 2 bytes per element.
-  const HEADS = 64;
+  const HEADS = 128;
   const HEAD_DIM = 128;
-  const LAYERS = 80;
+  const LAYERS = 61;
   const BYTES = 2;
 
-  // MLA numbers from DeepSeek-V2 paper (arXiv:2405.04434, Table 1):
-  // the paper quotes MLA as ~4.5 * head_dim elements per token per layer
-  // for the compressed KV plus decoupled RoPE key. We take 576 elements/tok/layer
-  // as an intermediate value; the exact number depends on the latent rank
-  // and RoPE head dim, but this is the right order of magnitude for a
-  // Llama-70B-shape stand-in.
+  // MLA numbers from DeepSeek-V2/V3 config (arXiv:2405.04434, arXiv:2412.19437):
+  // kv_lora_rank = 512 (compressed latent KV) + qk_rope_head_dim = 64
+  // (decoupled RoPE key that is NOT compressed) = 576 elements per token
+  // per layer. This is the actual per-token cache MLA carries in DeepSeek-V3,
+  // measured against the same 61-layer 128-head shape used for the other bars.
   const MLA_ELEMS_PER_TOKEN_PER_LAYER = 576;
 
-  // GQA groups: LLaMA 2 70B uses 8 KV heads. Keep that as a knob.
+  // GQA groups: Llama-3-70B (a 64-head model) uses 8 KV heads; carry the same
+  // group count over as a representative dense-attention baseline.
   const DEFAULT_GQA = 8;
 
   const VARIANTS = [
@@ -127,7 +134,7 @@
 
   mount.innerHTML = `
     <div class="kv-wrap">
-      <p class="kv-frame">Reference: 64 heads, head_dim 128, 80 layers, BF16. Per-sequence KV cache = elements &times; 2 bytes &times; ctx_len &times; layers.</p>
+      <p class="kv-frame">Reference: DeepSeek-V3 shape (128 heads, head_dim 128, 61 layers, BF16). Per-sequence KV cache = elements &times; 2 bytes &times; ctx_len &times; layers. MHA / GQA / MQA bars are the counterfactual dense-attention caches on the same shape; MLA is DeepSeek's actual latent (kv_lora_rank 512 + rope_head_dim 64 = 576 elems/tok/layer).</p>
       <div class="kv-controls">
         <label for="kv-ctx">Context length</label>
         <input id="kv-ctx" type="range" min="1" max="128" step="1" value="8">
@@ -168,7 +175,7 @@
     const mla = sizes.find(s => s.v.id === 'mla').bytes;
     const gqaRatio = (mha / gqa).toFixed(1);
     const mlaRatio = (mha / mla).toFixed(1);
-    noteEl.innerHTML = `At <strong>${ctxK}k</strong> context, GQA-8 fits ${gqaRatio}&times; more sequences per GPU than dense MHA; MLA fits ${mlaRatio}&times; more. Multiply by batch size to see why a serving stack picks the variant it does.`;
+    noteEl.innerHTML = `At <strong>${ctxK}k</strong> context on this shape, swapping dense MHA for GQA-8 shrinks the per-sequence cache <strong>${gqaRatio}&times;</strong>; swapping in MLA shrinks it <strong>${mlaRatio}&times;</strong>. Multiply by batch size to see why a serving stack picks the variant it does.`;
   }
 
   ctxRange.addEventListener('input', render);

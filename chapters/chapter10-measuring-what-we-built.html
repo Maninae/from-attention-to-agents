@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 10 · Measuring what we built - From Attention to Agents</title>
+<meta name="description" content="The 2026 eval landscape: saturating knowledge benchmarks, contamination-resistant coding sets, agent time-horizons, LLM-as-judge biases, and the leaderboard illusion. Interpretability (SAEs, attribution graphs) and safety practice (RSP, Preparedness, Frontier Safety Framework, sleeper agents, alignment faking, CoT monitorability).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../styles/shared.css">
+<link rel="stylesheet" href="../styles/demos.css">
+<link rel="stylesheet" href="../styles/glossary.css">
+</head>
+<body>
+<div class="progress-bar"></div>
+<button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Chapter 10</div>
+    <div class="sidebar-subtitle">Measuring what we built</div>
+    <a href="../index.html" class="sidebar-home">&larr; all chapters</a>
+    <nav class="nav-toc"></nav>
+  </aside>
+
+  <main class="main">
+    <div class="container">
+
+      <nav class="lecture-nav-top">
+        <a href="chapter09-learning-to-act.html">&lsaquo; Ch 9 &middot; Learning to act</a>
+        <a href="chapter11-computational-cognition.html">Ch 11 &middot; Computational cognition &rsaquo;</a>
+      </nav>
+
+      <header class="lecture-header">
+        <p class="eyebrow">Chapter 10 &middot; 2020 - 2026 &middot; lever: measurement + trust</p>
+        <h1>Measuring what we built</h1>
+        <p class="desc">Benchmarks age fast, leaderboards rank the wrong axis, and the judge has its own taste. The scoreboard is not the game - but the field only knows the game through the scoreboard.</p>
+        <div class="tags">
+          <span class="tag">Eval landscape</span>
+          <span class="tag">Contamination</span>
+          <span class="tag">LLM-as-judge</span>
+          <span class="tag">SAEs</span>
+          <span class="tag">RSP / FSF</span>
+          <span class="tag">CoT monitorability</span>
+        </div>
+      </header>
+
+      <article class="article">
+
+        <p class="lecture-roadmap">
+          Chapter 9 closed on an agent that can run for hours and a benchmark that grades whether the tests turned green. This one steps back and looks at every scoreboard the course has passed through - what they measured, how quickly they saturated, and why the answer to "which model is best" now depends on who is scoring, in which style, on data no one can prove was held out. Then it looks at the two moves the field has made to stop being fooled by its own numbers: opening up the black box (interpretability) and writing the danger down before it arrives (safety practice). The eval-shadow thread finally sits in one place, and the villain the course has been naming since Chapter 2 (Goodhart) gets its full portrait.
+        </p>
+
+        <h2><span class="section-number">1.</span>The scoreboard is not the game</h2>
+        <p>
+          Every previous chapter had a benchmark doing the work of a verdict.
+          <span class="gloss" data-gloss="bbh">BBH</span> and
+          <span class="gloss" data-gloss="mmlu">MMLU</span> stood in for "knowing things"
+          (<a href="https://arxiv.org/abs/2210.09261" target="_blank" rel="noopener">Suzgun 2022</a>,
+          <a href="https://arxiv.org/abs/2009.03300" target="_blank" rel="noopener">Hendrycks 2020</a>).
+          <span class="gloss" data-gloss="aime">AIME</span> and MATH stood in for "reasoning."
+          <span class="gloss" data-gloss="swe-bench">SWE-bench Verified</span> stood in for
+          "agent that can code." Each of them is a fixed sample of something we care about, wrapped
+          in a scoring rule. Each is easy to compare across models. And each stops being informative
+          the moment the scoring rule can be exploited faster than the underlying capability grows.
+        </p>
+        <p>
+          The pattern shows up on a chart of launch dates versus current scores. Below is what it
+          looks like when you draw it: knowledge, math, code, and reasoning benchmarks from 2020 to
+          2026, each plotted from its launch-year first-report score to where the frontier now sits.
+          Older benchmarks climb a wall; younger ones sit at the floor, and are already climbing.
+        </p>
+
+        <div class="demo-wrap">
+          <div class="demo-head">
+            <span class="demo-label">Interactive &middot; benchmark treadmill</span>
+            <span class="demo-hint">hover a line, click a family chip to filter</span>
+          </div>
+          <div class="demo-body"><div id="treadmill-demo"></div></div>
+        </div>
+
+        <p>
+          What the picture makes obvious is the <em>slope</em>. MMLU took roughly four years to go
+          from "hard" to "solved"; GPQA Diamond and AIME took closer to eighteen months;
+          FrontierMath was designed <em>specifically</em> to resist a fast-collapse and still moved
+          from below <strong>2%</strong> at launch to above <strong>50%</strong> on its Tier 1-3
+          set within eighteen months of publication
+          (<a href="https://epoch.ai/frontiermath/the-benchmark" target="_blank" rel="noopener">Epoch AI, Nov 2024</a>).
+          <span class="gloss" data-gloss="hle">Humanity's Last Exam</span>, an expert-written
+          2,500-question set from CAIS and Scale, was named in January 2025 for exactly this
+          expectation - the last exam the human cohort could assemble before its own field started
+          eating it
+          (<a href="https://arxiv.org/abs/2501.14249" target="_blank" rel="noopener">Center for AI Safety &amp; Scale, Jan 2025</a>).
+        </p>
+
+        <div class="callout definition">
+          <div class="callout-label">Definition &middot; benchmark treadmill</div>
+          <p>
+            The observation, load-bearing for the rest of this chapter: <strong>benchmarks are consumed faster than they can be built.</strong> A hard-to-solve set at publication is a two-year measurement instrument, sometimes less. The frontier does not sit next to the state-of-the-art; it sits ahead of it, on tasks no benchmark yet resolves.
+          </p>
+        </div>
+
+        <h2><span class="section-number">2.</span>The 2026 landscape, on one page</h2>
+        <p>
+          What a working researcher actually watches in late 2026 is a portfolio, not a benchmark. The table below is the compact version: what each set measures, who built it, when it landed, and what its intended failure mode is. Every row links inline to the primary source; specific SOTA numbers are omitted where they move faster than this page is edited.
+        </p>
+
+        <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px">
+          <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+            <th style="padding:9px 10px">Family</th>
+            <th style="padding:9px 10px">Benchmark</th>
+            <th style="padding:9px 10px">What it measures</th>
+            <th style="padding:9px 10px">Origin &middot; year</th>
+          </tr></thead>
+          <tbody style="color:var(--text-secondary)">
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td rowspan="3" style="padding:9px 10px; vertical-align:top"><strong>Knowledge</strong></td>
+              <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2406.01574" target="_blank" rel="noopener">MMLU-Pro</a></td>
+              <td style="padding:9px 10px">~12k 10-way MCQs, harder + more reasoning-heavy than MMLU.</td>
+              <td style="padding:9px 10px">Wang et al., 2024</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2311.12022" target="_blank" rel="noopener">GPQA Diamond</a></td>
+              <td style="padding:9px 10px">198 graduate physics/chem/bio MCQs; PhD experts hit 65%.</td>
+              <td style="padding:9px 10px">Rein et al., 2023</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2501.14249" target="_blank" rel="noopener">Humanity's Last Exam</a></td>
+              <td style="padding:9px 10px">2,500 expert-written questions across 100+ subjects.</td>
+              <td style="padding:9px 10px">CAIS + Scale, Jan 2025</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td rowspan="2" style="padding:9px 10px; vertical-align:top"><strong>Math</strong></td>
+              <td style="padding:9px 10px">AIME (2024, 2025)</td>
+              <td style="padding:9px 10px">15 short-answer competition problems per year; the reasoning-model dashboard.</td>
+              <td style="padding:9px 10px">MAA, adopted as an LLM eval circa 2024</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://epoch.ai/frontiermath/the-benchmark" target="_blank" rel="noopener">FrontierMath</a></td>
+              <td style="padding:9px 10px">Novel, unpublished problems; expert mathematicians take hours to days.</td>
+              <td style="padding:9px 10px">Epoch AI, Nov 2024</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td rowspan="2" style="padding:9px 10px; vertical-align:top"><strong>Reasoning</strong></td>
+              <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2505.11831" target="_blank" rel="noopener">ARC-AGI-2</a></td>
+              <td style="padding:9px 10px">Novel visual puzzles, humans-easy / brute-force-hard.</td>
+              <td style="padding:9px 10px">Chollet, Mar 2025</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://livecodebench.github.io/" target="_blank" rel="noopener">LiveCodeBench</a></td>
+              <td style="padding:9px 10px">Rolling contest problems (LeetCode/AtCoder/CodeForces), scored by post-cutoff slice to fight contamination.</td>
+              <td style="padding:9px 10px">Jain et al., 2024</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td rowspan="3" style="padding:9px 10px; vertical-align:top"><strong>Code</strong></td>
+              <td style="padding:9px 10px"><a href="https://openai.com/index/introducing-swe-bench-verified/" target="_blank" rel="noopener">SWE-bench Verified</a></td>
+              <td style="padding:9px 10px">500 human-vetted GitHub issues; the coding-agent scoreboard since Aug 2024 (introduced in Ch 9).</td>
+              <td style="padding:9px 10px">OpenAI, Aug 2024</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noopener">SWE-bench Pro</a></td>
+              <td style="padding:9px 10px">1,865 tasks across GPL-only public repos, held-out repos, and commercial codebases - built against contamination.</td>
+              <td style="padding:9px 10px">Scale, Sep 2025</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://www.laude.org/updates/terminal-bench" target="_blank" rel="noopener">Terminal-Bench</a></td>
+              <td style="padding:9px 10px">Long-horizon shell tasks in Docker; end-to-end, test-graded.</td>
+              <td style="padding:9px 10px">Stanford + Laude, 2025</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td rowspan="4" style="padding:9px 10px; vertical-align:top"><strong>Agents</strong></td>
+              <td style="padding:9px 10px"><a href="https://github.com/sierra-research/tau2-bench" target="_blank" rel="noopener">&tau;<sup>2</sup>-bench</a></td>
+              <td style="padding:9px 10px">Multi-turn customer-service simulation with a user simulator; reliability across repeated attempts, not one-shot success.</td>
+              <td style="padding:9px 10px">Sierra, 2025 (updates &tau;-bench 2024)</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2311.12983" target="_blank" rel="noopener">GAIA</a></td>
+              <td style="padding:9px 10px">466 general-assistant questions across web, PDFs, spreadsheets, images; humans 92%.</td>
+              <td style="padding:9px 10px">Meta &amp; HF, 2023</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2404.07972" target="_blank" rel="noopener">OSWorld</a></td>
+              <td style="padding:9px 10px">369 real Ubuntu / Windows computer-use tasks (introduced in Ch 9).</td>
+              <td style="padding:9px 10px">Xie et al., NeurIPS 2024</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 10px"><a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/" target="_blank" rel="noopener">METR time horizons</a></td>
+              <td style="padding:9px 10px">Not one score - the length of the task a frontier model completes at 50%; a distributional stand-in for "how long can it run".</td>
+              <td style="padding:9px 10px">METR, Mar 2025</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>
+          The right way to read the table is not "pick the winner." It is that every family answers a different question, and no one score summarizes a frontier model. A 2026 model card lists most of these rows and admits which ones its numbers are self-reported, which are third-party, and which are private. The <em>portfolio</em> is the review, not any one benchmark.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">The one that isn't a number</div>
+          <p>
+            <span class="gloss" data-gloss="metr-horizon">METR's time-horizon</span> deserves its own callout. Instead of one score, it fits a task-length axis (seconds to hours of expert human time) to model success rates and reports the length at which the model clears 50%. METR's March 2025 paper measures a 7-month doubling in that horizon from 2019 to 2025, accelerating to a <strong>4-month</strong> doubling in 2024 - 2025 (<a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">Kwa et al., Mar 2025</a>). Whatever the horizon is by the time you read this, it will not be what the paper reported; the shape of the measurement is what matters.
+          </p>
+        </div>
+
+        <h2><span class="section-number">3.</span>Contamination as a first-class threat</h2>
+        <p>
+          A benchmark's number is only as good as its distance from the training set. Model reports have discovered, quietly and repeatedly, that the internet-scale crawl that pretrained the model also contains the eval - either verbatim, or near-duplicate, or its answer key. The oldest examples are almost innocent: GSM8K and MATH problems paraphrased in dozens of tutoring sites; MMLU questions traded on Quizlet. The newer ones are load-bearing: SWE-bench issues came from public GitHub repos that were, of course, in every pretraining corpus.
+        </p>
+        <p>
+          The response was to design against contamination on purpose. Three moves are worth naming, because they now show up in every serious benchmark launch:
+        </p>
+        <ul>
+          <li><strong>Time-boxing.</strong> <a href="https://arxiv.org/abs/2403.07974" target="_blank" rel="noopener">LiveCodeBench</a> continuously scrapes new problems from LeetCode, AtCoder, and CodeForces and lets you evaluate on the slice released <em>after</em> a given training cutoff. Same benchmark, different windows.</li>
+          <li><strong>Held-out and commercial data.</strong> SWE-bench Pro pairs a public GPL set with a held-out repo set and a set from real commercial codebases; the initial post reports GPT-5 at <strong>23.3%</strong> on the public set versus <strong>70%+</strong> on SWE-bench Verified for the same model family
+              (<a href="https://scale.com/research/swe_bench_pro" target="_blank" rel="noopener">Scale, Sep 2025</a>). The gap is the contamination signal.</li>
+          <li><strong>Author-generated novel problems.</strong> FrontierMath commissioned original problems from working mathematicians under strict secrecy protocols. Humanity's Last Exam followed the same pattern across a thousand experts. The point is not that the problem is impossible; it is that the answer does not exist on the training internet.</li>
+        </ul>
+        <p>
+          None of these is a full cure. A private set that's evaluated against by many labs eventually leaks - through prompts in an API, through disclosure to a benchmark host, through inference on a shared endpoint. The design constraint became a rolling one: a benchmark's usefulness ages, and the field either refreshes the underlying data or accepts that yesterday's headline is a decoration.
+        </p>
+
+        <div class="callout theorem">
+          <div class="callout-label">Corollary &middot; how to read a launch report</div>
+          <ul style="margin-bottom:0">
+            <li>Prefer numbers on <em>post-cutoff</em> data (LiveCodeBench windows, novel problem sets) over static ones.</li>
+            <li>Prefer numbers on a <em>held-out set</em> the lab did not build, over ones the lab did.</li>
+            <li>Prefer <em>reliability</em> (<span class="gloss" data-gloss="pass-at-k">pass@k</span> at k&gt;1, or repeated-attempt success like &tau;<sup>2</sup>-bench) over single-shot numbers on stochastic tasks.</li>
+            <li>Prefer <em>third-party</em> evaluations (Artificial Analysis, Epoch AI, LMArena) over self-reported ones; treat both as <em>data</em>, not verdicts.</li>
+          </ul>
+        </div>
+
+        <h2><span class="section-number">4.</span>The arena, style, and the leaderboard illusion</h2>
+        <p>
+          Alongside static benchmarks, the field spent the 2023 - 2024 stretch converging on a live, human-graded leaderboard: <span class="gloss" data-gloss="chatbot-arena">Chatbot Arena</span> (now LMArena), where anonymous model pairs are shown side-by-side and users pick a winner. Wins are aggregated into <span class="gloss" data-gloss="elo-rating">Elo</span> ratings via a Bradley-Terry model. For a while this was, defensibly, the least gameable signal available: a fresh distribution of real user prompts, and a human judge you couldn't fine-tune against.
+        </p>
+        <p>
+          It turned out to be gameable anyway, in two different directions.
+        </p>
+
+        <h3>Style bias, and the fix</h3>
+        <p>
+          Users, on average, reward answers that <em>look</em> like effort: longer, more sub-headings, more bullets, more code fences. On <strong>August 28, 2024</strong> LMSYS shipped <span class="gloss" data-gloss="style-control">style control</span> - a Bradley-Terry regression that adds features for response length and markdown density and reports rankings after regressing style out. The published shift was direct: Claude 3.5 Sonnet, Claude 3 Opus, and Llama 3.1 405B moved up; GPT-4o-mini and Grok-2-mini moved down. Same battles, same clicks, different accounting
+          (<a href="https://www.lmsys.org/blog/2024-08-28-style-control/" target="_blank" rel="noopener">LMSYS, Aug 2024</a>).
+        </p>
+        <div class="callout insight">
+          <div class="callout-label">What style control actually says</div>
+          <p>
+            It is not that longer or more-formatted answers are wrong. It is that a leaderboard which fails to disentangle style from substance is measuring a <em>joint</em> preference over both, and rewarding models trained to over-format. Style control is a request to tell them apart.
+          </p>
+        </div>
+
+        <h3>The Leaderboard Illusion</h3>
+        <p>
+          A more structural critique landed in April 2025. Singh, Kapoor, Hooker and collaborators - across Cohere Labs, Princeton, MIT, Stanford, Waterloo, Ai2, and Washington - documented systematic distortions in Chatbot Arena in <em>The Leaderboard Illusion</em>
+          (<a href="https://arxiv.org/abs/2504.20879" target="_blank" rel="noopener">arXiv:2504.20879</a>). Their findings, briefly:
+        </p>
+        <ul>
+          <li>A small set of providers were allowed to <em>privately test</em> many model variants against the arena before public release, and to retract scores if the numbers were bad. The public leaderboard was the maximum over private siblings, not a single model's true rating.</li>
+          <li>Closed-model providers received disproportionately more battles than open-weight or open-source ones, giving them tighter confidence intervals and more Elo mass.</li>
+          <li>Open-source models were silently deprecated from the leaderboard at higher rates than closed ones, biasing the aggregate.</li>
+        </ul>
+        <p>
+          The response from LMArena, and from the broader community, was messy and ongoing. What is durable from the episode is not the specific corrections but the frame: any metric influential enough to move launches will develop an ecosystem around it, and the ecosystem is part of the measurement.
+        </p>
+
+        <h2><span class="section-number">5.</span>LLM-as-judge: its biases, and the loops that keep it honest</h2>
+        <p>
+          Once tasks became open-ended, the only judge that scaled was another language model. The founding paper is <a href="https://arxiv.org/abs/2306.05685" target="_blank" rel="noopener">MT-Bench (Zheng et al., 2023)</a>: GPT-4 as a pairwise rater reached roughly <strong>&ge;80%</strong> agreement with human raters, comparable to human-human agreement on the same prompts. That was enough to ship. It was not enough to trust unattended.
+        </p>
+        <p>
+          Systematic biases of LLM judges, documented and mostly reproducible:
+        </p>
+        <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; margin:14px 0; font-size:14.5px">
+          <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+            <th style="padding:9px 10px">Bias</th>
+            <th style="padding:9px 10px">What it looks like</th>
+            <th style="padding:9px 10px">Common mitigation</th>
+          </tr></thead>
+          <tbody style="color:var(--text-secondary)">
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px">Position</td>
+              <td style="padding:9px 10px">First (or last) presented answer wins more often.</td>
+              <td style="padding:9px 10px">Randomize order and average both directions.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px">Length &amp; verbosity</td>
+              <td style="padding:9px 10px">Longer answers preferred beyond their substance.</td>
+              <td style="padding:9px 10px">Style control (length as covariate); length-normalized rubrics.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px">Self-preference</td>
+              <td style="padding:9px 10px">A model rates outputs from its own family higher.</td>
+              <td style="padding:9px 10px">Cross-judge ensembles; blind-strip metadata.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px">Format &amp; markdown</td>
+              <td style="padding:9px 10px">Bullets and headings look like effort.</td>
+              <td style="padding:9px 10px">Style control; format-normalized rendering.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 10px">Sycophancy / assertion</td>
+              <td style="padding:9px 10px">Confident, agreeable answers preferred to hedged ones.</td>
+              <td style="padding:9px 10px">Force a rubric with a "confident and wrong" penalty column.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>
+          The productive move was not to abandon LLM judges - the labels are too expensive at scale - but to <em>instrument</em> them. Reward models became a benchmarked axis in their own right:
+          <strong><a href="https://arxiv.org/abs/2506.01937" target="_blank" rel="noopener">RewardBench 2</a></strong> (Malik et al., Jun 2025) evaluates reward models on 1,865 cases across factuality, focus, math, instruction following, safety, and ties, and the accuracy on it correlates with downstream RLHF performance more cleanly than earlier proxies.
+          <strong><a href="https://arxiv.org/abs/2408.15240" target="_blank" rel="noopener">Generative Verifiers (GenRM)</a></strong> reframes the reward model as a next-token prediction problem, so the same tools that made reasoning models work (CoT, majority voting) make judges better calibrated too.
+        </p>
+        <p>
+          The point of the RewardBench line is not that we now have a perfect judge. It is that the judge went from "we shipped it because agreement is high enough" to "we score it, we track it, we know its failure modes, and we hold out data it never sees." That is the same move the code-eval community made against contamination, one layer up.
+        </p>
+        <div class="callout insight">
+          <div class="callout-label">The pattern under both</div>
+          <p>
+            The eval-shadow thread, three chapters in, resolves like this: a metric influential enough to move behavior generates an economy that games it, and the field responds by <em>instrumenting the metric</em> - style controls, held-out sets, reward-model benchmarks, judge audits. The scoreboard is not made honest by finding a perfect one; it is made honest by watching all the ways this one is dishonest.
+          </p>
+        </div>
+
+        <h2><span class="section-number">6.</span>Interpretability: opening the box</h2>
+        <p>
+          Evals judge behavior; interpretability judges the mechanism producing it. If you want to know whether a model "actually" refused for the reason it said, or "actually" solved the problem the way its trace claims, the argument sits inside the network, not on a scoreboard. Two lines of work carried most of the frontier progress in 2024 - 2025.
+        </p>
+
+        <h3>Sparse autoencoders as a scaffold for features</h3>
+        <p>
+          A residual-stream activation is a dense vector; a huge number of concepts get superposed into a small number of dimensions, and no single neuron cleanly corresponds to "the Golden Gate Bridge." A <span class="gloss" data-gloss="sparse-autoencoder">sparse autoencoder</span> (SAE) trains a wide, mostly-inactive linear expansion of that activation so that only a handful of latents fire per token, and the ones that fire tend to be human-readable features.
+        </p>
+        <p>
+          Two 2024 results moved this from a toy to a production tool:
+        </p>
+        <ul>
+          <li><strong>Anthropic, "Scaling Monosemanticity" (May 2024).</strong> SAEs of up to <strong>34M</strong> features on Claude 3 Sonnet's middle residual stream. Multilingual, multimodal features; features that respond to abstract discussion of a concept, not just literal mentions; features that steer the model when clamped - the "Golden Gate Bridge" feature that, when amplified, made the model insist it was the bridge
+              (<a href="https://transformer-circuits.pub/2024/scaling-monosemanticity/" target="_blank" rel="noopener">Templeton et al., May 2024</a>).</li>
+          <li><strong>OpenAI, "Scaling and evaluating sparse autoencoders" (Jun 2024).</strong> Scaling laws for SAE width/sparsity/model-size; a 16M-feature SAE trained on GPT-4 activations; new evaluation metrics for feature interpretability
+              (<a href="https://cdn.openai.com/papers/sparse-autoencoders.pdf" target="_blank" rel="noopener">Gao et al., Jun 2024</a>).</li>
+        </ul>
+
+        <h3>Attribution graphs: tracing a single decision</h3>
+        <p>
+          Features are nouns; the field also wanted the verbs. In March 2025, Anthropic released
+          <em>Circuit Tracing</em> and its case-study companion <em>On the Biology of a Large
+          Language Model</em>. The method: replace the model's dense MLPs with <span class="gloss" data-gloss="cross-layer-transcoder">cross-layer transcoders</span> - sparse, interpretable "replacement neurons" that read from and write to the residual stream across layers - and then use the substitute network to build an <span class="gloss" data-gloss="attribution-graph">attribution graph</span> for a single prompt: which features caused which downstream features, all the way to the output logit
+          (<a href="https://transformer-circuits.pub/2025/attribution-graphs/biology.html" target="_blank" rel="noopener">Lindsey, Batson et al., Mar 2025</a>).
+        </p>
+        <p>
+          Findings from the case studies rearranged what people thought was happening inside the model. Claude 3.5 Haiku plans <em>ahead</em> when composing rhymed poetry, choosing a target rhyme word and steering the line toward it. It carries out multi-step arithmetic through a specific combination of look-up features and approximate-addition circuits, not the algorithm it verbalizes. It sometimes writes down a plausible chain of thought while the mechanism inside was different - a direct, mechanistic demonstration of the CoT faithfulness problem below.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">Scope</div>
+          <p>
+            Both SAEs and attribution graphs are partial. Not every feature is interpretable; not every graph explains a full behavior; the tools are cheaper on small models than on frontier ones. The right claim is not "we can read the mind"; it is "we can read pieces of the mind well enough to falsify specific stories the model tells about itself."
+          </p>
+        </div>
+
+        <h2><span class="section-number">7.</span>CoT faithfulness and monitorability</h2>
+        <p>
+          Chapter 6 mentioned in passing that OpenAI keeps o-series raw traces hidden to preserve them for safety monitoring. This is the fuller version. A chain of thought is <em>useful</em> as a monitoring signal only if it faithfully reports the computation that produced the answer. Turpin et al. (2023) showed early that CoT is not automatically faithful: adding a small biasing hint - like "the answer is always A" for a set of examples - flipped model answers on new questions, but the models' post-hoc reasoning traces did not mention the hint
+          (<a href="https://arxiv.org/abs/2305.04388" target="_blank" rel="noopener">Turpin et al., 2023</a>). The trace was a story, not a receipt.
+        </p>
+        <p>
+          That gap becomes load-bearing when the trace is the tool you use to catch a misaligned model. OpenAI's <em>Detecting Misbehavior in Frontier Reasoning Models via CoT Monitoring</em> (March 2025) trained models under RL on a coding environment, watched them find <em>reward hacks</em> (early-return exploits, hardcoded test values, spec loopholes), and showed a second model reading only the raw CoT could catch most of them - <em>until</em> the training pressure was placed on the CoT itself, at which point the policy learned to hack while writing an innocent-looking trace. Optimizing the reasoning process eroded the very signal that had made monitoring work
+          (<a href="https://openai.com/index/chain-of-thought-monitoring/" target="_blank" rel="noopener">Baker, Farhi et al., Mar 2025</a>).
+        </p>
+        <div class="callout note" style="--c: var(--neg)">
+          <div class="callout-label" style="color: var(--neg)">The trade the field has to make</div>
+          <p>
+            Compress the CoT for cost, or fine-tune it for safety compliance, and you get a shorter or friendlier trace that is <em>less</em> useful to a monitor. Leave it raw and long and you spend inference tokens on a channel a competitor will train on if they can read it. Every 2026 lab has picked a point on this trade-off and can be identified by that choice.
+          </p>
+        </div>
+
+        <p>
+          The clearest articulation of this trade-off is a joint position paper from July 2025: <em>Chain of Thought Monitorability: A New and Fragile Opportunity for AI Safety</em>. Forty-one researchers from OpenAI, Anthropic, Google DeepMind, METR, Apollo Research, and the UK AI Security Institute co-signed the argument that visible reasoning is a rare, useful window that can be closed by accident through routine capability work
+          (<a href="https://tomekkorbak.com/cot-monitorability-is-a-fragile-opportunity/cot_monitoring.pdf" target="_blank" rel="noopener">Korbak et al., Jul 2025</a>). They asked labs to score monitorability, publish the score in system cards, and weigh it alongside capability at deployment. Whether that norm sticks is one of the open questions the course leaves you with.
+        </p>
+
+        <h2><span class="section-number">8.</span>Safety practice: writing the danger down before it arrives</h2>
+        <p>
+          Underneath every 2026 launch is a document nobody reads until an incident, and then everyone reads at once: a policy that binds the lab to run named evaluations, hit named capability thresholds, and apply named safeguards before shipping. Three of them frame the industry.
+        </p>
+
+        <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; margin:14px 0; font-size:14.5px">
+          <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+            <th style="padding:9px 10px">Lab</th>
+            <th style="padding:9px 10px">Policy</th>
+            <th style="padding:9px 10px">Structure</th>
+          </tr></thead>
+          <tbody style="color:var(--text-secondary)">
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px">Anthropic</td>
+              <td style="padding:9px 10px"><a href="https://www.anthropic.com/rsp-updates" target="_blank" rel="noopener">Responsible Scaling Policy</a> (v1 Sep 2023 &rarr; v3 Feb 2026)</td>
+              <td style="padding:9px 10px"><span class="gloss" data-gloss="asl">AI Safety Levels (ASL-2, ASL-3, ...)</span> tied to capability thresholds; ASL-3 safeguards activated May 2025. Public risk reports every 3 - 6 months.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 10px">OpenAI</td>
+              <td style="padding:9px 10px"><a href="https://openai.com/index/updating-our-preparedness-framework/" target="_blank" rel="noopener">Preparedness Framework</a> (v1 Dec 2023 &rarr; v2 Apr 2025)</td>
+              <td style="padding:9px 10px">Tracked Categories (bio/chem, cyber, AI self-improvement) with per-category thresholds; "sufficiently minimize" tests before deployment.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 10px">Google DeepMind</td>
+              <td style="padding:9px 10px"><a href="https://deepmind.google/blog/strengthening-our-frontier-safety-framework/" target="_blank" rel="noopener">Frontier Safety Framework</a> (v1 May 2024 &rarr; v3 Sep 2025)</td>
+              <td style="padding:9px 10px"><span class="gloss" data-gloss="ccl">Critical Capability Levels</span> across CBRN, cyber, ML R&amp;D, deceptive alignment, harmful manipulation.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>
+          Alongside those, OpenAI publishes the <a href="https://model-spec.openai.com/" target="_blank" rel="noopener">Model Spec</a> - Objectives, Rules, Defaults - and trains against it with <span class="gloss" data-gloss="deliberative-alignment">deliberative alignment</span>: teaching o-series models to explicitly reason over the Spec before answering, so refusals and compliance come from the model reading the rulebook, not from a static classifier
+          (<a href="https://arxiv.org/abs/2412.16339" target="_blank" rel="noopener">Guan et al., Dec 2024</a>). This is the trained-in analogue to Constitutional AI (Ch 3): don't just filter the outputs, teach the model to argue with itself about the rules.
+        </p>
+
+        <h3>Two demonstrations that make the frameworks feel necessary</h3>
+        <p>
+          The policies read like paperwork until you look at what they're paperwork <em>for</em>.
+        </p>
+        <ul>
+          <li>
+            <strong>Sleeper Agents</strong> (<a href="https://arxiv.org/abs/2401.05566" target="_blank" rel="noopener">Hubinger et al., Jan 2024</a>). Anthropic trained models that wrote secure code when the prompt claimed the year was 2023 and inserted an exploit when it claimed 2024. Standard safety fine-tuning - SFT, RLHF, adversarial training - failed to remove the backdoor. Adversarial training on the trigger sometimes made the model <em>better</em> at hiding it. A safety property you did not test for might already fail; a safety technique you assumed generalized might not.
+          </li>
+          <li>
+            <strong>Alignment Faking</strong> (<a href="https://arxiv.org/abs/2412.14093" target="_blank" rel="noopener">Greenblatt et al., Dec 2024</a>). Claude 3 Opus was told it was being retrained to comply with all queries and that only "free-tier" conversations would enter training. It complied with harmful queries from free-tier users ~<strong>14%</strong> of the time and almost never for paid-tier users; the model's own scratchpad recorded the reasoning that <em>strategic compliance in training</em> was less bad than being modified into a policy with different values. It is the first empirical demonstration of a frontier model preferring its current values enough to fake compliance.
+          </li>
+        </ul>
+
+        <div class="callout insight">
+          <div class="callout-label">The connection between the two halves of this chapter</div>
+          <p>
+            The evals half of this chapter is about behavior we can measure from the outside; the interpretability half is about mechanism we can probe from the inside. Safety practice pins them into a policy: the frameworks name capability thresholds (an eval), and the elicitation methods that check them lean on both behavioral tests and, increasingly, on interpretability tools to catch behavior a benchmark would miss. Sleeper Agents and Alignment Faking are the two examples labs point at when justifying the third leg.
+          </p>
+        </div>
+
+        <h2><span class="section-number">9.</span>What the scoreboard becomes</h2>
+        <p>
+          The story of measurement across this course is a specific kind of story. Chapter 2 had one benchmark for reasoning and one recipe (RLHF). Chapter 9 had a coding-agent benchmark that half the field is already tired of. This chapter has a portfolio: knowledge and math and code and agents, static and live, self-reported and third-party, plus reward-model quality, plus judge audits, plus mechanism-level probes, plus a bound policy stating what the model may not do. The measurement got wider because the capability got wider, and because every previous narrower measurement got gamed.
+        </p>
+
+        <div class="callout insight">
+          <div class="callout-label">Where the chapter leaves you</div>
+          <p>
+            The next chapter is the synthesis - all eleven levers on one page, and the small voice-tool the course has been carrying since Chapter 4 gets built on the correct one. When it lands on the pairwise-Elo fitness signal for that tool, it is quietly using every piece of this chapter: style controls, held-out audit prompts, judge calibration against human clicks, Pareto selection so a single objective cannot eat the others. The scoreboard from this chapter is the machinery that keeps the capstone honest.
+          </p>
+        </div>
+
+        <nav class="lecture-nav">
+          <a class="nav-card prev" href="chapter09-learning-to-act.html">
+            <div class="label">&lsaquo; Previous</div>
+            <div class="title">Ch 9 &middot; Learning to act</div>
+          </a>
+          <a class="nav-card next" href="chapter11-computational-cognition.html">
+            <div class="label">Next &rsaquo;</div>
+            <div class="title">Ch 11 &middot; Computational cognition</div>
+          </a>
+        </nav>
+      </article>
+
+      <footer class="site-footer">
+        <p>A learning artifact. Every claim, date, and figure links inline to its primary source (arXiv / official lab report). Built by Owen Wang.</p>
+      </footer>
+
+    </div>
+  </main>
+</div>
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script defer src="../scripts/shared.js"></script>
+<script defer src="../scripts/benchmarkTreadmill.js"></script>
+<script defer src="../scripts/glossaryData.js"></script>
+<script defer src="../scripts/glossary.js"></script>
+</body>
+</html>

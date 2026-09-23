@@ -1,5 +1,5 @@
 /* ============================================================
-   Six-levers synthesis - toggle each lever and watch a stacked
+   Eleven-levers synthesis - toggle each lever and watch a stacked
    bar of "what the model can do" assemble. Illustrative, NOT
    benchmark-accurate; labeled as such inside the demo.
    Pure SVG + DOM, no deps. IIFE-mounted by id. Deterministic.
@@ -8,14 +8,23 @@
   const mount = document.getElementById('levers-demo');
   if (!mount) return;
 
-  // Ordered: architecture (Ch0) is the floor; agency (Ch6) is the ceiling.
+  // Ordered: architecture (Ch0) is the floor; measurement (Ch10) is the ceiling.
+  // Gains sum to ~90; FLOOR 6 puts a fully-lit stack near the 100 mark.
+  // Colors are project tokens only (see styles/shared.css). Adjacent
+  // levers in a family (arch+pretrain, align+democrat, ttc+rl) share a
+  // token; labels + position keep them distinct in the stack.
   const LEVERS = [
-    { id: 'arch',  chap: 0, label: 'Architecture',    sub: 'Transformer + pretraining (Ch0)', gain: 14, color: 'var(--blue)' },
-    { id: 'scale', chap: 1, label: 'Pretraining',      sub: 'Scale + in-context learning (Ch1)', gain: 22, color: 'var(--purple)' },
-    { id: 'align', chap: 2, label: 'Alignment',        sub: 'RLHF / DPO / GRPO (Ch2-3)', gain: 16, color: 'var(--amber)' },
-    { id: 'ctx',   chap: 4, label: 'Context',          sub: 'Reflective prompt search (Ch4)', gain: 12, color: 'var(--teal)' },
-    { id: 'ttc',   chap: 5, label: 'Test-time compute', sub: 'Reasoning traces (Ch5)', gain: 14, color: 'var(--green)' },
-    { id: 'agent', chap: 6, label: 'Agency',           sub: 'Tools, ReAct loop (Ch6)', gain: 12, color: 'var(--accent)' },
+    { id: 'arch',    chap: 0,  label: 'Architecture',        sub: 'Transformer + pretraining (Ch0)',       gain: 12, color: 'var(--blue)' },
+    { id: 'scale',   chap: 1,  label: 'Scale',               sub: 'Power law + in-context learning (Ch1)', gain: 16, color: 'var(--purple)' },
+    { id: 'pretrain',chap: 2,  label: 'Pretraining eff.',    sub: 'Data / MoE / MLA / FP8 (Ch2)',          gain: 7,  color: 'var(--blue)' },
+    { id: 'align',   chap: 3,  label: 'Alignment',           sub: 'RLHF, InstructGPT (Ch3)',               gain: 12, color: 'var(--amber)' },
+    { id: 'demo',    chap: 4,  label: 'Democratization',     sub: 'DPO / GRPO / QLoRA (Ch4)',              gain: 5,  color: 'var(--amber)' },
+    { id: 'ctx',     chap: 5,  label: 'Context',             sub: 'Reflective prompt search (Ch5)',        gain: 6,  color: 'var(--teal)' },
+    { id: 'ttc',     chap: 6,  label: 'Test-time compute',   sub: 'Reasoning traces (Ch6)',                gain: 10, color: 'var(--green)' },
+    { id: 'rl',      chap: 7,  label: 'RL at scale',         sub: 'Verifiable rewards, GRPO+ (Ch7)',       gain: 6,  color: 'var(--green)' },
+    { id: 'infer',   chap: 8,  label: 'Inference systems',   sub: 'PagedAttn, spec decoding (Ch8)',        gain: 4,  color: 'var(--purple)' },
+    { id: 'agent',   chap: 9,  label: 'Agency',              sub: 'Tools, ReAct loop, MCP (Ch9)',          gain: 8,  color: 'var(--accent)' },
+    { id: 'eval',    chap: 10, label: 'Measurement + trust', sub: 'Evals, interpretability (Ch10)',        gain: 4,  color: 'var(--pos)' },
   ];
   const FLOOR = 6; // "raw next-token completion" baseline.
 
@@ -184,7 +193,7 @@
       seg.className = 'lv-bar-seg';
       seg.style.background = l.color;
       seg.style.height = (state[l.id] ? l.gain : 0) + '%';
-      if (state[l.id] && l.gain >= 12) seg.textContent = l.label;
+      if (state[l.id] && l.gain >= 8) seg.textContent = l.label;
       track.appendChild(seg);
     });
   }

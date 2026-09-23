@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chapter 7 - Computational cognition · From Attention to Agents</title>
-<meta name="description" content="The synthesis: pretraining, alignment, prompt, test-time compute, and agency assemble into a modern AI system. Closes with a voice-rewriting capstone built on reflective prompt search.">
+<title>Chapter 11 - Computational cognition · From Attention to Agents</title>
+<meta name="description" content="Eleven levers, one system. The synthesis of a modern AI stack as of September 2026, and the voice-rewriting capstone finally placed on the right lever.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -20,7 +20,7 @@
 <div class="layout">
   <aside class="sidebar">
     <a class="sidebar-home" href="../index.html">&larr; from attention to agents</a>
-    <div class="sidebar-title">Chapter 7 &middot; 2026</div>
+    <div class="sidebar-title">Chapter 11 &middot; 2026</div>
     <div class="sidebar-subtitle">Computational cognition</div>
     <nav class="nav-toc"></nav>
   </aside>
@@ -29,26 +29,26 @@
     <div class="container">
 
       <nav class="lecture-nav-top">
-        <a href="chapter06-learning-to-act.html">&larr; Ch 6 &middot; Learning to act</a>
+        <a href="chapter10-measuring-what-we-built.html">&larr; Ch 10 &middot; Measuring what we built</a>
         <span>End of course</span>
       </nav>
 
       <header class="lecture-header">
-        <p class="eyebrow">Chapter 7 &middot; 2026 &middot; lever: synthesis</p>
+        <p class="eyebrow">Chapter 11 &middot; 2026 &middot; lever: synthesis</p>
         <h1>Computational cognition</h1>
-        <p class="desc">Six levers, one system. And one tool, finally built on the right one.</p>
+        <p class="desc">Eleven levers, one system. And one small tool, finally built on the right one.</p>
       </header>
 
       <article class="article">
 
         <p class="lecture-roadmap">
-          Six levers. Architecture, scale, alignment, context, test-time compute, agency - each one a separate bet, each one a separate paper trail. The system you woke up to in 2026 is what you get when all six are turned on at once. This chapter pins them on one map, names the villain that haunts every lever (Goodhart), and uses the map to design the small tool that has been waiting since Chapter 3: rewrite arbitrary text in your voice, without training anything.
+          Eleven chapters, eleven levers. Architecture, scale, pretraining efficiency, alignment, democratization, context, test-time compute, RL at scale, inference systems, agency, and measurement - each one a separate bet with its own paper trail. The system you woke up to in September 2026 is what you get when all eleven are on at once. This chapter pins them on one map, closes the recurring threads (CoT, democratization, multimodality), names the villain that haunts every lever (Goodhart), and uses the map to design the small tool that has been waiting since Chapter 4: rewrite arbitrary text in your voice, without training anything.
         </p>
 
-        <h2><span class="section-number">7.1</span>The six levers on one page</h2>
+        <h2><span class="section-number">11.1</span>The eleven levers on one page</h2>
         <p>
           You can describe a modern model two ways. One: a 2017 architecture
-          (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Vaswani et al.</a>) trained at scale on the internet, post-trained for helpfulness, prompted carefully, given room to think, then handed tools. Two: a stack of optimizations applied to a frozen substrate - some baked into <strong>weights</strong>, some pinned into <strong>context</strong>. The through-line of the whole course is that the optimization moved from one place to the other as we figured out how, and the modern system uses both at once.
+          (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Vaswani et al.</a>) trained at scale on the internet with a 2024-vintage data pipeline and 2025-vintage numerics, post-trained for helpfulness and then for verifiable reasoning, prompted carefully, given room to think, served over an inference system that makes long decodes affordable, handed tools, and continuously measured. Two: a stack of optimizations applied to a frozen substrate - some baked into <strong>weights</strong>, some pinned into <strong>context</strong>. The through-line of the whole course is that the optimization moved from one place to the other as we figured out how, and the modern system uses both at once.
         </p>
 
         <div style="overflow-x:auto">
@@ -68,61 +68,85 @@
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px"><strong>Ch1</strong> &middot; 2020&ndash;22</td>
-              <td style="padding:9px 12px">Pretraining / scale</td>
+              <td style="padding:9px 12px">Scale</td>
               <td style="padding:9px 12px">a power law you can buy capability from</td>
               <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">Brown 2020</a> &middot; <a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener">Kaplan 2020</a> &middot; <a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener">Hoffmann 2022</a></td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
-              <td style="padding:9px 12px"><strong>Ch2</strong> &middot; 2022</td>
+              <td style="padding:9px 12px"><strong>Ch2</strong> &middot; 2024&ndash;26</td>
+              <td style="padding:9px 12px">Pretraining efficiency</td>
+              <td style="padding:9px 12px">data mixture, MoE, MLA, FP8, Muon</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3</a> &middot; <a href="https://arxiv.org/abs/2406.11794" target="_blank" rel="noopener">DCLM</a></td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><strong>Ch3</strong> &middot; 2022</td>
               <td style="padding:9px 12px">Alignment (RLHF)</td>
               <td style="padding:9px 12px">a completer turned into an assistant</td>
               <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Ouyang 2022</a> &middot; <a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Wei 2022</a></td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
-              <td style="padding:9px 12px"><strong>Ch3</strong> &middot; 2023&ndash;24</td>
-              <td style="padding:9px 12px">Alignment, cheaper</td>
+              <td style="padding:9px 12px"><strong>Ch4</strong> &middot; 2023&ndash;24</td>
+              <td style="padding:9px 12px">Democratization</td>
               <td style="padding:9px 12px">drop the reward model, drop the critic</td>
               <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">Rafailov 2023</a> &middot; <a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">Shao 2024</a></td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
-              <td style="padding:9px 12px"><strong>Ch4</strong> &middot; 2022&ndash;25</td>
+              <td style="padding:9px 12px"><strong>Ch5</strong> &middot; 2022&ndash;25</td>
               <td style="padding:9px 12px">Context / prompt</td>
               <td style="padding:9px 12px">optimize the input, not the parameters</td>
               <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2507.19457" target="_blank" rel="noopener">GEPA 2026</a> &middot; <a href="https://arxiv.org/abs/2411.08733" target="_blank" rel="noopener">DRPO 2024</a></td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
-              <td style="padding:9px 12px"><strong>Ch5</strong> &middot; 2024&ndash;25</td>
+              <td style="padding:9px 12px"><strong>Ch6</strong> &middot; 2024&ndash;25</td>
               <td style="padding:9px 12px">Test-time compute</td>
               <td style="padding:9px 12px">spend tokens at inference to think longer</td>
               <td style="padding:9px 12px"><a href="https://openai.com/index/introducing-openai-o1-preview/" target="_blank" rel="noopener">o1 preview</a> &middot; <a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1</a></td>
             </tr>
-            <tr>
-              <td style="padding:9px 12px"><strong>Ch6</strong> &middot; 2024&ndash;26</td>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><strong>Ch7</strong> &middot; 2025&ndash;26</td>
+              <td style="padding:9px 12px">RL at scale</td>
+              <td style="padding:9px 12px">verifiable rewards, GRPO successors</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2503.14476" target="_blank" rel="noopener">DAPO</a> &middot; <a href="https://arxiv.org/abs/2503.20783" target="_blank" rel="noopener">Dr. GRPO</a> &middot; <a href="https://arxiv.org/abs/2507.18071" target="_blank" rel="noopener">GSPO</a></td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><strong>Ch8</strong> &middot; 2025&ndash;26</td>
+              <td style="padding:9px 12px">Inference systems</td>
+              <td style="padding:9px 12px">prefill/decode, KV cache, spec decoding</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">PagedAttention</a> &middot; <a href="https://arxiv.org/abs/2211.17192" target="_blank" rel="noopener">Spec decoding</a></td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><strong>Ch9</strong> &middot; 2024&ndash;26</td>
               <td style="padding:9px 12px">Agency</td>
               <td style="padding:9px 12px">thought &rarr; action &rarr; observation</td>
-              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct (Yao 2022)</a> &middot; <a href="https://www.anthropic.com/news/3-5-models-and-computer-use" target="_blank" rel="noopener">computer use (beta)</a></td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener">ReAct (Yao 2022)</a> &middot; <a href="https://www.anthropic.com/news/model-context-protocol" target="_blank" rel="noopener">MCP</a></td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px"><strong>Ch10</strong> &middot; 2026</td>
+              <td style="padding:9px 12px">Measurement + trust</td>
+              <td style="padding:9px 12px">evals, interpretability, safety practice</td>
+              <td style="padding:9px 12px"><a href="https://transformer-circuits.pub/2024/scaling-monosemanticity/" target="_blank" rel="noopener">Scaling Monosemanticity</a> &middot; <a href="https://arxiv.org/abs/2504.20879" target="_blank" rel="noopener">Leaderboard Illusion</a></td>
             </tr>
           </tbody>
         </table>
         </div>
 
         <p>
-          Toggle the levers and watch a (deliberately illustrative, not benchmark-accurate) capability bar assemble. The order is the order the field discovered them; it is not a strict dependency graph. Architecture without scale gets you BERT-era models that can read but not converse. Scale without alignment gets you GPT-3, which can recite anything and follow nothing. Add the rest and you get the assistant you used this morning.
+          Toggle the levers and watch a (deliberately illustrative, not benchmark-accurate) capability bar assemble. The order is the order the field discovered them; it is not a strict dependency graph. Architecture without scale gets you BERT-era models that can read but not converse. Scale without alignment gets you GPT-3, which can recite anything and follow nothing. A modern pretraining recipe without a reasoning post-train gets you a fluent generalist that stops short of hard math. Add the rest and you get the assistant you used this morning.
         </p>
 
         <div class="demo-wrap">
           <div class="demo-head">
-            <span class="demo-label">Interactive &middot; the six levers</span>
+            <span class="demo-label">Interactive &middot; the eleven levers</span>
             <span class="demo-hint">toggle to see the contribution</span>
           </div>
           <div class="demo-body"><div id="levers-demo"></div></div>
         </div>
 
-        <h2><span class="section-number">7.2</span>Three threads close here</h2>
+        <h2><span class="section-number">11.2</span>Three threads close here</h2>
 
         <h3>The CoT seed grows three times</h3>
         <p>
-          A single idea - make the model show its work - appeared at three levels of the stack. First in <strong>Chapter 2</strong> as a prompt trick: write "let's think step by step" and accuracy on multi-step problems jumps without touching a weight (<a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Wei et al., 2022</a>). Then in <strong>Chapter 4</strong> as a target: GEPA and MIPROv2 jointly optimize instructions and few-shot demos, so the search itself rewrites the chain of thought it asks the model to produce (<a href="https://arxiv.org/abs/2507.19457" target="_blank" rel="noopener">Agrawal et al., 2026</a> ; <a href="https://dspy.ai/api/optimizers/MIPROv2/" target="_blank" rel="noopener">MIPROv2 docs</a>). Then in <strong>Chapter 5</strong> as a weight update: DeepSeek-R1-Zero was trained with pure RL (<span class="gloss" data-gloss="rlvr">GRPO + RLVR</span>) on verifiable math, and a coherent reasoning trace emerged as the policy. On AIME 2024, R1-Zero went from <strong>15.6% to 71.0%</strong> pass@1 during training, with <strong>86.7%</strong> at majority-vote-of-64, "matching the performance of OpenAI-o1-0912" (<a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-AI 2025</a>).
+          A single idea - make the model show its work - appeared at three levels of the stack. First in <strong>Chapter 3</strong> as a prompt trick: write "let's think step by step" and accuracy on multi-step problems jumps without touching a weight (<a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Wei et al., 2022</a>). Then in <strong>Chapter 5</strong> as a target: GEPA and MIPROv2 jointly optimize instructions and few-shot demos, so the search itself rewrites the chain of thought it asks the model to produce (<a href="https://arxiv.org/abs/2507.19457" target="_blank" rel="noopener">Agrawal et al., 2026</a> ; <a href="https://dspy.ai/api/optimizers/MIPROv2/" target="_blank" rel="noopener">MIPROv2 docs</a>). Then in <strong>Chapter 6</strong> as a weight update: DeepSeek-R1-Zero was trained with pure RL (<span class="gloss" data-gloss="rlvr">GRPO + RLVR</span>) on verifiable math, and a coherent reasoning trace emerged as the policy. On AIME 2024, R1-Zero went from <strong>15.6% to 71.0%</strong> pass@1 during training, with <strong>86.7%</strong> at majority-vote-of-64, "matching the performance of OpenAI-o1-0912" (<a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-AI 2025</a>).
         </p>
         <p>
           Same idea, three levels: prompt &rarr; optimization target &rarr; weights. That is the whole point of the through-line. Once a useful behavior shows up at one level, the field finds a way to harvest it at every level.
@@ -130,7 +154,7 @@
 
         <h3>The democratization curve</h3>
         <p>
-          Every breakthrough got cheaper and more open. The alignment recipe shrank from RLHF's three-stage pipeline to <span class="gloss" data-gloss="dpo">DPO</span>'s "your LM is secretly a reward model" (<a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">Rafailov 2023</a>) and then to GRPO's group-relative advantage with no critic at all (<a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">Shao 2024</a>). Adaptation shrank from full fine-tuning to <span class="gloss" data-gloss="lora">LoRA</span> and then to <span class="gloss" data-gloss="qlora">QLoRA</span>'s 4-bit NF4 trick, which fits a 65B model on a single 48GB GPU (<a href="https://arxiv.org/abs/2305.14314" target="_blank" rel="noopener">Dettmers 2023</a>). The model layer shrank from closed APIs to <a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener">LLaMA</a> to <a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1</a>, an open-weights reasoning model released MIT-licensed in January 2025.
+          Every breakthrough got cheaper and more open. The alignment recipe shrank from RLHF's three-stage pipeline to <span class="gloss" data-gloss="dpo">DPO</span>'s "your LM is secretly a reward model" (<a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">Rafailov 2023</a>) and then to GRPO's group-relative advantage with no critic at all (<a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">Shao 2024</a>), before the field looped back to on-policy RL once verifiable rewards paid off (Chapter 7). Adaptation shrank from full fine-tuning to <span class="gloss" data-gloss="lora">LoRA</span> and then to <span class="gloss" data-gloss="qlora">QLoRA</span>'s 4-bit NF4 trick, which fits a 65B model on a single 48GB GPU (<a href="https://arxiv.org/abs/2305.14314" target="_blank" rel="noopener">Dettmers 2023</a>). The model layer shrank from closed APIs to <a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener">LLaMA</a> to <a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1</a> to Qwen3 and Kimi K2 - open-weights reasoning models released permissively through 2025.
         </p>
         <p>
           The pattern is not just "things get cheaper." The pattern is that each generation's <em>frontier</em> trick becomes the next generation's <em>default</em>, and the new frontier moves up.
@@ -138,34 +162,37 @@
 
         <h3>The eval shadow</h3>
         <p>
-          How we measure is its own history. <span class="gloss" data-gloss="bbh">BBH</span> set the scoreboard for prompted reasoning (<a href="https://arxiv.org/abs/2210.09261" target="_blank" rel="noopener">Suzgun 2022</a>). MMLU framed broad knowledge (<a href="https://arxiv.org/abs/2009.03300" target="_blank" rel="noopener">Hendrycks 2020</a>). SWE-bench moved the goalposts from quiz answers to real software work, scoring on 2,294 GitHub issues across 12 Python repos (<a href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener">Jimenez 2024</a>). And once the tasks got open-ended, the judge itself became a model: GPT-4 as a pairwise rater achieves <strong>&ge;80%</strong> agreement with human raters on MT-Bench (<a href="https://arxiv.org/abs/2306.05685" target="_blank" rel="noopener">Zheng 2023</a>) - close enough to human-human agreement that the field shipped it.
+          How we measure is its own history. <span class="gloss" data-gloss="bbh">BBH</span> set the scoreboard for prompted reasoning (<a href="https://arxiv.org/abs/2210.09261" target="_blank" rel="noopener">Suzgun 2022</a>). MMLU framed broad knowledge (<a href="https://arxiv.org/abs/2009.03300" target="_blank" rel="noopener">Hendrycks 2020</a>). SWE-bench moved the goalposts from quiz answers to real software work (<a href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener">Jimenez 2024</a>). Then agents raced past every fixed target and the field needed new axes: task-length horizons from METR, a rotating set of contamination-hard evals, and interpretability tools that watch model internals directly. Chapter 10 tables the 2026 landscape. It is the chapter that keeps this course honest.
         </p>
 
         <div class="callout note" style="--c: var(--neg)">
           <div class="callout-label" style="color: var(--neg)">The villain</div>
           <p>
-            <span class="gloss" data-gloss="goodharts-law">Goodhart's law</span>, in <a href="https://en.wikipedia.org/wiki/Goodhart%27s_law" target="_blank" rel="noopener">Marilyn Strathern's popular phrasing</a> (1997): "When a measure becomes a target, it ceases to be a good measure." It is the antagonist for every lever. In alignment it is <span class="gloss" data-gloss="reward-hacking">reward hacking</span> against the reward model. In prompt optimization it is the prompt evolving features that please an LLM judge but drift away from what humans actually want. In agency it is a tool-using agent finding the shortest path to the verifier, not to the task. The story of the next decade is partly the story of how the field stops being fooled by its own scoreboards.
+            <span class="gloss" data-gloss="goodharts-law">Goodhart's law</span>, in <a href="https://en.wikipedia.org/wiki/Goodhart%27s_law" target="_blank" rel="noopener">Marilyn Strathern's popular phrasing</a> (1997): "When a measure becomes a target, it ceases to be a good measure." It is the antagonist for every lever. In alignment it is <span class="gloss" data-gloss="reward-hacking">reward hacking</span> against the reward model. In RLVR it is length hacking and format hacking (Chapter 7). In prompt optimization it is the prompt evolving features that please an LLM judge but drift away from what humans actually want. In agency it is a tool-using agent finding the shortest path to the verifier, not to the task. The story of the next decade is partly the story of how the field stops being fooled by its own scoreboards.
           </p>
         </div>
 
-        <h2><span class="section-number">7.3</span>Multimodality, the thread that opened in Ch1</h2>
+        <h2><span class="section-number">11.3</span>Multimodality, the thread that opened in Ch1</h2>
         <p>
-          When you read about ViT and CLIP in Chapter 1, the point was that vision joined the same architectural family. That thread closes here. By 2024, frontier models were natively multimodal across text, image, audio, and (with longer contexts) video. <a href="https://openai.com/index/hello-gpt-4o/" target="_blank" rel="noopener">GPT-4o</a> shipped May 13, 2024 with text/image/audio in and out. <a href="https://blog.google/technology/ai/google-gemini-next-generation-model-february-2024/" target="_blank" rel="noopener">Gemini 1.5 Pro</a> was announced February 15, 2024 as "natively multimodal" with a 1M-token context preview spanning image, audio and video alongside text (<a href="https://arxiv.org/abs/2403.05530" target="_blank" rel="noopener">tech report</a>). "<span class="gloss" data-gloss="native-multimodal">Natively multimodal</span>" is now the table stakes of a frontier release, not a separate research line.
+          When you read about ViT and CLIP in Chapter 1, the point was that vision joined the same architectural family. That thread closes here. By 2024, frontier models were natively multimodal across text, image, audio, and (with longer contexts) video: <a href="https://openai.com/index/hello-gpt-4o/" target="_blank" rel="noopener">GPT-4o</a> shipped May 13, 2024 with text/image/audio in and out; <a href="https://blog.google/technology/ai/google-gemini-next-generation-model-february-2024/" target="_blank" rel="noopener">Gemini 1.5 Pro</a> was announced Feb 15, 2024 as "natively multimodal" with a 1M-token context preview (<a href="https://arxiv.org/abs/2403.05530" target="_blank" rel="noopener">tech report</a>).
+        </p>
+        <p>
+          Through 2025 the sub-modality frontier moved on its own. OpenAI's <strong>native image generation</strong> replaced DALL-E inside 4o on <strong>March 25, 2025</strong> - autoregressive image tokens produced by the same model that produces text (<a href="https://openai.com/index/introducing-4o-image-generation/" target="_blank" rel="noopener">OpenAI</a>). Google's <strong>Gemini 2.5 Flash Image</strong> ("Nano Banana") shipped Aug 26, 2025 with character consistency and multi-image blending (<a href="https://developers.googleblog.com/en/introducing-gemini-2-5-flash-image/" target="_blank" rel="noopener">Google</a>). Video followed: <strong>Veo 3</strong> (Google I/O, May 20, 2025) generates synchronized audio with the video track (<a href="https://deepmind.google/models/veo/" target="_blank" rel="noopener">DeepMind</a>); <strong>Sora 2</strong> (Sep 30, 2025) improved physics and synchronized audio at OpenAI (<a href="https://openai.com/index/sora-2/" target="_blank" rel="noopener">OpenAI</a>). "<span class="gloss" data-gloss="native-multimodal">Natively multimodal</span>" is now table stakes; the interesting frontier is what each additional modality lets an agent do.
         </p>
 
         <div class="callout note">
-          <div class="callout-label">Scope</div>
+          <div class="callout-label">The frontier as of September 2026</div>
           <p>
-            Specific 2026 model versions, benchmark deltas, and leaderboard positions move fast. The verified statements above are anchored to release dates and primary reports. Newer frontier claims belong in a release-notes addendum, not the chapter spine.
+            The reasoning wave that started with o1 crystallized into a hybrid-thinking product shape across labs: <a href="https://openai.com/index/introducing-gpt-5/" target="_blank" rel="noopener">GPT-5</a> (Aug 7, 2025, unified reasoning; 74.9% SWE-bench Verified at launch), <a href="https://www.anthropic.com/news/claude-4" target="_blank" rel="noopener">Claude 4</a> (May 22, 2025) and later <a href="https://www.anthropic.com/news/claude-sonnet-4-5" target="_blank" rel="noopener">Sonnet 4.5</a> (Sep 29, 2025), <a href="https://blog.google/products-and-platforms/products/gemini/gemini-2-5-deep-think/" target="_blank" rel="noopener">Gemini 2.5 Deep Think</a> (Aug 2025), <a href="https://qwenlm.github.io/blog/qwen3/" target="_blank" rel="noopener">Qwen3</a> (Apr 29, 2025) and <a href="https://github.com/MoonshotAI/Kimi-K2" target="_blank" rel="noopener">Kimi K2</a> (Jul 11, 2025) on the open-weight side, <a href="https://api-docs.deepseek.com/news/news250821/" target="_blank" rel="noopener">DeepSeek V3.1</a> (Aug 21, 2025) as a hybrid, and <a href="https://x.ai/" target="_blank" rel="noopener">Grok 4</a> (Jul 9, 2025) at xAI. Specific benchmark deltas and leaderboard positions move week to week; the shape - hybrid reasoning, native multimodality, agent tool use, verifiable-reward post-training - has stabilized.
           </p>
         </div>
 
-        <h2><span class="section-number">7.4</span>The capstone: a voice tool, finally placed on the map</h2>
+        <h2><span class="section-number">11.4</span>The capstone: a voice tool, finally placed on the map</h2>
         <p>
-          Back in Chapter 3, when we walked through QLoRA, there was a personal note. The reader had been carrying around a 2019-era idea: fine-tune a small model on their own writing so it could rewrite arbitrary text in their voice. Chapter 3 placed QLoRA as a real and valid democratization node - that idea was not wrong, exactly. It was simply the right idea for the wrong lever. The map we just drew tells us which lever it should be.
+          Back in Chapter 4, when we walked through QLoRA, there was a personal note. The reader had been carrying around a 2019-era idea: fine-tune a small model on their own writing so it could rewrite arbitrary text in their voice. Chapter 4 placed QLoRA as a real and valid democratization node - that idea was not wrong, exactly. It was simply the right idea for the wrong lever. The map we just drew tells us which lever it should be.
         </p>
         <p>
-          Style is steering, not knowledge. Voice is a direction in a frontier model's existing capability surface, not a new fact set you need to bake into weights. That is precisely the regime where discrete prompt optimization shines, and it is what makes the prompt lane (Ch4) the correct lever here.
+          Style is steering, not knowledge. Voice is a direction in a frontier model's existing capability surface, not a new fact set you need to bake into weights. That is precisely the regime where discrete prompt optimization shines, and it is what makes the prompt lane (Ch 5) the correct lever here.
         </p>
         <p>Three things decide it, and all three favor a frozen frontier model:</p>
         <ul>
@@ -176,7 +203,7 @@
 
         <h3>The recommended build, in primitives the literature already verified</h3>
         <p>
-          Nothing in the build below is new science. It is a composition of pieces every previous chapter introduced: GEPA's reflective mutation and <span class="gloss" data-gloss="pareto-frontier">Pareto frontier</span>, DRPO's tuning-free prompt search, MT-Bench-style LLM-judge calibration, and Chatbot Arena's <span class="gloss" data-gloss="pairwise-preference">pairwise</span>-to-<span class="gloss" data-gloss="elo-rating">Elo</span> aggregation. The novelty is in the recipe and in naming the failure mode.
+          Nothing in the build below is new science. It is a composition of pieces every previous chapter introduced: GEPA's reflective mutation and <span class="gloss" data-gloss="pareto-frontier">Pareto frontier</span> (Ch 5), DRPO's tuning-free prompt search (Ch 5), a calibrated LLM judge (see Ch 10 for the general treatment of judges and their biases), and Chatbot Arena's <span class="gloss" data-gloss="pairwise-preference">pairwise</span>-to-<span class="gloss" data-gloss="elo-rating">Elo</span> aggregation. The novelty is in the recipe and in naming the failure mode.
         </p>
 
         <div class="callout theorem">
@@ -208,13 +235,13 @@
         </p>
         <ul>
           <li><strong>Pareto selection</strong> over multiple objectives, so the search cannot collapse to one. GEPA does this natively.</li>
-          <li><strong>Periodic human-pairwise re-calibration</strong> of the judge, the same loop DRPO and Chatbot Arena use to keep their signals honest.</li>
+          <li><strong>Periodic human-pairwise re-calibration</strong> of the judge, the same loop DRPO and Chatbot Arena use to keep their signals honest. Chapter 10 lists the ways this loop itself can be gamed, and how leaderboards responded (style-controlled Elo; the Leaderboard Illusion).</li>
           <li><strong>Held-out audit prompts</strong> the judge never sees during search, so reward-hacking is detectable instead of invisible.</li>
         </ul>
 
         <h3>What this resolves</h3>
         <p>
-          The reader's original instinct - train a small model on my writing - was not wrong. It was a real and valid Chapter 3 node, and the QLoRA paper made it practical for someone with one consumer GPU. But the convergence the course has been tracking changes the answer. Optimizing the context can now rival optimizing the weights, far cheaper, with an artifact you can read, port, and audit. The voice tool is the same idea as the reader's 2019-era plan, executed on the lever the field has spent four years sharpening into the better one.
+          The reader's original instinct - train a small model on my writing - was not wrong. It was a real and valid Chapter 4 node, and the QLoRA paper made it practical for someone with one consumer GPU. But the convergence the course has been tracking changes the answer. Optimizing the context can now rival optimizing the weights, far cheaper, with an artifact you can read, port, and audit. The voice tool is the same idea as the reader's 2019-era plan, executed on the lever the field has spent four years sharpening into the better one.
         </p>
 
         <div class="callout insight">
@@ -225,9 +252,9 @@
         </div>
 
         <nav class="lecture-nav">
-          <a class="nav-card prev" href="chapter06-learning-to-act.html">
+          <a class="nav-card prev" href="chapter10-measuring-what-we-built.html">
             <div class="label">&larr; Previous</div>
-            <div class="title">Ch 6 &middot; Learning to act</div>
+            <div class="title">Ch 10 &middot; Measuring what we built</div>
           </a>
           <a class="nav-card next" href="../index.html">
             <div class="label">Course home &rarr;</div>

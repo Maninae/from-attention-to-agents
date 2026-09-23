@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 8 &middot; Paying for thought &middot; From Attention to Agents</title>
+<meta name="description" content="Inference systems and the economics of test-time compute: KV-cache arithmetic, PagedAttention, speculative decoding, quantization, disaggregated prefill/decode, and why reasoning models re-priced the serving stack.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../styles/shared.css">
+<link rel="stylesheet" href="../styles/demos.css">
+<link rel="stylesheet" href="../styles/glossary.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+<div class="progress-bar"></div>
+
+<button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+
+<aside class="sidebar">
+  <a class="sidebar-home" href="../index.html">&larr; from attention to agents</a>
+  <div class="sidebar-title">Chapter 8</div>
+  <h2 class="sidebar-subtitle">Paying for thought</h2>
+  <nav class="nav-toc" aria-label="On this page"></nav>
+</aside>
+
+<main class="main">
+  <div class="container">
+
+    <nav class="lecture-nav-top" aria-label="Chapter navigation">
+      <a href="chapter07-reinforcement-learning-grows-up.html">&larr; Ch 7 &middot; Reinforcement learning grows up</a>
+      <a href="chapter09-learning-to-act.html">Ch 9 &middot; Learning to act &rarr;</a>
+    </nav>
+
+    <header class="lecture-header">
+      <span class="eyebrow">Chapter 8 &middot; Inference systems &middot; 2023 &ndash; 2026</span>
+      <h1>Paying for thought</h1>
+      <p class="desc">Reasoning models moved capability onto the inference bill. This is the serving stack that makes long thinking affordable - the KV cache, PagedAttention, speculative decoding, quantization, and disaggregated prefill/decode.</p>
+      <div class="tags">
+        <span class="tag">KV cache</span>
+        <span class="tag">PagedAttention</span>
+        <span class="tag">Speculative decoding</span>
+        <span class="tag">FP8</span>
+        <span class="tag">Disaggregated serving</span>
+      </div>
+    </header>
+
+    <article class="article">
+
+      <p class="lecture-roadmap">
+        The RL work in Chapter 7 pushed the cost of frontier capability off the training bill and
+        onto the inference bill. A single reasoning-model call can now emit tens of thousands of
+        tokens before it answers, and every one of them has to be produced by hardware someone
+        pays for. This chapter is the systems layer that made that math work. We start with the
+        two very different phases of a transformer forward pass - prefill and decode - and the
+        <span class="gloss" data-gloss="kv-cache">KV cache</span> that connects them. Then the
+        engineering that grew up around each: PagedAttention and continuous batching for the
+        cache, speculative decoding and quantization for the arithmetic, prefix caching for the
+        conversation, and disaggregated prefill/decode plus expert parallelism for the largest
+        deployments. We close on what long reasoning traces did to the economics, and hand off
+        to agents in Chapter 9, where the same tokens get spent inside a loop.
+      </p>
+
+      <h2 id="sec-two-phases"><span class="section-number">8.1</span> Two phases of a token</h2>
+
+      <p>
+        A generation request splits into two very different pieces of work. Given a prompt of
+        length <em>P</em> and a target output of length <em>D</em>, the model first runs
+        <strong>prefill</strong>: a single forward pass over all <em>P</em> input tokens in
+        parallel, which fills the attention <span class="gloss" data-gloss="kv-cache">KV cache</span>
+        for every layer and produces the first output token. Then <strong>decode</strong> takes
+        over: <em>D&minus;1</em> more forward passes, each producing exactly one token, each
+        reading the entire KV cache to attend over everything so far.
+      </p>
+
+      <p>
+        These two phases have opposite hardware profiles. Prefill has <em>P</em> tokens of work
+        per layer; a matmul against the weights is compute-bound, and an H100 or H200 can chew
+        through thousands of tokens per second per replica. Decode has <em>one</em> token of
+        work per step; the matmul is skinny, GPU compute sits idle, and the bottleneck is HBM
+        bandwidth - each step must stream the full weights and the full KV cache from memory to
+        registers just to produce one token. The
+        <a href="https://arxiv.org/abs/2311.18677" target="_blank" rel="noopener">Splitwise paper
+        (Patel et al., Microsoft/UW, Nov 2023)</a> was the first to publish a full
+        characterization: prefill saturates FLOPs, decode saturates bandwidth, and the two
+        happening on the same GPU fight each other for both.
+      </p>
+
+      <div class="callout insight">
+        <div class="callout-label">Insight - the same model, two workloads</div>
+        <p>
+          Prefill is what training looks like: many tokens, one big matmul, compute-bound.
+          Decode is what nothing else in ML looks like: batch size one along the sequence axis,
+          weights read from HBM per step, memory-bandwidth-bound. Every serving decision below
+          is a response to that split.
+        </p>
+      </div>
+
+      <h2 id="sec-kv-arithmetic"><span class="section-number">8.2</span> The KV cache, in bytes per request</h2>
+
+      <p>
+        The KV cache is a per-request buffer that grows by one entry per token per layer.
+        <a href="chapter02-inside-a-modern-pretraining-run.html#sec-attn" target="_self">Chapter
+        2 walks through the per-variant arithmetic</a>: MHA stores <code>2 &times; n_heads
+        &times; head_dim</code> elements per token per layer, GQA
+        (<a href="https://arxiv.org/abs/2305.13245" target="_blank" rel="noopener">Ainslie
+        et al., 2023</a>) shares KV across query heads and drops the <em>n_heads</em> to
+        <em>n_kv_heads</em>, MLA
+        (<a href="https://arxiv.org/abs/2405.04434" target="_blank" rel="noopener">DeepSeek-V2</a>)
+        caches a compressed latent and reconstructs K and V on the fly. Take that per-token
+        byte count as given. What the serving layer does with it is a distinct problem, and it
+        is the one this chapter is about.
+      </p>
+
+      <p>
+        A single Llama 3 70B request at 128K context (GQA-8, BF16 KV) needs about
+        <strong>40 GB</strong> of cache. DeepSeek-V3 at the same context, in BF16 KV, needs
+        about <strong>9 GB</strong> - the entire difference is MLA plus V3's smaller
+        n_layers. But one request is not what a node serves. The interesting number is how many concurrent
+        requests fit alongside the model weights on the HBM you paid for - and that is where
+        the memory manager (PagedAttention), the KV dtype, and the cache-sharing story make or
+        break the deployment:
+      </p>
+
+      <div class="demo-wrap">
+        <div class="demo-head">
+          <span class="demo-label">Demo &middot; concurrent requests per node</span>
+          <span class="demo-hint">pick model + context length</span>
+        </div>
+        <div class="demo-body">
+          <div id="kvcalc-demo"></div>
+        </div>
+      </div>
+
+      <p>
+        The three rows compare the same node under three serving disciplines: reserve-the-max
+        static allocation (pre-vLLM defaults), PagedAttention (only pay for the tokens actually
+        used), and PagedAttention plus FP8/INT8 KV-cache quantization. On the 70B node at
+        128K, moving from naive to paged roughly doubles concurrency; adding FP8 KV doubles it
+        again. The dollar cost per served token falls by the same factor.
+      </p>
+
+      <div class="callout note">
+        <div class="callout-label">Note - a small model of a real workload</div>
+        <p>
+          The paged rows assume average request length is half of max context - a rough stand-in
+          for the shape of chat traffic. Reasoning-model traffic pushes the average up because
+          hidden thinking tokens are long; agent traffic pushes it up further because tool
+          calls loop. Both shrink the paging win compared to the calculator. In exchange the
+          prefix-cache win (section 8.4) grows, because agent sub-calls share more prompt.
+        </p>
+      </div>
+
+      <h2 id="sec-paged"><span class="section-number">8.3</span> PagedAttention and continuous batching</h2>
+
+      <p>
+        The first serving-side breakthrough was
+        <span class="gloss" data-gloss="paged-attention">PagedAttention</span>, from
+        <a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">Kwon et al.
+        (SOSP 2023)</a>, released as the <a href="https://github.com/vllm-project/vllm"
+        target="_blank" rel="noopener">vLLM</a> engine. The observation is embarrassingly simple
+        once stated: pre-2023 serving systems allocated each request a contiguous KV buffer
+        sized for the model's maximum context length. Real requests are shorter and varied, so
+        60&ndash;80% of that reserved memory sat empty. Sequences that could have fit did not,
+        because the memory manager could not compact around them.
+      </p>
+
+      <p>
+        PagedAttention borrows the operating-system trick: cut the KV cache into fixed-size
+        blocks (16 tokens is typical) and keep a per-request block table that maps logical
+        positions to physical blocks. Blocks can live anywhere; new blocks are allocated on
+        demand. The attention kernel is modified to gather from a scattered layout. Fragmentation
+        drops to a few percent, and the effective batch size the GPU can hold climbs sharply.
+        The paper reports <strong>2-4&times;</strong> throughput over FasterTransformer and Orca
+        at matched latency on LLaMA-family models; a widely cited
+        <a href="https://www.anyscale.com/blog/continuous-batching-llm-inference" target="_blank" rel="noopener">Anyscale
+        benchmark from June 2023</a> put the improvement over naive Hugging Face static batching
+        at closer to 23&times;.
+      </p>
+
+      <p>
+        The second lever, applied in the same engine, is <strong>continuous batching</strong> -
+        the term
+        <a href="https://www.anyscale.com/blog/continuous-batching-llm-inference" target="_blank" rel="noopener">Anyscale popularized in mid-2023</a>
+        for the iteration-level scheduling
+        <a href="https://www.usenix.org/conference/osdi22/presentation/yu" target="_blank" rel="noopener">Orca (Yu et al., OSDI 2022)</a>
+        first shipped. Static batching waits for the longest sequence in the batch to finish
+        before serving the next request; continuous batching lets finished sequences leave the
+        batch mid-step, and new requests join at the next decode iteration. Combined with paged
+        memory, an H100 that used to sit at ~30% utilization sits near 90%.
+      </p>
+
+      <div class="callout definition">
+        <div class="callout-label">Definition - PagedAttention</div>
+        <p>
+          A KV-cache memory manager that stores each request's cache as a list of fixed-size
+          blocks and a page table, so the attention kernel can gather from a non-contiguous
+          layout. Eliminates the reserve-the-max-context fragmentation that older serving stacks
+          suffered from. Shipped in vLLM (June 2023);
+          <a href="https://github.com/sgl-project/sglang" target="_blank" rel="noopener">SGLang</a>,
+          <a href="https://github.com/NVIDIA/TensorRT-LLM" target="_blank" rel="noopener">TensorRT-LLM</a>,
+          and every serious 2024+ serving engine adopted the same idea.
+        </p>
+      </div>
+
+      <h2 id="sec-prefix"><span class="section-number">8.4</span> Prefix caching</h2>
+
+      <p>
+        Chat traffic has a hidden structural gift: most requests share a long prefix. A system
+        prompt, a tool schema, a few-shot template, an in-context document - the leading
+        thousands of tokens are the same across many calls. Prefill for those tokens is pure
+        waste if you have already done it once.
+      </p>
+
+      <p>
+        <strong>Prefix caching</strong> keeps the KV cache produced by past requests around and
+        reuses it whenever a new request starts with the same tokens. vLLM ships this as
+        <em>automatic prefix caching</em>: a hash of the block's content is the lookup key, and
+        cache hits skip prefill entirely for the shared prefix. SGLang generalized it further
+        with <strong>RadixAttention</strong>
+        (<a href="https://arxiv.org/abs/2312.07104" target="_blank" rel="noopener">Zheng et al.,
+        SGLang, Dec 2023</a>), which organizes the cache as a radix tree so branching prompts share
+        their common trunk instead of only linear prefixes. For agent workloads that spawn many
+        sibling calls off a shared plan, radix-style sharing changes the cost curve outright.
+      </p>
+
+      <p>
+        Prefix caching is one of the reasons API prices for cached input tokens are typically
+        <strong>~10% of the uncached rate</strong> - the provider spent zero flops recomputing
+        that prefix, and the savings are (partially) passed on.
+      </p>
+
+      <h2 id="sec-spec"><span class="section-number">8.5</span> Speculative decoding</h2>
+
+      <p>
+        Decode is bandwidth-bound, which means a single decode step under-uses the GPU's
+        arithmetic. That slack is where
+        <a href="https://arxiv.org/abs/2211.17192" target="_blank" rel="noopener"><span class="gloss" data-gloss="speculative-decoding">speculative
+        decoding</span> (Leviathan et al., 2022)</a> and
+        <a href="https://arxiv.org/abs/2302.01318" target="_blank" rel="noopener">Chen et al.
+        (2023, DeepMind)</a> live. Use a small, cheap <em>draft</em> model to propose the next
+        <em>k</em> tokens, then verify all <em>k</em> in a single parallel forward pass of the
+        big <em>target</em> model. Every drafted token that matches what the target would have
+        produced is a token accepted for free. The output distribution is provably identical to
+        running the target alone (there is a rejection-sampling rule that preserves it, even
+        when the draft disagrees). No quality loss; only fewer target forward passes per token.
+      </p>
+
+      <div class="demo-wrap">
+        <div class="demo-head">
+          <span class="demo-label">Demo &middot; speculative decoding stepper</span>
+          <span class="demo-hint">draft &rarr; verify &rarr; repeat</span>
+        </div>
+        <div class="demo-body">
+          <div id="spec-demo"></div>
+        </div>
+      </div>
+
+      <p>
+        The whole trick lives inside two constants: acceptance rate $\alpha$ (fraction
+        of drafted tokens the target keeps) and cost ratio $c$ (draft-forward time over
+        target-forward time). Leviathan's Eq. 9 puts the expected speedup over plain decoding
+        at $\htmlData{tip=numerator: expected tokens accepted per verify pass; denominator: cost of one target step plus k draft steps}{\frac{1 - \alpha^{k+1}}{(1 - \alpha)(1 + c k)}}$.
+        The two failure modes: a draft too slow (large $c$) eats the win; a draft too weak
+        (small $\alpha$) rarely gets its predictions accepted. So the practical research has
+        been about better drafts.
+      </p>
+
+      <ul>
+        <li>
+          <strong>EAGLE / EAGLE-2 / EAGLE-3</strong>
+          (<a href="https://arxiv.org/abs/2401.15077" target="_blank" rel="noopener">Li et al.,
+          Jan 2024</a>;
+          <a href="https://arxiv.org/abs/2406.16858" target="_blank" rel="noopener">June 2024</a>;
+          2025). A tiny autoregressive head reused on top of the target's own last-layer hidden
+          states drafts far better than a separate model, because it sees exactly what the
+          target sees. EAGLE-2 adds dynamic tree drafting; EAGLE-3 removes the constraint that
+          the draft head predict features and lets it predict tokens directly. Reported
+          speedups on Llama 3 8B/70B routinely land at 3-5&times; over vanilla decode.
+        </li>
+        <li>
+          <strong>Medusa</strong>
+          (<a href="https://arxiv.org/abs/2401.10774" target="_blank" rel="noopener">Cai et al.,
+          Jan 2024</a>). Multiple parallel decoding heads on top of the target predict tokens at
+          offsets +1, +2, +3, +4 in one shot; a tree-attention pass verifies the joint hypothesis.
+          Simpler than EAGLE; used as a baseline.
+        </li>
+        <li>
+          <strong>MTP-as-drafter.</strong>
+          <a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3</a>
+          trains multi-token-prediction heads as an auxiliary objective during pretraining
+          (following <a href="https://arxiv.org/abs/2404.19737" target="_blank" rel="noopener">Gloeckle
+          et al., Meta, 2024</a>). At serving time those heads double as an EAGLE-style drafter,
+          costing nothing extra to train.
+        </li>
+      </ul>
+
+      <div class="callout note">
+        <div class="callout-label">Note - decode arithmetic under speculation</div>
+        <p>
+          Because decode is bandwidth-bound, verifying <em>k</em>+1 positions in one forward
+          pass costs roughly the same wall-clock as verifying one. That is the entire reason
+          the scheme is worth doing. On compute-bound prefill it would be a wash; on decode it
+          is a step-function.
+        </p>
+      </div>
+
+      <h2 id="sec-quant"><span class="section-number">8.6</span> Quantization for serving</h2>
+
+      <p>
+        Every byte a decode step reads from HBM eats bandwidth, so shrinking the number of bytes
+        speeds decode up directly. Serving-time quantization comes in three flavors, applied to
+        three different objects.
+      </p>
+
+      <p>
+        <strong>Weight-only quantization</strong> keeps the compute in higher precision (BF16 or
+        FP16) and stores the weights in 4 bits.
+        <a href="https://arxiv.org/abs/2210.17323" target="_blank" rel="noopener">GPTQ (Frantar
+        et al., ICLR 2023)</a> is the post-training layer-wise round-to-nearest with error
+        correction that shipped everywhere first;
+        <a href="https://arxiv.org/abs/2306.00978" target="_blank" rel="noopener">AWQ (Lin
+        et al., MLSys 2024)</a> is the activation-aware variant that protects the ~1% of weight
+        channels the activations most rely on. Both target INT4 (or NF4 for QLoRA-style flows)
+        with typical accuracy drops under one point on standard benchmarks.
+      </p>
+
+      <p>
+        <strong>Weight-and-activation quantization</strong> puts both the weights and the
+        activations at low precision so the matmul itself runs on the low-precision tensor
+        cores.
+        <a href="https://arxiv.org/abs/2211.10438" target="_blank" rel="noopener">SmoothQuant
+        (Xiao et al., ICML 2023)</a> and its successors handle the activation-outlier problem by
+        migrating scale from activations into weights. On Hopper this typically means FP8; the
+        <a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3
+        report</a> is the reference for a full FP8 training and serving stack.
+      </p>
+
+      <p>
+        <strong>KV-cache quantization</strong> is applied on top of the model weights. FP8 or
+        INT8 KV cache typically loses less than a point on long-context evals while cutting the
+        cache footprint in half - directly doubling the batch size a GPU can hold under load.
+        Every major serving engine now supports this as a separate flag from model quantization.
+      </p>
+
+      <table style="width:100%; border-collapse:collapse; margin: 18px 0 28px; font-size:14px;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--rule-strong);">
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Method</th>
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Target</th>
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Precision</th>
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">What it buys</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--rule);">
+            <td style="padding:12px;">GPTQ / AWQ / NF4</td>
+            <td style="padding:12px;">weights only</td>
+            <td style="padding:12px;">INT4 / NF4</td>
+            <td style="padding:12px;">4&times; less weight bandwidth per decode step; compute stays BF16.</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--rule);">
+            <td style="padding:12px;">SmoothQuant, FP8</td>
+            <td style="padding:12px;">weights + activations</td>
+            <td style="padding:12px;">INT8 / FP8</td>
+            <td style="padding:12px;">matmul runs on low-precision tensor cores; ~2&times; compute + bandwidth.</td>
+          </tr>
+          <tr>
+            <td style="padding:12px;">KV-cache quant</td>
+            <td style="padding:12px;">KV cache only</td>
+            <td style="padding:12px;">FP8 / INT8</td>
+            <td style="padding:12px;">2&times; batch size at same context; stacks with the two above.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec-disagg"><span class="section-number">8.7</span> Disaggregated prefill and decode</h2>
+
+      <p>
+        Prefill and decode fight each other for the same GPU. Prefill wants to be interrupted as
+        little as possible so its long matmuls run to completion; decode wants tight latency on
+        each token. Put them on the same box and you either delay decode when a big prefill
+        lands, or you interrupt prefill and eat context switches.
+      </p>
+
+      <p>
+        The 2023-24 answer was disaggregation: run prefill and decode on <em>separate</em> GPU
+        pools, and ship the KV cache from the prefill pool to the decode pool once the prompt is
+        done. <a href="https://arxiv.org/abs/2311.18677" target="_blank" rel="noopener">Splitwise
+        (Patel et al., Microsoft/UW, Nov 2023)</a> characterized the split and prototyped the
+        transfer. <a href="https://arxiv.org/abs/2401.09670" target="_blank" rel="noopener">DistServe
+        (Zhong et al., OSDI 2024)</a> optimized the assignment jointly with SLOs.
+        <a href="https://arxiv.org/abs/2407.00079" target="_blank" rel="noopener">Mooncake (Qin
+        et al., Kimi/Moonshot AI, June 2024)</a> is the production system Kimi runs on: KV
+        cache is treated as a first-class distributed object across a CPU/GPU/SSD memory
+        hierarchy, with a global scheduler steering requests to whichever decode node already
+        holds the largest usable prefix. All three of the major open serving engines
+        (<a href="https://docs.vllm.ai/" target="_blank" rel="noopener">vLLM</a>, SGLang,
+        TensorRT-LLM) have shipped disaggregated modes since.
+      </p>
+
+      <div class="callout insight">
+        <div class="callout-label">Insight - the KV cache became a first-class object</div>
+        <p>
+          Once you disaggregate, the cache is a distributed data structure you transfer over
+          NVLink or InfiniBand, hash-lookup, and evict. Every optimization above (paging,
+          prefix reuse, quantization, radix sharing, disaggregation) is really a different
+          answer to the same question: how do you manage this thing at scale?
+        </p>
+      </div>
+
+      <h2 id="sec-moe"><span class="section-number">8.8</span> MoE serving and expert parallelism</h2>
+
+      <p>
+        <span class="gloss" data-gloss="moe">Mixture-of-Experts</span> models - taught in Chapter
+        2 - route each token to a small subset of many experts. That is a training-side story
+        about parameters versus compute. At serving time it becomes a memory-and-communication
+        story. DeepSeek-V3, at 671B total / 37B active, does not fit on a single node no matter
+        how you quantize; its experts have to live spread across many GPUs.
+      </p>
+
+      <p>
+        The standard answer is <strong>expert parallelism (EP)</strong>: each GPU holds a shard
+        of the experts, and each layer's routing is followed by an all-to-all that sends every
+        token to whichever GPU holds the experts it was routed to, then a second all-to-all to
+        bring the results back. The choreography is bandwidth-hungry - a single decode step now
+        involves cross-node communication - and the payoff only appears at scale. DeepSeek's
+        <a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">V3 technical
+        report</a> documents a serving layout that runs prefill under 32-way expert parallel
+        and decode under <strong>320-way</strong> expert parallel - one expert per GPU across
+        40 nodes, with a second set of GPUs hosting the shared and redundant experts. Smaller
+        deployments trade latency for less all-to-all. The open-source
+        <a href="https://github.com/deepseek-ai/DeepEP" target="_blank" rel="noopener">DeepEP</a>
+        kernels released in early 2025 gave the community a reference implementation.
+      </p>
+
+      <h2 id="sec-reasoning"><span class="section-number">8.9</span> What reasoning did to the economics</h2>
+
+      <p>
+        Every trick above was in flight by early 2024, when the median request was a chat turn
+        of maybe a few hundred output tokens. Then o1 shipped in September 2024 and the median
+        request under reasoning models suddenly generated tens of thousands of tokens of hidden
+        chain-of-thought before answering. That was a step-function change in the workload the
+        engines had to serve.
+      </p>
+
+      <p>
+        Three effects fell out immediately. First, decode-time dominates the request: prefill on
+        a short question is dwarfed by the reasoning trace that follows, which pushed even more
+        priority onto continuous batching and speculative decoding for the long tail. Second, the
+        KV cache per request grew by an order of magnitude, which is exactly why MLA and heavy
+        cache quantization went from nice-to-have to load-bearing. Third, the product surface
+        changed. Every major provider now exposes a
+        <span class="gloss" data-gloss="thinking-budget"><strong>thinking budget</strong></span>
+        knob on the reasoning models - a way to bound how much compute you buy for a single response.
+      </p>
+
+      <ul>
+        <li>
+          OpenAI's o-family and GPT-5+ accept a
+          <a href="https://platform.openai.com/docs/guides/reasoning" target="_blank" rel="noopener">reasoning.effort</a>
+          field on the request (from <em>minimal</em> through <em>high</em>, varying by model),
+          which caps hidden-thinking tokens.
+        </li>
+        <li>
+          Anthropic's Claude reasoning API exposes
+          <a href="https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking" target="_blank" rel="noopener">extended
+          thinking</a> with an explicit integer <code>budget_tokens</code>, billed at the
+          output-token rate and reported back in <code>usage</code>.
+        </li>
+        <li>
+          Google's Gemini 2.5 / 3.x API exposes a
+          <a href="https://ai.google.dev/gemini-api/docs/thinking" target="_blank" rel="noopener">thinking_level</a>
+          knob with the same shape.
+        </li>
+      </ul>
+
+      <p>
+        The knob is the API-visible shadow of everything in this chapter. If reasoning tokens
+        were free, no one would need to bound them; they are not, because they arrive at
+        bandwidth-bound decode rate, one token at a time, and every one of them holds a slot in
+        the KV cache. The pricing sheet is now more legible than in 2023 - most providers
+        publish separate <em>input</em>, <em>cached input</em>, and <em>output</em> rates, and
+        the output rate is typically 3-5&times; the input rate. That gap is exactly the cost of
+        decode.
+      </p>
+
+      <div class="callout note">
+        <div class="callout-label">Note - the on-device edge</div>
+        <p>
+          The same stack has quietly migrated to consumer hardware. Apple's on-device foundation
+          model, Meta's Llama variants running under
+          <a href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noopener">llama.cpp</a>
+          on a MacBook, and the growing herd of small distilled reasoners all rely on 4-bit
+          weights, KV-cache quantization, and speculative decoding to run at usable latency
+          on hardware that never sees an H100.
+        </p>
+      </div>
+
+      <h2 id="sec-takeaways"><span class="section-number">8.10</span> What this chapter changed</h2>
+
+      <p>
+        A frontier model in 2026 is two very different bills. Training is a one-off capital
+        spend; inference is a per-token operating cost, and reasoning-model generations pushed
+        the operating cost into places it had never been. The plumbing that emerged to absorb
+        that push - paged and prefix-cached KV, continuous batching, speculative decoding with
+        EAGLE- or MTP-style drafters, FP8 weights and activations, per-request KV
+        quantization, and disaggregated prefill/decode with expert parallelism for MoE serving -
+        is what makes a $0.60-per-million-input-token reasoning API mathematically possible.
+      </p>
+
+      <p>
+        The tokens are cheap now, which changes what you can build on top of them. Chapter 9
+        picks up the moment a chat turn stops being the atomic unit: an
+        <span class="gloss" data-gloss="agent">agent</span> spends its budget in a loop, calling
+        tools, reading their output, and deciding what to do next. Every trick in this chapter
+        matters more when the same model is called dozens of times inside one user request.
+      </p>
+
+      <div class="callout insight">
+        <div class="callout-label">Through-line - three coins</div>
+        <p>
+          Chapter 1's scaling laws said capability costs training compute. Chapter 6 added a
+          second coin: capability also costs test-time compute. Chapter 8 shows the exchange
+          rate. Every algorithm and every piece of hardware in this chapter is buying you tokens
+          per second per dollar, and the reasoning wave made that number the one that decides
+          which frontier features are actually shippable.
+        </p>
+      </div>
+
+      <nav class="lecture-nav" aria-label="Chapter navigation">
+        <a class="nav-card prev" href="chapter07-reinforcement-learning-grows-up.html">
+          <div class="label">&larr; Previous</div>
+          <div class="title">Ch 7 &middot; Reinforcement learning grows up</div>
+        </a>
+        <a class="nav-card next" href="chapter09-learning-to-act.html">
+          <div class="label">Next &rarr;</div>
+          <div class="title">Ch 9 &middot; Learning to act</div>
+        </a>
+      </nav>
+
+      <footer class="site-footer">
+        <p>From Attention to Agents &middot; Chapter 8 &middot;
+          <a href="../index.html">index</a>
+        </p>
+      </footer>
+    </article>
+  </div>
+</main>
+
+<script defer src="../scripts/shared.js"></script>
+<script defer src="../scripts/glossaryData.js"></script>
+<script defer src="../scripts/glossary.js"></script>
+<script defer src="../scripts/kvCacheCalc.js"></script>
+<script defer src="../scripts/specDecodeStepper.js"></script>
+
+</body>
+</html>

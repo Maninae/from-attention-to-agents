@@ -73,6 +73,9 @@ function renderMath() {
     ],
     trust: true,           // required for \htmlData tooltips
     throwOnError: false,
+    // \htmlData is a trusted HTML extension here (see the tooltips code below);
+    // silence KaTeX's strict-mode warning for that one code, keep other warnings on.
+    strict: (errorCode) => (errorCode === 'htmlExtension' ? 'ignore' : 'warn'),
   });
 }
 

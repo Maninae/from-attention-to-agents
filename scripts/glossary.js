@@ -19,7 +19,7 @@
   panel.setAttribute('aria-hidden', 'true');
   panel.innerHTML =
     '<div class="gp-head">' +
-      '<div><div class="gp-eyebrow">Glossary</div><div class="gp-title"></div></div>' +
+      '<div><div class="gp-title"></div></div>' +
       '<button class="gp-close" type="button" aria-label="Close glossary">×</button>' +
     '</div>' +
     '<div class="gp-body">' +

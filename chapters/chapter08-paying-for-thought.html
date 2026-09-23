@@ -24,7 +24,6 @@
 
 <aside class="sidebar">
   <a class="sidebar-home" href="../index.html">&larr; from attention to agents</a>
-  <div class="sidebar-title">Chapter 8</div>
   <h2 class="sidebar-subtitle">Paying for thought</h2>
   <nav class="nav-toc" aria-label="On this page"></nav>
 </aside>
@@ -38,16 +37,8 @@
     </nav>
 
     <header class="lecture-header">
-      <span class="eyebrow">Chapter 8 &middot; Inference systems &middot; 2023 &ndash; 2026</span>
-      <h1>Paying for thought</h1>
+      <h1><span class="section-number">8</span>Paying for thought</h1>
       <p class="desc">Reasoning models moved capability onto the inference bill. This is the serving stack that makes long thinking affordable - the KV cache, PagedAttention, speculative decoding, quantization, and disaggregated prefill/decode.</p>
-      <div class="tags">
-        <span class="tag">KV cache</span>
-        <span class="tag">PagedAttention</span>
-        <span class="tag">Speculative decoding</span>
-        <span class="tag">FP8</span>
-        <span class="tag">Disaggregated serving</span>
-      </div>
     </header>
 
     <article class="article">
@@ -196,7 +187,7 @@
       </p>
 
       <div class="callout definition">
-        <div class="callout-label">Definition - PagedAttention</div>
+        <div class="callout-label">PagedAttention</div>
         <p>
           A KV-cache memory manager that stores each request's cache as a list of fixed-size
           blocks and a page table, so the attention kernel can gather from a non-contiguous
@@ -539,12 +530,10 @@
 
       <nav class="lecture-nav" aria-label="Chapter navigation">
         <a class="nav-card prev" href="chapter07-reinforcement-learning-grows-up.html">
-          <div class="label">&larr; Previous</div>
-          <div class="title">Ch 7 &middot; Reinforcement learning grows up</div>
+            <div class="title">&lsaquo; Ch 7 &middot; Reinforcement learning grows up</div>
         </a>
         <a class="nav-card next" href="chapter09-learning-to-act.html">
-          <div class="label">Next &rarr;</div>
-          <div class="title">Ch 9 &middot; Learning to act</div>
+            <div class="title">Ch 9 &middot; Learning to act &rsaquo;</div>
         </a>
       </nav>
 

@@ -21,7 +21,6 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-title">Chapter 2 &middot; 2023 &ndash; 2026</div>
     <div class="sidebar-subtitle">Inside a modern pretraining run</div>
     <a class="sidebar-home" href="../index.html">&larr; All chapters</a>
     <nav class="nav-toc"></nav>
@@ -36,8 +35,7 @@
       </nav>
 
       <header class="lecture-header">
-        <span class="eyebrow">Chapter 2 &middot; Efficiency (data, architecture, numerics) &middot; 2023 &ndash; 2026</span>
-        <h1>Inside a modern pretraining run</h1>
+        <h1><span class="section-number">2</span>Inside a modern pretraining run</h1>
         <p class="desc">
           Chinchilla told you how much to train. It did not tell you how to spend the money.
           Between 2023 and 2026 the pretraining stack was quietly rebuilt from the ground up:
@@ -46,14 +44,6 @@
           most flagship weights now sleep as inactive experts, and the numerics run in
           eight bits. Same objective. Different machine.
         </p>
-        <div class="tags">
-          <span class="tag">Data mixtures</span>
-          <span class="tag">RMSNorm / SwiGLU / RoPE</span>
-          <span class="tag">GQA / MLA</span>
-          <span class="tag">MoE</span>
-          <span class="tag">FP8</span>
-          <span class="tag">Muon</span>
-        </div>
       </header>
 
       <article class="article">
@@ -384,7 +374,7 @@
         </p>
 
         <div class="callout definition">
-          <div class="callout-label">Definition &middot; the MoE FFN</div>
+          <div class="callout-label">The MoE FFN</div>
           <p>
             Replace the position-wise FFN in a transformer block with $N$ parallel FFNs (the
             <em>experts</em>) and a small learned gate. For each token, the gate scores all
@@ -582,7 +572,7 @@
         </p>
 
         <div class="callout note">
-          <div class="callout-label">Chapter pivot &middot; the levers so far</div>
+          <div class="callout-label">The levers so far</div>
           <p>
             Chapter 0 turned the <strong>architecture</strong> lever (attention). Chapter 1 turned
             the <strong>scale</strong> lever (Kaplan, Chinchilla, over-train for deployment).
@@ -635,12 +625,10 @@
 
         <nav class="lecture-nav" aria-label="Chapter navigation">
           <a class="nav-card prev" href="chapter01-scale-is-a-strategy.html">
-            <div class="label">&larr; Previous &middot; Chapter 1</div>
-            <div class="title">Scale is a strategy</div>
+            <div class="title">&lsaquo; Scale is a strategy</div>
           </a>
           <a class="nav-card next" href="chapter03-teaching-it-to-be-helpful.html">
-            <div class="label">Next &middot; Chapter 3 &rarr;</div>
-            <div class="title">Teaching it to be helpful</div>
+            <div class="title">Teaching it to be helpful &rsaquo;</div>
           </a>
         </nav>
 

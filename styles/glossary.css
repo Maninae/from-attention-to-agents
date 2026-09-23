@@ -70,8 +70,8 @@ body.gloss-open .gloss-scrim { opacity: 1; pointer-events: auto; }
 
 .gp-resources { margin-top: 22px; border-top: 1px solid var(--rule); padding-top: 16px; }
 .gp-resources-label {
-  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px;
+  font-family: var(--sans); font-size: 14px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 10px;
 }
 .gp-res {
   display: block; padding: 9px 12px; margin-bottom: 8px;

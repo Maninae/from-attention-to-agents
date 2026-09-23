@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside a modern pretraining run - From Attention to Agents &middot; Chapter 2</title>
+<meta name="description" content="What a frontier pretraining run in 2025-26 actually spends compute on: the data pipeline (DCLM, FineWeb-Edu, Nemotron-CC, synthetic), the modernized block (RMSNorm, SwiGLU, RoPE), attention variants that shrink the KV cache (MQA, GQA, MLA), long-context extension, MoE routing, FP8 numerics, Muon, and how it all still leaves you with a document completer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../styles/shared.css">
+<link rel="stylesheet" href="../styles/demos.css">
+<link rel="stylesheet" href="../styles/glossary.css">
+</head>
+<body>
+<div class="progress-bar"></div>
+<button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Chapter 2 &middot; 2023 &ndash; 2026</div>
+    <div class="sidebar-subtitle">Inside a modern pretraining run</div>
+    <a class="sidebar-home" href="../index.html">&larr; All chapters</a>
+    <nav class="nav-toc"></nav>
+  </aside>
+
+  <main class="main">
+    <div class="container">
+
+      <nav class="lecture-nav-top" aria-label="Chapter navigation">
+        <a href="chapter01-scale-is-a-strategy.html">&larr; Ch 1 &middot; Scale is a strategy</a>
+        <a href="chapter03-teaching-it-to-be-helpful.html">Ch 3 &middot; Teaching it to be helpful &rarr;</a>
+      </nav>
+
+      <header class="lecture-header">
+        <span class="eyebrow">Chapter 2 &middot; Efficiency (data, architecture, numerics) &middot; 2023 &ndash; 2026</span>
+        <h1>Inside a modern pretraining run</h1>
+        <p class="desc">
+          Chinchilla told you how much to train. It did not tell you how to spend the money.
+          Between 2023 and 2026 the pretraining stack was quietly rebuilt from the ground up:
+          the data pipeline picks the tokens with a classifier, the block swapped LayerNorm
+          for RMSNorm and GELU for SwiGLU, attention learned to shrink its own KV cache,
+          most flagship weights now sleep as inactive experts, and the numerics run in
+          eight bits. Same objective. Different machine.
+        </p>
+        <div class="tags">
+          <span class="tag">Data mixtures</span>
+          <span class="tag">RMSNorm / SwiGLU / RoPE</span>
+          <span class="tag">GQA / MLA</span>
+          <span class="tag">MoE</span>
+          <span class="tag">FP8</span>
+          <span class="tag">Muon</span>
+        </div>
+      </header>
+
+      <article class="article">
+
+        <p class="lecture-roadmap">
+          Chapter 1 closed with a budget calculator and a warning: Chinchilla is compute-optimal
+          for <em>training</em>, not for deployment, so labs deliberately over-train small models
+          on more tokens than the ratio says. This chapter is the other axis. Same compute, same
+          token count - where does it actually go once it lands on the cluster? We walk the six
+          places a modern flagship has changed since GPT-3: the data (crawl to classifier to
+          synthetic), the block (norms, activation, positions), attention (a KV-cache story that
+          reshapes both training and inference), sparsity (MoE and multi-token prediction),
+          numerics (BF16 to FP8 with a new optimizer), and the tail (mid-training, distillation,
+          the one non-attention alternative that survived). By the end, the machine looks
+          modern - but the model it produces is still a document completer. That gap opens
+          Chapter 3.
+        </p>
+
+        <h2><span class="section-number">1.</span> What a flagship run is actually buying</h2>
+        <p>
+          A 2020-era pretraining run was a small number of moving parts: a dense transformer,
+          BPE tokens, AdamW, FP16 or BF16, next-token cross-entropy, one big pile of scraped
+          text. A 2025-26 flagship run is a much longer bill. The
+          <a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3 technical report</a>
+          is the clearest single window into it: <strong>671B total parameters, 37B active per
+          token</strong> (a <span class="gloss" data-gloss="moe">mixture-of-experts</span>),
+          <span class="gloss" data-gloss="mla">multi-head latent attention</span> to shrink the
+          <span class="gloss" data-gloss="kv-cache">KV cache</span>,
+          <span class="gloss" data-gloss="aux-loss-free-balancing">auxiliary-loss-free load balancing</span>
+          on the router, <span class="gloss" data-gloss="mtp">multi-token prediction</span> heads
+          on top, <span class="gloss" data-gloss="fp8-training">FP8 mixed-precision training</span>
+          throughout, 14.8T pretraining tokens - and the whole run cost <strong>2.664 million
+          H800 GPU-hours</strong>. Every one of those choices is a lever you did not have five
+          years ago.
+        </p>
+        <p>
+          The point of the chapter is not to catalog names. It is to see the shape of the machine
+          a working practitioner reasons about in 2026 - because every downstream chapter
+          (post-training, reasoning, inference, agents) inherits this substrate. Tokenization,
+          the seventh moving part, belongs one chapter back: Chapter 0 now teaches BPE, byte-level
+          BPE, and the vocab creep from 32k up to 128k-200k, so we do not re-teach it here.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">The six levers, in one screen</div>
+          <p>
+            <strong>Data</strong> (what the model reads) &middot;
+            <strong>Block</strong> (RMSNorm, SwiGLU, RoPE) &middot;
+            <strong>Attention</strong> (MQA / GQA / MLA + FlashAttention) &middot;
+            <strong>Sparsity</strong> (MoE + MTP) &middot;
+            <strong>Numerics</strong> (BF16, FP8, Muon) &middot;
+            <strong>Tail</strong> (long-context extension, mid-training, distillation).
+            Sections 2-8 walk them in that order.
+          </p>
+        </div>
+
+        <h2><span class="section-number">2.</span> The data pipeline is the model</h2>
+        <p>
+          Chinchilla put a number on <em>how many</em> tokens. It did not say which ones. The
+          post-Chinchilla frontier's largest single quality lever has been the pipeline that
+          picks them.
+        </p>
+        <p>
+          The 2024 pipelines converged on the same skeleton. Start from
+          <a href="https://commoncrawl.org/" target="_blank" rel="noopener">Common Crawl</a>.
+          Strip HTML and boilerplate. Apply language ID. Deduplicate globally (MinHash / suffix-array,
+          within-snapshot and across snapshots). Filter with a
+          <span class="gloss" data-gloss="quality-classifier">model-based quality classifier</span>
+          that scores each document. Decontaminate against known eval sets. Blend in
+          <span class="gloss" data-gloss="synthetic-pretraining-data">synthetic</span> text and
+          code/math sub-corpora. Anneal on the best of it at the end.
+        </p>
+        <p>
+          Three 2024 releases are the reference points for the classifier step:
+        </p>
+
+        <table style="width:100%; border-collapse: collapse; margin: 18px 0 28px; font-size: 14px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--rule-strong); text-align: left;">
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Dataset</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Filter signal</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Scale</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Trick</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;"><a href="https://arxiv.org/abs/2406.11794" target="_blank" rel="noopener">DCLM</a></td>
+              <td style="padding: 10px 12px;">fastText classifier trained on OpenHermes + ELI5</td>
+              <td style="padding: 10px 12px;">3.8T tokens filtered from 240T</td>
+              <td style="padding: 10px 12px;">Whole training a benchmark for filters</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;"><a href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">FineWeb-Edu</a></td>
+              <td style="padding: 10px 12px;">Classifier on educational ratings from Llama-3-70B</td>
+              <td style="padding: 10px 12px;">1.3T tokens</td>
+              <td style="padding: 10px 12px;">Small model teaches the filter for a big one</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 12px;"><a href="https://arxiv.org/abs/2412.02595" target="_blank" rel="noopener">Nemotron-CC</a></td>
+              <td style="padding: 10px 12px;">Classifier ensemble + LLM rephrasing of low-quality docs</td>
+              <td style="padding: 10px 12px;">4.4T real + 1.9T synthetic = 6.3T</td>
+              <td style="padding: 10px 12px;">Rewriting recovers ~90% of filtered content</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          The Nemotron trick generalizes: <em>synthetic data is now first-class</em>. The most
+          public line of that argument is Microsoft's <em>phi</em> series -
+          <a href="https://arxiv.org/abs/2306.11644" target="_blank" rel="noopener">phi-1</a>
+          (2023) trained on "textbooks are all you need" - and a 1B model that beat much
+          larger contemporaries on code. The result was not that synthetic beats real. It was
+          that a distribution shaped by <em>what a strong teacher would say next</em> was worth
+          more per token than raw crawl. Frontier runs now mix in curated math (proofs, solved
+          problems), code (repo-scale, unit-test-verified), instruction-shaped documents, and
+          machine-rewritten crawl.
+        </p>
+        <p>
+          The last data-side stage is the one everyone forgot to name until 2024:
+          <span class="gloss" data-gloss="mid-training-annealing">mid-training</span>, also
+          called cooldown or annealing. Save your very-highest-quality tokens for the tail of
+          pretraining - math, code, textbooks, distilled reasoning traces - and warm the
+          learning rate down while feeding only that. OLMo 2's "Dolmino" mix
+          (<a href="https://arxiv.org/abs/2501.00656" target="_blank" rel="noopener">Groeneveld et al. 2025</a>)
+          is the cleanest public case study; the technique also shows up under names like
+          "cooldown" or "annealing" in the Llama 3 herd
+          (<a href="https://arxiv.org/abs/2407.21783" target="_blank" rel="noopener">Grattafiori et al. 2024</a>).
+          Chapter 3 will do the same trick with human-labeled preferences; the shape is the
+          same, only the labels differ.
+        </p>
+
+        <div class="callout insight">
+          <div class="callout-label">Why the classifier moved from rules to models</div>
+          <p>
+            The C4-era pipelines were dominated by hand-written heuristics: bad-word blocklists,
+            document length windows, stop-word ratios. That worked until the crawl grew. A
+            model-based classifier can see coherence and pedagogy in a document; a regex sees
+            neither. The gain is measurable and cheap: FineWeb-Edu pushed MMLU on a fixed-scale
+            probe from 33% to 37% by <em>filtering alone</em>. Data quality is now the axis with
+            the best return-on-effort in a frontier run, which is why every new lab publishes
+            its filter before it publishes its model.
+          </p>
+        </div>
+
+        <h2><span class="section-number">3.</span> The block, modernized</h2>
+        <p>
+          Chapter 0 walked you through the 2017 block: multi-head self-attention, position-wise
+          feed-forward, LayerNorm, sinusoidal positions, ReLU/GELU somewhere in the middle. That
+          block is not what a 2025 flagship trains. Three swaps stuck, and they are boring in
+          the good way - each one gives up a small amount of expressivity for a lot of
+          stability, throughput, or generalization.
+        </p>
+
+        <table style="width:100%; border-collapse: collapse; margin: 18px 0 28px; font-size: 15px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--rule-strong); text-align: left;">
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Component</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">2017 default</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">2025 default</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Norm placement</td>
+              <td style="padding: 10px 12px;">Post-norm</td>
+              <td style="padding: 10px 12px;">Pre-norm</td>
+              <td style="padding: 10px 12px;">Stable gradients at 100+ layers</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Norm</td>
+              <td style="padding: 10px 12px;">LayerNorm</td>
+              <td style="padding: 10px 12px;"><span class="gloss" data-gloss="rmsnorm">RMSNorm</span></td>
+              <td style="padding: 10px 12px;">Same behavior, fewer ops, no mean subtraction</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">FFN activation</td>
+              <td style="padding: 10px 12px;">ReLU / GELU</td>
+              <td style="padding: 10px 12px;"><span class="gloss" data-gloss="swiglu">SwiGLU</span></td>
+              <td style="padding: 10px 12px;">Gated variant, small loss win at fixed FLOPs</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 12px;">Positions</td>
+              <td style="padding: 10px 12px;">Sinusoidal / learned</td>
+              <td style="padding: 10px 12px;"><span class="gloss" data-gloss="rope">RoPE</span></td>
+              <td style="padding: 10px 12px;">Rotary, relative, extensible past training length</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          The whole story is on the Llama page. Touvron et al. (2023,
+          <a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener">arXiv:2302.13971</a>)
+          write, verbatim, "compared to the original architecture, here are the main differences
+          [...]: Pre-normalization [GPT-3]. Instead of normalizing the output of each transformer
+          sub-layer, we normalize the input, using the RMSNorm normalizing function [Zhang and
+          Sennrich, 2019]. SwiGLU activation function [PaLM]. We replace the ReLU non-linearity
+          by the SwiGLU activation function [...] introduced by Shazeer (2020). Rotary
+          Embeddings [GPTNeo]. We remove the absolute positional embeddings and instead add
+          rotary positional embeddings (RoPE), introduced by Su et al. (2021)." That short list
+          is the modern block. Every open flagship since - Llama 2/3, Mistral, Qwen, DeepSeek,
+          Gemma, Kimi - inherits the three swaps.
+        </p>
+        <p>
+          Two things are worth pausing on. RoPE
+          (<a href="https://arxiv.org/abs/2104.09864" target="_blank" rel="noopener">Su et al. 2021</a>)
+          encodes position by <em>rotating</em> each query and key vector by an angle that scales
+          with token index and dimension frequency; the dot product then depends only on the
+          relative offset. That relativity is what makes context extension possible at all
+          (Section 5). And SwiGLU is a gated variant that multiplies two projections instead of
+          one - three matrices in the FFN instead of two - which is why frontier reports tend to
+          quote FFN hidden width as <em>2/3</em> of the naive figure to keep the parameter count
+          honest.
+        </p>
+
+        <h2><span class="section-number">4.</span> Attention and the KV cache</h2>
+        <p>
+          At training time, standard multi-head attention costs $O(L^2 d)$ per layer. That has
+          not changed. What has changed is the cost people design against, which is not training
+          time - it is <em>inference</em> memory bandwidth. During autoregressive generation
+          the model reads its own KV cache once per token; the cache is per-layer, per-head,
+          per-token, and it grows with context length. At 128k context and dozens of layers a
+          dense-MHA cache is measured in tens of gigabytes per sequence. That is the number the
+          block is now optimized for.
+        </p>
+        <p>
+          Three shrinks lived long enough to matter:
+        </p>
+        <ul>
+          <li><strong>MQA</strong> (<span class="gloss" data-gloss="mqa">multi-query attention</span>,
+            <a href="https://arxiv.org/abs/1911.02150" target="_blank" rel="noopener">Shazeer 2019</a>):
+            one K/V head shared by all Q heads. Divides the cache by number of heads. Loses some
+            quality in ablation.</li>
+          <li><strong>GQA</strong> (<span class="gloss" data-gloss="gqa">grouped-query attention</span>,
+            <a href="https://arxiv.org/abs/2305.13245" target="_blank" rel="noopener">Ainslie et al. 2023</a>):
+            groups of Q heads share one K/V head. A tunable knob between MHA and MQA. Llama 2 70B
+            was the flagship that made it standard.</li>
+          <li><strong>MLA</strong> (<span class="gloss" data-gloss="mla">multi-head latent attention</span>,
+            <a href="https://arxiv.org/abs/2405.04434" target="_blank" rel="noopener">DeepSeek-V2 2024</a>):
+            do not cache K and V. Cache a low-rank <em>latent</em>, reconstruct per-head K and V
+            on the fly with two up-projections. Shrinks the cache more than GQA and, per
+            DeepSeek's ablations, keeps quality above MHA rather than below it.</li>
+        </ul>
+
+        <p>
+          The demo below is the arithmetic in one panel: pick a variant, a context length, a
+          layer count, and see the resulting cache. This is the calculation a serving team runs
+          before quoting a token-per-dollar number.
+        </p>
+
+        <div class="demo-wrap">
+          <div class="demo-head">
+            <span class="demo-label">KV cache size &middot; MHA vs MQA vs GQA vs MLA</span>
+            <span class="demo-hint">drag the sliders</span>
+          </div>
+          <div class="demo-body"><div id="kv-demo"></div></div>
+        </div>
+
+        <p>
+          Orthogonal to <em>what</em> you cache is <em>how</em> you compute the attention.
+          <a href="https://arxiv.org/abs/2205.14135" target="_blank" rel="noopener">FlashAttention</a>
+          (Dao et al. 2022), extended by
+          <a href="https://arxiv.org/abs/2307.08691" target="_blank" rel="noopener">FlashAttention-2</a>
+          and <a href="https://arxiv.org/abs/2407.08608" target="_blank" rel="noopener">FlashAttention-3</a>,
+          is <em>exact</em> attention - same output as the naive matmul - but reordered to never
+          materialize the $L \times L$ score matrix in high-bandwidth memory. The algebra tiles
+          the softmax so the score matrix lives only in on-chip SRAM. The word to remember is
+          IO-aware: it wins by moving fewer bytes, not by doing fewer FLOPs. Every modern trainer
+          uses it. It is the reason "attention is expensive" has stopped being the right mental
+          model at the sizes anyone actually runs.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">Why MoE reports quote MLA and MTP together</div>
+          <p>
+            DeepSeek-V2 and V3 pair MLA (cache shrink) with the MoE that dominates their
+            parameter count. The reason is symmetric: the router activates a small fraction of
+            experts per token, so per-token FLOPs are low; MLA drops per-token memory bandwidth
+            proportionally; both together make the model serveable. Take one away and the other
+            gains a large fraction of its benefit back as slack.
+          </p>
+        </div>
+
+        <h2><span class="section-number">5.</span> Long context, extended after the fact</h2>
+        <p>
+          A 128k or 1M context window is almost never native. It is a fine-tune on top of a
+          model that pretrained at 4k or 8k. The pipeline for extending it has two moves.
+        </p>
+        <p>
+          First, rescale the RoPE frequencies. Naive position interpolation
+          (<a href="https://arxiv.org/abs/2306.15595" target="_blank" rel="noopener">Chen et al. 2023</a>)
+          scales all rotary angles by the same ratio so that a longer sequence "looks like" the
+          training length. That works but degrades short-context perplexity.
+          <a href="https://arxiv.org/abs/2309.00071" target="_blank" rel="noopener">YaRN</a>
+          (Peng et al. 2023) does the interpolation
+          <em>per frequency band</em> - leave high-frequency dimensions alone, stretch low-frequency
+          ones - and adds an attention-temperature term to keep the softmax well-scaled.
+          <span class="gloss" data-gloss="yarn">YaRN</span> is what most public 128k-context
+          fine-tunes ride on; DeepSeek-V3 uses it to reach 128k, and the Llama 3.1 herd extends
+          to 128k with a related recipe.
+        </p>
+        <p>
+          Second, run a dedicated <strong>long-context stage</strong> at the end of pretraining
+          on a curriculum that grows the sequence length in bands (say 8k &rarr; 32k &rarr;
+          128k), with a data mixture reweighted toward long documents (books, code repos, legal
+          filings) and needle-in-a-haystack style probes to sanity-check retrieval. This stage
+          is small compared to main pretraining but has to be there. Without it, the model has
+          RoPE angles it has never seen fire in a real gradient.
+        </p>
+
+        <h2><span class="section-number">6.</span> Sparsity: mixture-of-experts</h2>
+        <p>
+          By 2024 the frontier's open flagships were nearly all MoE:
+          <a href="https://arxiv.org/abs/2401.04088" target="_blank" rel="noopener">Mixtral</a>
+          (8 experts, top-2), <a href="https://arxiv.org/abs/2401.06066" target="_blank" rel="noopener">DeepSeekMoE</a>,
+          <a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3</a>
+          (256 routed experts + 1 shared, 8-of-256 active, 671B total / 37B active),
+          <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">Kimi K2</a>
+          (1T total / 32B active),
+          <a href="https://openai.com/index/introducing-gpt-oss/" target="_blank" rel="noopener">gpt-oss</a>
+          (Aug 2025 open-weights release). The reason is arithmetic. If every token routes to
+          $k$ of $n$ experts, the model behaves at inference like a $k/n$-of-total dense model
+          for FLOPs, while every expert can specialize in the way a dense FFN cannot.
+        </p>
+
+        <div class="callout definition">
+          <div class="callout-label">Definition &middot; the MoE FFN</div>
+          <p>
+            Replace the position-wise FFN in a transformer block with $N$ parallel FFNs (the
+            <em>experts</em>) and a small learned gate. For each token, the gate scores all
+            experts, top-$k$ are chosen ($k$ is small - 2 or 8), the token is routed to those
+            experts, and their outputs are combined by gate weight. Total parameters = $\Theta(N)$,
+            active parameters per token = $\Theta(k)$. Only the active experts do work, so both
+            training FLOPs per token and inference FLOPs per token stay near the dense-$k$-expert
+            cost.
+          </p>
+        </div>
+
+        <p>
+          Two 2024 refinements are what make current MoE runs actually work.
+        </p>
+        <p>
+          <strong>Fine-grained + shared experts</strong>
+          (<a href="https://arxiv.org/abs/2401.06066" target="_blank" rel="noopener">DeepSeekMoE 2024</a>):
+          instead of a handful of large experts, use many small ones (finer specialization) and
+          keep one or two "shared" experts that every token visits (common knowledge that would
+          otherwise be replicated). This is why DeepSeek-V3 has 256 routed experts and 1 shared.
+        </p>
+        <p>
+          <strong>Auxiliary-loss-free load balancing</strong>
+          (DeepSeek-V3, following
+          <a href="https://arxiv.org/abs/2408.15664" target="_blank" rel="noopener">Wang et al. 2024</a>):
+          the classical MoE trick was to add a load-balancing loss - a penalty that pushes
+          the router toward uniform expert usage. It works, but the penalty leaks into the
+          language loss and slightly hurts quality. Aux-loss-free balancing instead maintains a
+          per-expert <em>bias</em> that is adjusted online: if an expert is underused this step,
+          nudge its bias up so it wins slightly more routing decisions; if overused, nudge it
+          down. No loss term, no gradient distortion, same balance. DeepSeek reports this alone
+          was worth a measurable quality bump.
+        </p>
+
+        <p>
+          The demo shows the router in miniature: eight routed experts, one shared, top-2 gating,
+          fixed seed, a small stream of tokens colored by which experts fired. Watch total
+          parameters stay pinned while active parameters per token drop, and watch the balancing
+          bias keep any one expert from monopolizing traffic.
+        </p>
+
+        <div class="demo-wrap">
+          <div class="demo-head">
+            <span class="demo-label">MoE router &middot; total vs active parameters, with balancing</span>
+            <span class="demo-hint">step, or toggle balancing off</span>
+          </div>
+          <div class="demo-body"><div id="moe-demo"></div></div>
+        </div>
+
+        <h3><span class="section-number">6.1</span> Multi-token prediction (MTP)</h3>
+        <p>
+          A quieter DeepSeek-V3 innovation. Instead of a single next-token head, train several
+          shallow heads that predict the next $D$ tokens in parallel (each conditioned on the
+          previous head's prediction). The training loss becomes a sum over depth, and each token
+          contributes gradients from $D$ prediction sites instead of one. The paper reports the
+          quality gain and an under-appreciated bonus: the extra heads work as draft-token
+          producers for <em>speculative decoding</em> at inference time, so an MTP-trained model
+          gets a serving speedup for free. Chapter 8 will pick this up again from the inference
+          side.
+        </p>
+
+        <h2><span class="section-number">7.</span> Numerics and the optimizer</h2>
+        <p>
+          Pretraining precision has descended a step. BF16
+          (<a href="https://cloud.google.com/blog/products/ai-machine-learning/bfloat16-the-secret-to-high-performance-on-cloud-tpus" target="_blank" rel="noopener">brain-float 16</a>)
+          replaced FP16 as the default around 2020 because it preserved the FP32 exponent range
+          and stopped needing loss scaling. Then, in December 2024, DeepSeek-V3 shipped a
+          production FP8 training path: matmuls in
+          <a href="https://arxiv.org/abs/2209.05433" target="_blank" rel="noopener">FP8 (E4M3 / E5M2)</a>
+          on Hopper tensor cores, with BF16 master weights and per-tile activation scaling to
+          contain the numeric drift. The compute win is roughly 2&times; over BF16 at the same
+          hardware. The engineering cost is real - overflow behavior, gradient scaling, kernel
+          rewrites - but the FP8 recipe now lives in open trainers and other flagships
+          (Nemotron, Llama post-training) have followed.
+        </p>
+        <p>
+          Optimizers moved less, and then a lot. AdamW was the frontier default from ~2019
+          through 2024. In 2024 Moonshot published
+          <a href="https://arxiv.org/abs/2502.16982" target="_blank" rel="noopener">Muon</a>,
+          a matrix-aware optimizer that treats a layer's weight update as a matrix and applies a
+          Newton-Schulz-based orthogonalization step to its momentum. It converges faster than
+          AdamW at fixed compute in the settings where it works, and it is cheap because
+          Newton-Schulz needs only a few matmuls. The catch was stability: at large scale, MoE
+          runs would spike. Kimi K2's
+          <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">MuonClip</a>
+          (July 2025) added a "QK-clip" that rescales attention query/key projections whenever
+          their logits blow up. Kimi K2 - 1T total, 32B active - was pretrained on 15.5T tokens
+          <em>with zero loss spikes</em>, per the release. That is the first published trillion-parameter
+          run to drop AdamW at frontier scale.
+        </p>
+
+        <h2><span class="section-number">8.</span> How it fits on a cluster</h2>
+        <p>
+          Distributed training is not a technique, it is a wardrobe of them, and the frontier
+          uses several at once. The three axes to know:
+        </p>
+
+        <table style="width:100%; border-collapse: collapse; margin: 18px 0 28px; font-size: 14px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--rule-strong); text-align: left;">
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">Kind</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">What it splits</th>
+              <th style="padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">What it costs</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Data / FSDP (ZeRO)</td>
+              <td style="padding: 10px 12px;">Different microbatches per GPU; params/grads/optimizer state sharded across GPUs</td>
+              <td style="padding: 10px 12px;">All-gather per forward step</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Tensor (TP)</td>
+              <td style="padding: 10px 12px;">Each matmul split across GPUs by rows/cols</td>
+              <td style="padding: 10px 12px;">All-reduce inside every block; needs fast NVLink</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 10px 12px;">Pipeline (PP)</td>
+              <td style="padding: 10px 12px;">Different layers on different GPUs</td>
+              <td style="padding: 10px 12px;">Bubble time unless you interleave microbatches</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 12px;">Expert (EP)</td>
+              <td style="padding: 10px 12px;">Different MoE experts on different GPUs</td>
+              <td style="padding: 10px 12px;">All-to-all traffic per token routing decision</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          Modern runs stack all four. The
+          <a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3 report</a>
+          spends much of its infrastructure section on custom kernels that overlap EP all-to-all
+          with computation, which is what keeps a heavily expert-parallel MoE from spending most
+          of its wall-clock on networking. Chapter 0's parallelism demo shows the primitive that
+          makes any of this possible - transformer blocks compute across the sequence axis in
+          one pass, unlike an RNN - and this section is the industrial extension of that primitive.
+        </p>
+
+        <h2><span class="section-number">9.</span> The tail: mid-training, distillation, the SSM aside</h2>
+        <p>
+          A frontier run ends messier than it starts. After main pretraining there is a bundle
+          of stages that used to be lumped into "training" and are now separately named.
+          Mid-training / annealing (Section 2, tail of the data story), long-context extension
+          (Section 5), sometimes a "capabilities" stage that feeds concentrated math/code, and
+          finally a bake-off between many small distilled variants.
+        </p>
+        <p>
+          <strong>Distillation as pretraining</strong> earned its own status with the Gemma line.
+          <a href="https://arxiv.org/abs/2408.00118" target="_blank" rel="noopener">Gemma 2</a>
+          (Google DeepMind 2024) trained a 27B teacher from scratch and then trained the 2B and
+          9B students on the teacher's <em>full soft distribution</em> over the next token, not
+          the one-hot label. Each token gives the small model a richer gradient - the entire
+          probability vector, not "yes / no." Gemma 3 continued the recipe. This is not the
+          <span class="gloss" data-gloss="reasoning-distillation">reasoning distillation</span>
+          you will meet in Chapter 6 (that copies traces, not logits); this is
+          <em>pretraining-time</em> logit distillation, and it is why small open-weights models
+          have gotten as good as they have.
+        </p>
+        <p>
+          Finally, the one <strong>non-attention</strong> architecture that survived.
+          <a href="https://arxiv.org/abs/2312.00752" target="_blank" rel="noopener">Mamba</a>
+          (Gu &amp; Dao 2023) and Mamba-2 are selective
+          <span class="gloss" data-gloss="ssm-mamba">state-space models</span>: instead of
+          all-to-all attention, they run a linear-time recurrence with data-dependent transitions,
+          keeping constant per-step state instead of a growing KV cache. Pure SSMs match small
+          transformers on language and lose ground on retrieval-heavy tasks. What is shipping in
+          2025-26 is <em>hybrid</em>: alternating SSM layers and attention layers in the same
+          stack. Nvidia's Nemotron-H
+          (<a href="https://arxiv.org/abs/2504.03624" target="_blank" rel="noopener">Nvidia 2025</a>)
+          and IBM/AI21's earlier
+          <a href="https://arxiv.org/abs/2403.19887" target="_blank" rel="noopener">Jamba</a>
+          are the reference points. The hybrid keeps attention where it earns its keep (in-context
+          precision) and pays SSM cost everywhere else.
+        </p>
+
+        <h2><span class="section-number">10.</span> What you get, and what you do not</h2>
+        <p>
+          Add it up. Run for a few million H100/H800-hours. Feed 10-20T tokens through a
+          modernized MoE transformer with MLA and RoPE, in FP8, with Muon, on a cluster that
+          overlaps expert parallelism with matmul, extend the context to 128k, mid-train on your
+          best tokens, distill down for the small sizes. The model that falls out is - still - a
+          document completer.
+        </p>
+        <p>
+          Ask it "explain photosynthesis to a child" and, half the time, you get a plausible
+          continuation of the prompt rather than an answer. Ask it to solve a word problem and it
+          may or may not show its work. Ask it what its policy is on unsafe requests and it does
+          not have one. Pretraining has taught it the substrate: what the world talks about, in
+          what order, in what registers. It has not taught it that there is a user across the
+          table who wants an answer to a specific question. That is what Chapter 1 hinted at with
+          the phrase <span class="gloss" data-gloss="intent-alignment-gap">intent-alignment gap</span>.
+          Chapter 3 is where a small team at OpenAI closes it with a three-stage recipe called
+          RLHF, ships the result as ChatGPT, and quietly plants the seed of chain-of-thought.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">Chapter pivot &middot; the levers so far</div>
+          <p>
+            Chapter 0 turned the <strong>architecture</strong> lever (attention). Chapter 1 turned
+            the <strong>scale</strong> lever (Kaplan, Chinchilla, over-train for deployment).
+            Chapter 2 turned the <strong>efficiency</strong> lever - same objective, machine
+            rebuilt from data pipeline through numerics. Chapter 3 turns the
+            <strong>alignment</strong> lever. Same weights. Different behavior.
+          </p>
+        </div>
+
+        <h2><span class="section-number">11.</span> What to take with you</h2>
+        <ul>
+          <li><strong>Data is a pipeline, not a corpus.</strong> Crawl, dedup, classifier-filter, decontaminate, mix in synthetic and code/math, save the best tokens for a cooldown stage. DCLM, FineWeb-Edu, Nemotron-CC are the 2024 reference filters.</li>
+          <li><strong>The 2017 block quietly grew up.</strong> Pre-norm RMSNorm, SwiGLU FFN, RoPE positions. Every flagship since Llama 1 uses that triple.</li>
+          <li><strong>Attention now optimizes for inference memory.</strong> MQA / GQA / MLA all shrink the KV cache; FlashAttention makes exact attention IO-cheap. Long context is a rescale (YaRN) plus an extension stage.</li>
+          <li><strong>Sparsity is the flagship default.</strong> MoE separates total from active parameters. Fine-grained + shared experts, aux-loss-free balancing, and multi-token prediction are the 2024-25 refinements that made it stable.</li>
+          <li><strong>Numerics dropped a step.</strong> BF16 became FP8 for matmuls (DeepSeek-V3); AdamW got a real challenger (Muon / MuonClip on Kimi K2).</li>
+          <li><strong>The tail matters.</strong> Mid-training on high-quality tokens, long-context extension, pretraining-time distillation for small siblings. The Mamba hybrid is the sole non-attention survivor.</li>
+          <li><strong>The model out the other end is still a document completer.</strong> Chapter 3 makes it an assistant.</li>
+        </ul>
+
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 28px;">
+          Sources:
+          DeepSeek-V3 (<a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">arXiv:2412.19437</a>);
+          DeepSeek-V2 / MLA (<a href="https://arxiv.org/abs/2405.04434" target="_blank" rel="noopener">arXiv:2405.04434</a>);
+          DeepSeekMoE (<a href="https://arxiv.org/abs/2401.06066" target="_blank" rel="noopener">arXiv:2401.06066</a>);
+          Mixtral (<a href="https://arxiv.org/abs/2401.04088" target="_blank" rel="noopener">arXiv:2401.04088</a>);
+          Kimi K2 / MuonClip (<a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">arXiv:2507.20534</a>);
+          Muon (<a href="https://arxiv.org/abs/2502.16982" target="_blank" rel="noopener">arXiv:2502.16982</a>);
+          Llama (<a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener">arXiv:2302.13971</a>);
+          Llama 3 herd (<a href="https://arxiv.org/abs/2407.21783" target="_blank" rel="noopener">arXiv:2407.21783</a>);
+          RoPE (<a href="https://arxiv.org/abs/2104.09864" target="_blank" rel="noopener">arXiv:2104.09864</a>);
+          YaRN (<a href="https://arxiv.org/abs/2309.00071" target="_blank" rel="noopener">arXiv:2309.00071</a>);
+          MQA (<a href="https://arxiv.org/abs/1911.02150" target="_blank" rel="noopener">arXiv:1911.02150</a>);
+          GQA (<a href="https://arxiv.org/abs/2305.13245" target="_blank" rel="noopener">arXiv:2305.13245</a>);
+          FlashAttention (<a href="https://arxiv.org/abs/2205.14135" target="_blank" rel="noopener">arXiv:2205.14135</a>);
+          FlashAttention-3 (<a href="https://arxiv.org/abs/2407.08608" target="_blank" rel="noopener">arXiv:2407.08608</a>);
+          DCLM (<a href="https://arxiv.org/abs/2406.11794" target="_blank" rel="noopener">arXiv:2406.11794</a>);
+          FineWeb / FineWeb-Edu (<a href="https://arxiv.org/abs/2406.17557" target="_blank" rel="noopener">arXiv:2406.17557</a>);
+          Nemotron-CC (<a href="https://arxiv.org/abs/2412.02595" target="_blank" rel="noopener">arXiv:2412.02595</a>);
+          phi-1 (<a href="https://arxiv.org/abs/2306.11644" target="_blank" rel="noopener">arXiv:2306.11644</a>);
+          OLMo 2 (<a href="https://arxiv.org/abs/2501.00656" target="_blank" rel="noopener">arXiv:2501.00656</a>);
+          Gemma 2 (<a href="https://arxiv.org/abs/2408.00118" target="_blank" rel="noopener">arXiv:2408.00118</a>);
+          Mamba (<a href="https://arxiv.org/abs/2312.00752" target="_blank" rel="noopener">arXiv:2312.00752</a>);
+          Jamba (<a href="https://arxiv.org/abs/2403.19887" target="_blank" rel="noopener">arXiv:2403.19887</a>);
+          Nemotron-H (<a href="https://arxiv.org/abs/2504.03624" target="_blank" rel="noopener">arXiv:2504.03624</a>);
+          Aux-loss-free balancing (<a href="https://arxiv.org/abs/2408.15664" target="_blank" rel="noopener">arXiv:2408.15664</a>);
+          FP8 formats (<a href="https://arxiv.org/abs/2209.05433" target="_blank" rel="noopener">arXiv:2209.05433</a>);
+          Position interpolation (<a href="https://arxiv.org/abs/2306.15595" target="_blank" rel="noopener">arXiv:2306.15595</a>).
+        </p>
+
+        <nav class="lecture-nav" aria-label="Chapter navigation">
+          <a class="nav-card prev" href="chapter01-scale-is-a-strategy.html">
+            <div class="label">&larr; Previous &middot; Chapter 1</div>
+            <div class="title">Scale is a strategy</div>
+          </a>
+          <a class="nav-card next" href="chapter03-teaching-it-to-be-helpful.html">
+            <div class="label">Next &middot; Chapter 3 &rarr;</div>
+            <div class="title">Teaching it to be helpful</div>
+          </a>
+        </nav>
+
+      </article>
+
+      <footer class="site-footer">
+        <p>From Attention to Agents &middot; <a href="../index.html">All chapters</a> &middot; <a href="https://github.com/" target="_blank" rel="noopener">Source</a></p>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script defer src="../scripts/shared.js"></script>
+<script defer src="../scripts/glossaryData.js"></script>
+<script defer src="../scripts/glossary.js"></script>
+<script defer src="../scripts/kvCache.js"></script>
+<script defer src="../scripts/moeRouter.js"></script>
+</body>
+</html>

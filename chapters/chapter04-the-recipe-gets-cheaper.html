@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chapter 3 - The recipe gets cheaper · From Attention to Agents</title>
-<meta name="description" content="2023–2024: DPO drops the reward model and the PPO loop, GRPO drops the critic, LLaMA cracks open the weights, and LoRA/QLoRA shrink the compute. The alignment recipe gets steadily cheaper - and the open-weights wave catches up.">
+<title>Chapter 4 - The recipe gets cheaper · From Attention to Agents</title>
+<meta name="description" content="2023-2026: DPO drops the reward model and the PPO loop, its variants (KTO/IPO/SimPO/ORPO) prune it further, GRPO drops the critic; LLaMA cracks open the weights, LoRA/QLoRA shrink the compute, and once verifiable rewards arrived the frontier came back to online RL - Tulu 3 coining the term RLVR. The alignment recipe gets steadily cheaper, and the open-weights wave catches up through gpt-oss and Kimi K2.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-title">Chapter 3 · 2023 – 2024</div>
+    <div class="sidebar-title">Chapter 4 · 2023 – 2026</div>
     <div class="sidebar-subtitle">The recipe gets cheaper</div>
     <a class="sidebar-home" href="../index.html">← course index</a>
     <nav class="nav-toc"></nav>
@@ -32,28 +32,31 @@
       <article class="article">
 
         <nav class="lecture-nav-top" aria-label="Chapter navigation">
-          <a href="chapter02-teaching-it-to-be-helpful.html">← Ch 2 · Teaching it to be helpful</a>
-          <a href="chapter04-steering-without-retraining.html">Ch 4 · Steering without retraining →</a>
+          <a href="chapter03-teaching-it-to-be-helpful.html">← Ch 3 · Teaching it to be helpful</a>
+          <a href="chapter05-steering-without-retraining.html">Ch 5 · Steering without retraining →</a>
         </nav>
 
-        <p class="eyebrow" style="margin-top:32px">Chapter 3 · Alignment, continued · lever: democratization</p>
+        <p class="eyebrow" style="margin-top:32px">Chapter 4 · 2023 – 2026 · lever: democratization</p>
         <h1 style="font-size:42px; font-weight:700; line-height:1.1; margin:14px 0 18px; letter-spacing:-0.02em">
           The recipe gets cheaper
         </h1>
 
         <p class="lecture-roadmap">
-          RLHF worked, but the recipe was expensive. Over 2023 and 2024 it was taken apart
+          RLHF worked, but the recipe was expensive. From 2023 through 2026 it was taken apart
           in two directions at once. The <strong>alignment algorithm</strong> shed pieces - DPO
-          dropped the reward model and the RL loop, GRPO dropped the critic. The
-          <strong>base model</strong> stopped being a secret - LLaMA leaked the weights into the
-          open, and Alpaca and Vicuna showed you could fine-tune a respectable assistant on a
-          credit card. The <strong>compute</strong> stopped being a wall - LoRA, then QLoRA, fit
-          a 65B fine-tune onto a single GPU. Same destination as Chapter 2, an order of magnitude
-          cheaper at every step.
+          dropped the reward model and the RL loop, its variants pruned it further, GRPO dropped
+          the critic. The <strong>base model</strong> stopped being a secret - LLaMA leaked the
+          weights into the open, and Alpaca and Vicuna showed you could fine-tune a respectable
+          assistant on a credit card. The <strong>compute</strong> stopped being a wall - LoRA,
+          then QLoRA, fit a 65B fine-tune onto a single GPU. Same destination as Chapter 3, an
+          order of magnitude cheaper at every step. And then, once <em>verifiable</em> rewards
+          arrived at the end of 2024, the field walked half of that back: strong open recipes
+          returned to online RL, and the open-weights wave rolled forward through Kimi K2 and
+          gpt-oss.
         </p>
 
         <p>
-          The Chapter 2 recipe - supervised fine-tuning, then a reward model, then PPO - works,
+          The Chapter 3 recipe - supervised fine-tuning, then a reward model, then PPO - works,
           and ChatGPT was the proof. But running it required keeping four models resident at
           once (policy, reference, reward, critic), and PPO is notoriously finicky to tune. Most
           of the next two years is the same field <em>removing</em> moving parts from that recipe,
@@ -61,7 +64,7 @@
           reach of anyone with a single GPU and a weekend.
         </p>
 
-        <h2><span class="section-number">3.1</span>DPO - your LM is secretly a reward model</h2>
+        <h2><span class="section-number">4.1</span>DPO - your LM is secretly a reward model</h2>
 
         <p>
           The <span class="gloss" data-gloss="dpo">DPO</span> paper, posted to arXiv in May 2023
@@ -103,7 +106,59 @@
           alignment with a regular supervised-learning workflow.
         </p>
 
-        <h2><span class="section-number">3.2</span>GRPO - the group is its own baseline</h2>
+        <h2><span class="section-number">4.2</span>DPO's family</h2>
+
+        <p>
+          Once the closed-form derivation was public, the year that followed produced a small zoo
+          of DPO variants. Each one keeps the "no reward model, no PPO loop" idea and moves one
+          other piece. It is worth knowing the shape of the space; you will see these names in
+          almost every 2024-2025 post-training report.
+        </p>
+
+        <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; margin:18px 0; font-size:15px">
+          <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+            <th style="padding:9px 12px">Method</th>
+            <th style="padding:9px 12px">Date</th>
+            <th style="padding:9px 12px">What it drops or changes vs DPO</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><strong><span class="gloss" data-gloss="ipo">IPO</span></strong>
+                <a href="https://arxiv.org/abs/2310.12036" target="_blank" rel="noopener">(Azar 2023)</a></td>
+              <td style="padding:9px 12px">Oct 2023</td>
+              <td style="padding:9px 12px">Replaces the Bradley-Terry log-sigmoid with an identity mapping, so the loss stops running off to infinity on near-certain preferences. Same setup, less overfit.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><strong><span class="gloss" data-gloss="kto">KTO</span></strong>
+                <a href="https://arxiv.org/abs/2402.01306" target="_blank" rel="noopener">(Ethayarajh 2024)</a></td>
+              <td style="padding:9px 12px">Feb 2024</td>
+              <td style="padding:9px 12px">No pairs. Each example is a single response tagged desirable or undesirable, and the loss is a Kahneman-Tversky utility. Match the data you actually have (a thumbs-up feed) instead of the data DPO wants (ranked A/B).</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><strong><span class="gloss" data-gloss="orpo">ORPO</span></strong>
+                <a href="https://arxiv.org/abs/2403.07691" target="_blank" rel="noopener">(Hong 2024)</a></td>
+              <td style="padding:9px 12px">Mar 2024</td>
+              <td style="padding:9px 12px">Folds SFT and preference optimization into a single objective with an odds-ratio term. No reference model, no separate SFT run. One stage instead of two.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px"><strong><span class="gloss" data-gloss="simpo">SimPO</span></strong>
+                <a href="https://arxiv.org/abs/2405.14734" target="_blank" rel="noopener">(Meng 2024)</a></td>
+              <td style="padding:9px 12px">May 2024</td>
+              <td style="padding:9px 12px">Reference-free too, with a length-normalized log-prob as the reward and a target margin. Half the memory of DPO and reported gains on AlpacaEval / Arena-Hard.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>
+          The moral of the family is that DPO is one point in a small design space. What you drop -
+          the reference policy, the pair structure, the log-sigmoid, the separate SFT stage - is up
+          to your data and your budget. What you keep is the core move: <em>no reward model, no
+          online rollouts</em>.
+        </p>
+
+        <h2><span class="section-number">4.3</span>GRPO - the group is its own baseline</h2>
 
         <p>
           DPO took alignment <em>out</em> of reinforcement learning. <span class="gloss" data-gloss="grpo">GRPO</span>
@@ -137,8 +192,11 @@
           That's the whole change. Policy and reference model still live in memory. Reward model
           still scores. PPO's clipped surrogate update still applies. Only the critic - a
           second model-sized set of activations and optimizer state - is gone. The same GRPO
-          comes back in Chapter 5: it's the algorithm DeepSeek uses to train R1, the open
-          reasoning model that rivals o1.
+          comes back in Chapter 6: it is the algorithm DeepSeek uses to train R1, the open
+          reasoning model that rivals o1. GRPO also, it turns out, has its own failure modes -
+          length bias, entropy collapse, off-policy drift under long rollouts - and the 2025
+          successors (Dr. GRPO, DAPO, GSPO, CISPO, VAPO) fix them one by one. That whole zoo is
+          Chapter 7's subject; here it is enough to know GRPO was the on-ramp.
         </p>
 
         <h3>Three recipes, side by side</h3>
@@ -197,12 +255,62 @@
         <p>
           Two different ways to shrink the same recipe - and a hint of what's coming. DPO showed
           you could align without RL at all. GRPO showed you could keep RL but drop the most
-          expensive piece. By Chapter 5 the lane reaches its logical end: reasoning models
+          expensive piece. By Chapter 6 the second lane reaches its logical end: reasoning models
           trained with <em>verifiable</em> rewards, where the human-labeled reward model is gone
           too.
         </p>
 
-        <h2><span class="section-number">3.3</span>The open-weights wave</h2>
+        <h2><span class="section-number">4.4</span>What happened next: back to online RL</h2>
+
+        <p>
+          The neat DPO-vs-GRPO framing above is where the story stood in late 2024. What actually
+          happened over the following year is more interesting: <em>the open community walked
+          DPO's dominance partly back</em>. Once verifiable rewards for math and code showed up
+          as a reliable reward signal, the frontier of open post-training shifted the last stage
+          from an offline preference loss to an online RL loop again - not the human-labeled PPO
+          of 2022, but a GRPO-family run against automatic verifiers.
+        </p>
+
+        <p>
+          The clearest inflection is Ai2's <span class="gloss" data-gloss="tulu3">Tulu 3</span>
+          in November 2024. Tulu 3 published a four-stage open recipe - data curation, SFT,
+          preference optimization (DPO), and a final stage the paper introduces as
+          <em>"a novel method we call <span class="gloss" data-gloss="rlvr">Reinforcement Learning
+          with Verifiable Rewards (RLVR)</span>."</em> The term
+          <span class="gloss" data-gloss="rlvr">RLVR</span> was coined here. The recipe hit or
+          exceeded closed-model baselines like Claude 3.5 Haiku and GPT-4o-mini at its scale, and
+          the paper's headline result is the clean SFT &rarr; DPO &rarr; RLVR pipeline that most
+          open post-training this year still starts from.
+          (<a href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noopener">Lambert et al., 2024</a>;
+          <a href="https://allenai.org/blog/tulu-3-technical" target="_blank" rel="noopener">Ai2 report</a>.)
+        </p>
+
+        <p>
+          Once verifiable rewards worked, everything downstream leaned back into online RL.
+          DeepSeek-R1 (January 2025) built on GRPO with rule-based rewards. The 2025 successor
+          zoo - DAPO, Dr. GRPO, GSPO, CISPO, VAPO - all live in the online-RL lane. Kimi K2's
+          post-training (July 2025) is on-policy RL over verifiable and self-critique signals.
+          Qwen3's post-training (April 2025) is a four-stage pipeline that ends in RL over
+          verifiable rewards, then general rewards, in that order. The DPO-only frontier lasted
+          about a year. Chapter 7 opens exactly on that pivot.
+          (DeepSeek-R1 <a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">Guo et al., 2025</a>;
+          Qwen3 <a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">Yang et al., 2025</a>;
+          Kimi K2 <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">Team, 2025</a>.)
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">Where DPO still lives</div>
+          <p>
+            None of this makes DPO obsolete. As the middle stage of a modern open recipe (SFT
+            &rarr; DPO &rarr; RLVR), it still does the load-bearing preference work on tasks
+            without cheap verifiers - style, safety, tone, refusals. And on a small team's budget
+            it is still the simplest thing that works. DPO's story is not "beaten" - it is
+            "sandwiched" between an SFT stage that teaches format and an RL stage that chases the
+            things a verifier can actually measure.
+          </p>
+        </div>
+
+        <h2><span class="section-number">4.5</span>The open-weights wave</h2>
 
         <p>
           The other half of this chapter isn't about algorithms. It's about who gets to run them.
@@ -265,7 +373,78 @@
           floor of "make a useful chat model" had dropped two orders of magnitude in a fortnight.
         </p>
 
-        <h2><span class="section-number">3.4</span>PEFT - the compute wall comes down</h2>
+        <p>
+          The three years since bear the same signature at bigger scale. The base models have
+          gotten stronger and more open, and by 2025 the frontier of "open weights" is
+          indistinguishable from the frontier of "closed weights" on most public benchmarks.
+        </p>
+
+        <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; margin:18px 0; font-size:14px">
+          <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+            <th style="padding:9px 12px">When</th>
+            <th style="padding:9px 12px">Release</th>
+            <th style="padding:9px 12px">Why it mattered</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Sep 2023</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2310.06825" target="_blank" rel="noopener">Mistral 7B</a></td>
+              <td style="padding:9px 12px">First Apache-2 base that beat LLaMA-2-13B at 7B. The permissive-license bar reset.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Dec 2023</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2401.04088" target="_blank" rel="noopener">Mixtral 8x7B</a></td>
+              <td style="padding:9px 12px">The open MoE that made "sparse experts" a household concept for practitioners.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Jul 2024</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2407.21783" target="_blank" rel="noopener">Llama 3.1 405B</a></td>
+              <td style="padding:9px 12px">First open ~GPT-4-tier flagship (the herd's 8B and 70B, also over-Chinchilla at ~15T tokens - the deliberate over-training move from Ch 1).</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Dec 2024</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener">DeepSeek-V3</a></td>
+              <td style="padding:9px 12px">671B MoE with 37B active, aux-loss-free routing, FP8 training. The recipe that everyone in the open community read carefully.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Jan 2025</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1</a></td>
+              <td style="padding:9px 12px">Open reasoning model that rivalled o1 on math and code, trained mostly by RL. This is the file Chapter 6 opens on.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Apr 2025</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">Qwen3</a></td>
+              <td style="padding:9px 12px">Apache-2 dense and MoE lines from 0.6B to 235B. Hybrid thinking / non-thinking modes in one model, 119 languages.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Jul 2025</td>
+              <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">Kimi K2</a></td>
+              <td style="padding:9px 12px">1T-param MoE with 32B active; modified-MIT license; the open flagship of the summer.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px; white-space:nowrap">Aug 2025</td>
+              <td style="padding:9px 12px"><a href="https://openai.com/index/introducing-gpt-oss/" target="_blank" rel="noopener">gpt-oss-120b / 20b</a></td>
+              <td style="padding:9px 12px">OpenAI's first open-weights release since GPT-2. Apache-2 MoE, the 120B near o4-mini, fits on one 80 GB H100.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px; white-space:nowrap">Aug 2025</td>
+              <td style="padding:9px 12px"><a href="https://api-docs.deepseek.com/news/news250821/" target="_blank" rel="noopener">DeepSeek-V3.1</a></td>
+              <td style="padding:9px 12px">Hybrid think / non-think in one model, 128K context, still open.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>
+          The through-line is that the open-weights wave stopped being a research toy and became
+          the plurality of the frontier. A working ML engineer in late 2026 can pick a fully open
+          MoE flagship, fine-tune it against a written spec, and serve it - without a phone call
+          to a research lab. That is the point on the map where the "fine-tune it in my voice"
+          idea from the intro has both the base model and the recipe within reach.
+        </p>
+
+        <h2><span class="section-number">4.6</span>PEFT - the compute wall comes down</h2>
 
         <p>
           Alpaca and Vicuna were still <em>full</em> fine-tunes, which is why they leaned on the
@@ -315,14 +494,14 @@
             If you've been ML-literate since 2019 and you've been scoping a "fine-tune a small
             model on my own writing in my own voice" project, this is exactly the node where that
             plan lives. QLoRA on a single consumer-ish GPU was the credible 2023-vintage path to
-            personal fine-tuning, and it is a real one. Hold onto it - Chapter 7's capstone returns
-            to it and argues, with a chapter's worth of evidence, that for <em>style</em>
-            specifically the prompt lane (Chapter 4) is the better path. Plant the seed; we'll
+            personal fine-tuning, and it is a real one. Hold onto it - the Chapter 11 capstone
+            returns to it and argues, with a course's worth of evidence, that for <em>style</em>
+            specifically the prompt lane (Chapter 5) is the better path. Plant the seed; we'll
             resolve it.
           </p>
         </div>
 
-        <h2><span class="section-number">3.5</span>The democratization curve, on one axis</h2>
+        <h2><span class="section-number">4.7</span>The democratization curve, on one axis</h2>
 
         <p>
           Notice that the two halves of this chapter are the same curve seen from two angles.
@@ -335,25 +514,29 @@
             <th style="padding:9px 12px">2022 baseline</th>
             <th style="padding:9px 12px">2023</th>
             <th style="padding:9px 12px">2024</th>
+            <th style="padding:9px 12px">2025 - 2026</th>
           </tr></thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">Alignment algorithm</td>
               <td style="padding:9px 12px">PPO (4 models)</td>
               <td style="padding:9px 12px">DPO (2 models, no RL)</td>
-              <td style="padding:9px 12px">GRPO (no critic)</td>
+              <td style="padding:9px 12px">GRPO + Tulu 3's SFT&rarr;DPO&rarr;RLVR</td>
+              <td style="padding:9px 12px">GRPO successors (Ch 7)</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">Base model access</td>
               <td style="padding:9px 12px">API-only</td>
-              <td style="padding:9px 12px">LLaMA → Alpaca / Vicuna</td>
-              <td style="padding:9px 12px">LLaMA-2 commercial</td>
+              <td style="padding:9px 12px">LLaMA &rarr; Alpaca / Vicuna</td>
+              <td style="padding:9px 12px">LLaMA-2 &rarr; Mixtral &rarr; DeepSeek-V3</td>
+              <td style="padding:9px 12px">Qwen3, Kimi K2, gpt-oss</td>
             </tr>
             <tr>
               <td style="padding:9px 12px; color:var(--text-muted)">Compute footprint</td>
               <td style="padding:9px 12px">Full FT (cluster)</td>
               <td style="padding:9px 12px">LoRA (single GPU)</td>
               <td style="padding:9px 12px">QLoRA (48 GB)</td>
+              <td style="padding:9px 12px">Same, on open MoE bases</td>
             </tr>
           </tbody>
         </table>
@@ -362,11 +545,11 @@
         <p>
           Every row is the same gesture: keep what you're trying to do, drop something the
           previous generation needed. None of this changed the <em>shape</em> of the alignment
-          recipe Chapter 2 laid out. Better algorithms, more open weights, smaller GPUs - the
+          recipe Chapter 3 laid out. Better algorithms, more open weights, smaller GPUs - the
           map is just being filled in cheaper.
         </p>
 
-        <h2><span class="section-number">3.6</span>What this chapter didn't touch</h2>
+        <h2><span class="section-number">4.8</span>What this chapter didn't touch</h2>
 
         <p>
           Two things, on purpose. The PEFT family is wider than just LoRA and QLoRA - adapters,
@@ -384,13 +567,13 @@
         </p>
 
         <nav class="lecture-nav" aria-label="Chapter navigation">
-          <a class="nav-card prev" href="chapter02-teaching-it-to-be-helpful.html">
+          <a class="nav-card prev" href="chapter03-teaching-it-to-be-helpful.html">
             <div class="label">← previous</div>
-            <div class="title">Ch 2 · Teaching it to be helpful</div>
+            <div class="title">Ch 3 · Teaching it to be helpful</div>
           </a>
-          <a class="nav-card next" href="chapter04-steering-without-retraining.html">
+          <a class="nav-card next" href="chapter05-steering-without-retraining.html">
             <div class="label">next →</div>
-            <div class="title">Ch 4 · Steering without retraining</div>
+            <div class="title">Ch 5 · Steering without retraining</div>
           </a>
         </nav>
 

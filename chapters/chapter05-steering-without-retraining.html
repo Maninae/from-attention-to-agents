@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Steering without retraining - From Attention to Agents · Chapter 4</title>
-<meta name="description" content="Optimize the context, not the weights. The 2022 to 2025 arc of discrete prompt optimization: APE, OPRO, EvoPrompt, PromptBreeder, DSPy/MIPROv2, DRPO, SPO, GEPA. By 2026 the prompt lane catches the weights lane.">
+<title>Steering without retraining - From Attention to Agents · Chapter 5</title>
+<meta name="description" content="Optimize the context, not the weights. The 2022 to 2026 arc of discrete prompt optimization: APE, OPRO, EvoPrompt, PromptBreeder, DSPy/MIPROv2, DRPO, SPO, GEPA. By 2026 the prompt lane catches the weights lane.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-title">Chapter 4 · Context / prompt</div>
+    <div class="sidebar-title">Chapter 5 &middot; 2022 &ndash; 2026</div>
     <div class="sidebar-subtitle">Steering without retraining</div>
     <a class="sidebar-home" href="../index.html">&larr; all chapters</a>
     <nav class="nav-toc"></nav>
@@ -29,12 +29,12 @@
     <div class="container">
 
       <nav class="lecture-nav-top" aria-label="Chapter navigation">
-        <a href="chapter03-the-recipe-gets-cheaper.html">&larr; Ch 3 &middot; The recipe gets cheaper</a>
-        <a href="chapter05-learning-to-think.html">Ch 5 &middot; Learning to think &rarr;</a>
+        <a href="chapter04-the-recipe-gets-cheaper.html">&larr; Ch 4 &middot; The recipe gets cheaper</a>
+        <a href="chapter06-learning-to-think.html">Ch 6 &middot; Learning to think &rarr;</a>
       </nav>
 
       <header class="lecture-header">
-        <span class="eyebrow">Chapter 4 &middot; 2022 – 2025 &middot; lever: context / prompt</span>
+        <span class="eyebrow">Chapter 5 &middot; 2022 – 2026 &middot; lever: context / prompt</span>
         <h1>Steering without retraining</h1>
         <p class="desc">
           The other lane. Freeze the model, search over the words in front of it,
@@ -52,21 +52,21 @@
       <article class="article">
 
         <p class="lecture-roadmap">
-          Three chapters of alignment, and every step still touched the weights. Now we put
+          Two chapters of alignment, and every step still touched the weights. Now we put
           the gradients down. The model is frozen; the lever is the prompt. We will trace
           the discrete branch of prompt optimization from <span class="gloss" data-gloss="ape">APE</span>
           in late 2022 to <span class="gloss" data-gloss="gepa">GEPA</span> in 2025, watch
-          the chain-of-thought trick from Ch&nbsp;2 grow up into something a search can target,
+          the chain-of-thought trick from Ch&nbsp;3 grow up into something a search can target,
           and arrive at the result that gives this chapter its punchline: a prompt optimizer that
           matches reinforcement learning while spending up to <strong>35&times; fewer rollouts</strong>
           to get there
-          (<a href="https://arxiv.org/abs/2507.19457" target="_blank" rel="noopener">Agrawal et al., ICLR&nbsp;2026</a>).
+          (<a href="https://arxiv.org/abs/2507.19457" target="_blank" rel="noopener">Agrawal et al., 2025</a>).
         </p>
 
-        <h2><span class="section-number">4.1</span>Two ways to change a mind</h2>
+        <h2><span class="section-number">5.1</span>Two ways to change a mind</h2>
         <p>
-          A language model has exactly two surfaces you can move. The weights - what Ch&nbsp;2
-          and Ch&nbsp;3 spent the whole alignment recipe optimizing. And the context - the
+          A language model has exactly two surfaces you can move. The weights - what Ch&nbsp;3
+          and Ch&nbsp;4 spent the whole alignment recipe optimizing. And the context - the
           tokens you put in front of it at inference time. Pick one and you have picked your lane.
         </p>
         <p>
@@ -104,7 +104,7 @@
         <p>
           "Prompt tuning" refers to two methods that share nothing but a name - and the
           mix-up derails almost everyone arriving from classical ML. One uses gradients on
-          continuous vectors and is really a member of the PEFT family from Ch&nbsp;3. The other,
+          continuous vectors and is really a member of the PEFT family from Ch&nbsp;4. The other,
           this chapter's subject, searches over actual words and never touches a gradient.
         </p>
         <div style="overflow-x:auto">
@@ -155,7 +155,7 @@
           optimization</span>, words only, weights frozen.
         </p>
 
-        <h2><span class="section-number">4.2</span>APE: the prompt becomes a search target</h2>
+        <h2><span class="section-number">5.2</span>APE: the prompt becomes a search target</h2>
         <p>
           The lane opens in late 2022 with the <strong>Automatic Prompt Engineer</strong>
           (<a href="https://arxiv.org/abs/2211.01910" target="_blank" rel="noopener">Zhou et al., 2022</a>,
@@ -181,7 +181,7 @@
           <div class="demo-body"><div id="search-demo"></div></div>
         </div>
 
-        <h2><span class="section-number">4.3</span>OPRO, EvoPrompt, PromptBreeder: the loop tightens</h2>
+        <h2><span class="section-number">5.3</span>OPRO, EvoPrompt, PromptBreeder: the loop tightens</h2>
         <p>
           A year later, <strong><span class="gloss" data-gloss="opro">OPRO</span></strong> - Optimization by PROmpting - made the
           search trajectory explicit. Feed the optimizer-LLM a running history of
@@ -209,15 +209,15 @@
         <div class="callout insight">
           <div class="callout-label">CoT seed, second growth</div>
           <p>
-            Chain-of-thought arrived in Ch&nbsp;2 as a <em>prompt trick</em> - a hand-written
+            Chain-of-thought arrived in Ch&nbsp;3 as a <em>prompt trick</em> - a hand-written
             line that made the model show its work. Here it becomes a <em>target</em>: APE, OPRO,
             and EvoPrompt all search over CoT-style instructions, and PromptBreeder explicitly
             evolves them. The same idea - make the model think before it answers - gets
-            mechanized. In Ch&nbsp;5 it grows once more, and this time it ends up in the weights.
+            mechanized. In Ch&nbsp;6 it grows once more, and this time it ends up in the weights.
           </p>
         </div>
 
-        <h2><span class="section-number">4.4</span>DSPy: program, don't prompt</h2>
+        <h2><span class="section-number">5.4</span>DSPy: program, don't prompt</h2>
         <p>
           Up to this point we've been searching for a single magic string. <strong>DSPy</strong>
           changed the unit of work
@@ -254,7 +254,7 @@
           </p>
         </div>
 
-        <h2><span class="section-number">4.5</span>DRPO and SPO: lose the human, lose the labels</h2>
+        <h2><span class="section-number">5.5</span>DRPO and SPO: lose the human, lose the labels</h2>
         <p>
           <strong><span class="gloss" data-gloss="drpo">DRPO</span></strong> - Dynamic Rewarding
           with Prompt Optimization - is the moment the prompt lane stops being a productivity
@@ -288,7 +288,7 @@
           </p>
         </div>
 
-        <h2><span class="section-number">4.6</span>GEPA: reflection beats a scalar reward</h2>
+        <h2><span class="section-number">5.6</span>GEPA: reflection beats a scalar reward</h2>
         <p>
           The answer, as of ICLR&nbsp;2026, is <span class="pos">yes</span>.
           <strong>GEPA</strong> - Genetic-Pareto - is a prompt optimizer with two
@@ -312,10 +312,11 @@
         <div class="callout insight">
           <div class="callout-label">The numbers, honestly</div>
           <p>
-            Across <strong>6 tasks</strong>, GEPA beats GRPO (the RL recipe from Ch&nbsp;3) by
-            <strong>+6%</strong> on average and by <strong>up to +20%</strong> on its best task,
+            Across <strong>six tasks</strong>, GEPA beats GRPO (the RL recipe from Ch&nbsp;4) by
+            <strong>+6&nbsp;pp</strong> on average and by <strong>up to +19&nbsp;pp</strong> on its best task,
             using up to <strong>35&times; fewer rollouts</strong>. Against MIPROv2 the
-            average gap is <strong>&gt;+10%</strong>, including <strong>+12%</strong> on AIME-2025.
+            average gap is <strong>&gt;+10&nbsp;pp</strong>. The headline tail (+19, 35&times;)
+            is the one everyone quotes; the +6&nbsp;pp average is the one a reviewer would write down.
             The headline tail (+20, 35&times;) is the one everyone quotes; the +6% average is the
             one a reviewer would write down.
           </p>
@@ -329,7 +330,7 @@
           <div class="demo-body"><div id="evo-demo"></div></div>
         </div>
 
-        <h2><span class="section-number">4.7</span>The eval shadow: who judges the judge?</h2>
+        <h2><span class="section-number">5.7</span>The eval shadow: who judges the judge?</h2>
         <p>
           We've buried something quietly across the whole chapter. Every method here needs a way
           to <em>score</em> a candidate. For APE on a labeled task that's accuracy. For DRPO it's
@@ -341,7 +342,7 @@
         <p>
           One robust fix is to refuse to score on an absolute scale at all. Ask only the easier
           pairwise question - "which of these two is better?" - and let Elo turn those
-          choices into a ranking. Pairwise is what reward models from Ch&nbsp;2 were trained on, and
+          choices into a ranking. Pairwise is what reward models from Ch&nbsp;3 were trained on, and
           it travels: a calibrated LLM judge plus a thin layer of human pairwise feedback is a
           surprisingly hard signal to game.
         </p>
@@ -355,12 +356,12 @@
         </div>
 
         <p>
-          The capstone in Ch&nbsp;7 makes this concrete - the voice-rewriter we'll build there
+          The capstone in Ch&nbsp;11 makes this concrete - the voice-rewriter we'll build there
           uses pairwise clicks &rarr; Elo as its fitness signal precisely to keep the judge honest.
           Park that thought.
         </p>
 
-        <h2><span class="section-number">4.8</span>Where this leaves us</h2>
+        <h2><span class="section-number">5.8</span>Where this leaves us</h2>
         <p>
           By 2025 the picture is clean enough to summarize in a small table. The methods of this
           chapter are not variations on one trick - they each delete a different dependency
@@ -438,10 +439,10 @@
           </p>
         </div>
 
-        <h3>Handoff to Chapter 5</h3>
+        <h3>Handoff to Chapter 6</h3>
         <p>
           We have done as much as freezing the model lets us do. The next move is the one that
-          unfreezes it again, but on purpose. Chain-of-thought entered as a prompt trick (Ch&nbsp;2),
+          unfreezes it again, but on purpose. Chain-of-thought entered as a prompt trick (Ch&nbsp;3),
           became something prompt search could optimize (this chapter), and is about to be trained
           directly into the weights via RL on verifiable rewards - the o1 and DeepSeek-R1 line
           of work. Same idea, third life. The model is about to learn to <em>think</em>.
@@ -450,18 +451,18 @@
       </article>
 
       <nav class="lecture-nav" aria-label="Chapter navigation">
-        <a class="nav-card prev" href="chapter03-the-recipe-gets-cheaper.html">
-          <div class="label">&larr; Previous &middot; Chapter 3</div>
+        <a class="nav-card prev" href="chapter04-the-recipe-gets-cheaper.html">
+          <div class="label">&larr; Previous &middot; Chapter 4</div>
           <div class="title">The recipe gets cheaper</div>
         </a>
-        <a class="nav-card next" href="chapter05-learning-to-think.html">
-          <div class="label">Next &middot; Chapter 5 &rarr;</div>
+        <a class="nav-card next" href="chapter06-learning-to-think.html">
+          <div class="label">Next &middot; Chapter 6 &rarr;</div>
           <div class="title">Learning to think</div>
         </a>
       </nav>
 
       <footer class="site-footer">
-        <p>From Attention to Agents &middot; Chapter 4. Every claim, date, and figure is cited inline to its primary source (arXiv / ACL / NeurIPS / OpenReview).</p>
+        <p>From Attention to Agents &middot; Chapter 5. Every claim, date, and figure is cited inline to its primary source (arXiv / ACL / NeurIPS / OpenReview).</p>
       </footer>
 
     </div>

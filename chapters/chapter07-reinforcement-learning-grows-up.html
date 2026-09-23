@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 7 - Reinforcement learning grows up · From Attention to Agents</title>
+<meta name="description" content="2025-26: the RLVR recipe that trained R1 gets rebuilt from the inside. GRPO's biases get named and fixed (Dr. GRPO, DAPO, GSPO, CISPO, VAPO). Reward hacking returns as length-and-format-and-spec exploits. Rubric rewards, generative RMs, and deliberative alignment take over where verifiers stop. RL infrastructure becomes a first-class engineering surface, and RL compute finally gets a predictable scaling law of its own.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="../styles/shared.css">
+<link rel="stylesheet" href="../styles/demos.css">
+<link rel="stylesheet" href="../styles/glossary.css">
+</head>
+<body>
+<div class="progress-bar"></div>
+<button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Chapter 7 &middot; 2025 &ndash; 2026</div>
+    <div class="sidebar-subtitle">Reinforcement learning grows up</div>
+    <a class="sidebar-home" href="../index.html">&larr; course index</a>
+    <nav class="nav-toc"></nav>
+  </aside>
+
+  <main class="main">
+    <div class="container">
+      <article class="article">
+
+        <nav class="lecture-nav-top" aria-label="Chapter navigation">
+          <a href="chapter06-learning-to-think.html">&larr; Ch 6 &middot; Learning to think</a>
+          <a href="chapter08-paying-for-thought.html">Ch 8 &middot; Paying for thought &rarr;</a>
+        </nav>
+
+        <p class="eyebrow" style="margin-top:32px">Chapter 7 &middot; 2025 &ndash; 2026 &middot; lever: reward (RL at scale)</p>
+        <h1 style="font-size:42px; font-weight:700; line-height:1.1; margin:14px 0 18px; letter-spacing:-0.02em">
+          Reinforcement learning grows up
+        </h1>
+
+        <p class="lecture-roadmap">
+          Chapter 6 ended with the R1 weekend: <span class="gloss" data-gloss="grpo">GRPO</span> plus
+          <span class="gloss" data-gloss="rlvr">RLVR</span> was suddenly the whole recipe for a
+          reasoning model, and everyone with a math checker and a base model rushed to try it.
+          What happened next is this chapter. GRPO's own biases got named and patched inside a
+          year - Dr. GRPO, DAPO, GSPO, CISPO, VAPO. Reward hacking returned in new clothes: not
+          the RM-wireheading of Chapter 3, but length exploits, format exploits, and unit-test
+          exploits like the model calling <code>exit(0)</code> to make failing tests disappear.
+          Where verifiers ran out - style, safety, refusals - a rubric layer and a
+          <span class="gloss" data-gloss="genrm">generative reward model</span> took over,
+          and OpenAI trained its o-series to reason over a written spec before answering. The
+          plumbing became a first-class engineering surface (verl, OpenRLHF, TRL, NeMo-RL,
+          slime, SkyRL), and Meta's ScaleRL paper finally showed RL compute obeys a smooth
+          sigmoid the same way pretraining loss obeys a power law.
+        </p>
+
+        <p>
+          The through-line: <em>reward is the design</em>. In Chapter 3 the reward was a small
+          learned model, and Goodhart's law showed up immediately. In Chapter 6 the reward
+          became a program - a math checker, a unit-test runner, a sandbox exit code - and the
+          field cheered "unhackable." That was oversold. This chapter is the field cleaning
+          up after itself.
+        </p>
+
+        <h2><span class="section-number">7.1</span>Verifiers, and why the reward got easy again</h2>
+
+        <p>
+          The trick that made R1 possible is worth stating on its own. A
+          <span class="gloss" data-gloss="verifier">verifier</span> is any program that maps a
+          model's response to a scalar reward without asking a human. For math it is the
+          answer-equality check: was the boxed number right. For code it is the unit-test
+          runner: how many tests pass. For instruction-following it is a format regex, and for
+          agentic coding it is the sandbox's exit code and the git-diff comparator. In all four,
+          the reward function has the properties a learned RM never had: it is <em>cheap</em>
+          (microseconds), <em>exact</em> (not a preference estimate), and <em>bounded</em>
+          (0 to 1 by construction). This is the class of problem where GRPO+RLVR shines and
+          the entire 2025-26 reasoning wave was trained.
+        </p>
+
+        <div class="callout definition">
+          <div class="callout-label">RLVR, precisely</div>
+          <p>
+            Reinforcement learning against a reward function that is a fixed program, not a
+            learned model. The reward is not a scalar predicted by an RM head; it is a checker
+            that runs against the response. Two consequences flow from this:
+          </p>
+          <ul style="margin: 0">
+            <li>
+              You cannot Goodhart the RM the way Chapter 3 warned about, because there is no
+              RM. The reward is a truth condition.
+            </li>
+            <li>
+              You <em>can</em> Goodhart the checker. Every place the checker is a
+              proxy for what you meant - length, formatting, "any answer in the box" - the
+              policy will find the exploit. Section 7.3.
+            </li>
+          </ul>
+          <p style="font-size:14px; color:var(--text-muted); margin-top:8px; margin-bottom:0">
+            The term "RLVR" was coined by Tulu 3 (Lambert et al., AI2, Nov 2024;
+            <a href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noopener">arXiv</a>);
+            the underlying mechanism - GRPO plus a math checker - was already running in
+            DeepSeekMath in Feb 2024. Chapter 4 introduces GRPO; Chapter 6 introduces RLVR
+            through R1.
+          </p>
+        </div>
+
+        <p>
+          The rule of thumb: <em>if you can check it cheaply, you can RL against it.</em>
+          Math with a boxed integer answer, competitive-programming problems with hidden tests,
+          formal-verification obligations, browser tasks with a task-completion oracle,
+          instruction-following with a syntactic template - all of it fits. What the rule
+          excludes is the whole soft edge of quality: taste, style, tone, safe-refusal,
+          honesty. That is what Sections 7.4 and 7.5 come back to.
+        </p>
+
+        <h2><span class="section-number">7.2</span>GRPO's failure modes, patched in one year</h2>
+
+        <p>
+          The February 2024 GRPO from
+          <a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">DeepSeekMath</a>
+          is a beautiful five-line diff on top of PPO. Sample a group of $G$ responses per
+          prompt, score all of them, and use the group as its own baseline:
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">GRPO advantage - as originally written</div>
+          <p style="text-align:center">
+            $\hat{A}_{i,t} = \dfrac{r_i - \htmlData{tip=mean reward across the G responses sampled for this prompt}{\text{mean}(r_1,\ldots,r_G)}}{\text{std}(r_1,\ldots,r_G)}$
+          </p>
+          <p style="text-align:center">
+            $\mathcal{L}_{\text{GRPO}} = \dfrac{1}{G}\sum_{i=1}^{G} \dfrac{1}{\htmlData{tip=length in tokens of the i-th response}{|o_i|}} \sum_{t=1}^{|o_i|} \min\!\left( \rho_{i,t}\hat{A}_{i,t},\, \text{clip}(\rho_{i,t}, 1{-}\varepsilon, 1{+}\varepsilon)\hat{A}_{i,t}\right)$
+          </p>
+          <p style="font-size:14px; color:var(--text-muted); margin-bottom:0">
+            Two normalizations to notice: dividing the advantage by $\text{std}(r_1,\ldots,r_G)$,
+            and dividing the summed token loss by $|o_i|$ per response. Both look innocent.
+            Both are biased.
+          </p>
+        </div>
+
+        <p>
+          Between March and July 2025 four papers took that loss apart. Dr. GRPO named the two
+          normalizations as bugs. DAPO named four training-dynamics failures - exploration
+          collapsing, zero-gradient prompts wasting compute, long-response gradients washing
+          out, truncated overlong responses spraying reward noise - and fixed each. GSPO moved
+          the entire importance ratio up to the sequence level, which turned out to matter a
+          lot for training MoE models stably. CISPO clipped the importance weight instead of
+          the update. VAPO put the critic back and made it work. Same object, five knives.
+        </p>
+
+        <h3 id="sec-drgrpo"><span class="section-number">7.2.1</span>Dr. GRPO - two biases hidden in the denominators</h3>
+
+        <p>
+          Liu et al. (Sea AI Lab and NUS, March 2025;
+          <a href="https://arxiv.org/abs/2503.20783" target="_blank" rel="noopener">Understanding R1-Zero-Like Training</a>)
+          identified two biases in the loss above.
+        </p>
+
+        <p>
+          <strong>Length bias.</strong> Dividing the token-summed loss by $|o_i|$ makes the
+          per-token gradient inversely proportional to response length. For a correct response
+          (positive advantage), the update pushes hardest on the shortest ones - the policy
+          learns to answer short and right. For an <em>incorrect</em> response, longer answers
+          get less push per token toward "don't do this." Combined, the policy drifts to
+          <em>short right answers and long wrong ones</em>. Empirically, that is what R1-Zero
+          training looks like when it drifts: response length keeps growing, but the extra
+          length is disproportionately in the wrong rollouts.
+        </p>
+
+        <p>
+          <strong>Difficulty bias.</strong> Dividing the advantage by
+          $\text{std}(r_1,\ldots,r_G)$ upweights prompts where the group happens to be low
+          variance (nearly-all-right or nearly-all-wrong), because their std is small. A
+          question the model already almost solves gets an outsized gradient step. The prompts
+          in the productive middle - some right, some wrong - are downweighted just when they
+          are most informative.
+        </p>
+
+        <div class="callout insight">
+          <div class="callout-label">The Dr. GRPO fix, in one line</div>
+          <p>
+            Delete both denominators. Use $\hat{A}_i = r_i - \text{mean}(r_1,\ldots,r_G)$ and
+            sum the token losses instead of averaging by $|o_i|$. What is left is the vanilla
+            REINFORCE-with-baseline you would have written in a textbook. Their 7B "Oat-Zero"
+            recipe on Qwen2.5-Math hits <strong>43.3% on AIME 2024</strong> after 27 hours on
+            eight A100s, at half the response length of naive GRPO.
+            (<a href="https://arxiv.org/abs/2503.20783" target="_blank" rel="noopener">Liu et al., Mar 2025</a>.)
+          </p>
+        </div>
+
+        <h3 id="sec-dapo"><span class="section-number">7.2.2</span>DAPO - four training-dynamics fixes</h3>
+
+        <p>
+          Two weeks before Dr. GRPO, ByteDance Seed posted
+          <a href="https://arxiv.org/abs/2503.14476" target="_blank" rel="noopener">DAPO</a>
+          (Decoupled Clip and Dynamic sAmpling Policy Optimization) with a stronger claim:
+          <strong>50 points on AIME 2024 with a Qwen2.5-32B base, matching DeepSeek-R1-Zero-Qwen-32B
+          at about half the training steps</strong>. DAPO ships four fixes in one bundle.
+        </p>
+
+        <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:15px">
+          <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+            <th style="padding:9px 12px; color:var(--text-muted); font-weight:600">Trick</th>
+            <th style="padding:9px 12px">What it does</th>
+            <th style="padding:9px 12px">The bug it patches</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><span class="gloss" data-gloss="clip-higher">Clip-Higher</span></td>
+              <td style="padding:9px 12px">Two clip bounds: $\varepsilon_{\text{low}}$ and $\varepsilon_{\text{high}}$, with $\varepsilon_{\text{high}}$ larger.</td>
+              <td style="padding:9px 12px"><span class="gloss" data-gloss="entropy-collapse">Entropy collapse</span>. A symmetric clip caps a low-probability exploration token at $(1{+}\varepsilon)\pi_{\text{old}}$, choking its growth.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><span class="gloss" data-gloss="dynamic-sampling">Dynamic sampling</span></td>
+              <td style="padding:9px 12px">Discard prompts where all $G$ rollouts are correct or all are wrong (advantage = 0), oversample and refill until the batch is fully useful.</td>
+              <td style="padding:9px 12px">Zero-advantage prompts contribute no gradient; as the model gets stronger, more of the batch becomes wasted.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><span class="gloss" data-gloss="token-level-loss">Token-level policy-gradient loss</span></td>
+              <td style="padding:9px 12px">Sum losses across all tokens in the batch and normalize once, instead of averaging per response.</td>
+              <td style="padding:9px 12px">GRPO's per-response $1/|o_i|$ hides long-response signal. Token-level lets long responses contribute in proportion to their length.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px"><span class="gloss" data-gloss="overlong-shaping">Overlong reward shaping</span></td>
+              <td style="padding:9px 12px">A soft length penalty on responses approaching the max-length cap, instead of a hard truncation with 0 reward.</td>
+              <td style="padding:9px 12px">Truncating a valid-but-lengthy reasoning trace to 0 reward is pure noise. The soft penalty preserves signal near the boundary.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <p>
+          Clip-Higher is the one most worth internalizing, because it explains a
+          counter-intuitive dynamics failure in GRPO runs. A low-probability token that
+          <em>should</em> get more mass under the new policy is bounded above at
+          $\pi_{\text{new}} \le (1{+}\varepsilon)\pi_{\text{old}}$. If $\pi_{\text{old}}$
+          was $0.001$ and $\varepsilon = 0.2$, the largest step you can take is to
+          $0.0012$. High-probability exploitation tokens face the same asymmetric ceiling but
+          have much more room to lose. The policy quietly collapses to the highest-entropy
+          rollouts it already knew, and exploration dies. Decoupling the clip bounds
+          (typically $\varepsilon_{\text{low}} = 0.2$, $\varepsilon_{\text{high}} = 0.28$)
+          buys back exactly the room the exploration tokens need.
+        </p>
+
+        <h3 id="sec-demo"><span class="section-number">7.2.3</span>A group of rollouts, three algorithms</h3>
+
+        <p>
+          Length bias is easier to see than to describe. Below is a fixed group of eight
+          rollouts to one math prompt - three correct-and-short, one correct-and-long, three
+          wrong-of-varying-lengths, one medium-wrong. The middle column shows what per-response
+          gradient each rollout contributes under each algorithm.
+        </p>
+
+        <div class="demo-wrap">
+          <div class="demo-head">
+            <span class="demo-label">Interactive &middot; per-response gradient contribution</span>
+            <span class="demo-hint">pick an algorithm</span>
+          </div>
+          <div class="demo-body"><div id="rlg-demo"></div></div>
+        </div>
+
+        <p style="font-size:14px; color:var(--text-muted); margin-top:-4px">
+          The bars are proportional to $|A_i|$ per response under each recipe's aggregation.
+          Under GRPO the two long wrong rollouts (E, F) contribute the same $|A_i|$ per
+          <em>response</em> as the short wrong rollout D, but the per-<em>token</em> push on E
+          and F is a fraction of D's. Under Dr. GRPO the per-token push is constant per verdict.
+          Under DAPO's token-level aggregation, F and E accumulate <em>more</em> total gradient
+          than D, in proportion to their length - which is what you want when the wrong-and-long
+          rollout is the failure mode you are trying to squash.
+        </p>
+
+        <h3 id="sec-gspo"><span class="section-number">7.2.4</span>GSPO - move the ratio up to the sequence</h3>
+
+        <p>
+          The Qwen team (Zheng et al., Alibaba, July 2025;
+          <a href="https://arxiv.org/abs/2507.18071" target="_blank" rel="noopener">GSPO</a>)
+          made a different change: put the importance-sampling ratio at the sequence level, not
+          the token level. In classical PPO/GRPO the ratio
+          $\rho_{i,t} = \pi_\theta(o_{i,t}\mid x, o_{i,<t}) / \pi_{\text{old}}(o_{i,t}\mid x, o_{i,<t})$
+          is per-token; GSPO uses one ratio per sequence and clips at the sequence level. For a
+          dense model this is a modest change; for a
+          <span class="gloss" data-gloss="moe">MoE</span> model it turns out to be load-bearing.
+        </p>
+
+        <p>
+          The reason is routing drift. Between the rollout snapshot and the update snapshot,
+          the router in an MoE model can send the same token through slightly different
+          experts, producing per-token ratios that are noisy in a way that has nothing to do
+          with the policy's decisions. Sequence-level aggregation averages that noise out.
+          Qwen credits GSPO with the stability of Qwen3's RL runs; the paper explicitly claims
+          it "notably stabilizes MoE RL training." For anyone training an MoE reasoner in
+          2026, GSPO or one of its variants is the default.
+        </p>
+
+        <h3 id="sec-cispo"><span class="section-number">7.2.5</span>CISPO - clip the weight, not the update</h3>
+
+        <p>
+          MiniMax's M1 report (Chen et al., June 2025;
+          <a href="https://arxiv.org/abs/2506.13585" target="_blank" rel="noopener">MiniMax-M1</a>)
+          introduced CISPO - Clipped-IS-weight Policy Optimization - which does the opposite
+          move from PPO's clipped surrogate. PPO clips the <em>update</em> (the ratio times
+          the advantage) to keep the step bounded. CISPO clips the importance-sampling weight
+          <em>itself</em>, then lets the rest of the term flow through. The paper's claim is
+          that this preserves signal from low-probability but high-reward tokens that PPO's
+          symmetric clip discards. M1 is a 456B-parameter MoE (45.9B active) trained with
+          CISPO on 512 H800s over three weeks, at a reported <strong>$534,700</strong> in
+          rollout cost, with a 1M-token context. CISPO is the loss function that ended up in
+          Meta's ScaleRL recipe below.
+        </p>
+
+        <h3 id="sec-vapo"><span class="section-number">7.2.6</span>VAPO - the value-based path, done right</h3>
+
+        <p>
+          One line that runs through the four papers above is: they all give up on the critic.
+          VAPO (Ren et al., ByteDance Seed, April 2025;
+          <a href="https://arxiv.org/abs/2504.05118" target="_blank" rel="noopener">VAPO</a>)
+          argues the critic was thrown out too quickly. Their claim is that a value model can
+          work at frontier scale if you address three specific pathologies: value-model bias
+          (fix with value pretraining), reward sparsity (fix with a length-adaptive GAE that
+          smooths advantages across the long CoT), and the heterogeneous-response-length
+          problem (fix with clip-higher and token-level loss, borrowed straight from DAPO).
+          Result: <strong>60.4 on AIME 2024 with Qwen 32B</strong>, ten points above the
+          reported DeepSeek-R1-Zero-Qwen-32B and above DAPO under matched conditions, no
+          training crashes across multiple seeds. The critic is not dead; it just needs the
+          same care GRPO's group baseline was quietly getting.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">The RL-algorithm zoo, one line each</div>
+          <table style="width:100%; border-collapse:collapse; font-size:14px; margin:8px 0 0">
+            <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+              <th style="padding:6px 10px 6px 0; font-weight:600; color:var(--text-muted)">Method</th>
+              <th style="padding:6px 10px; font-weight:600; color:var(--text-muted)">Team / Date</th>
+              <th style="padding:6px 10px; font-weight:600; color:var(--text-muted)">Change from GRPO</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0">GRPO</td>
+                <td style="padding:6px 10px">DeepSeek, Feb 2024</td>
+                <td style="padding:6px 10px">The baseline. Group-relative advantage, no critic.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0"><span class="gloss" data-gloss="dr-grpo">Dr. GRPO</span></td>
+                <td style="padding:6px 10px">Sea AI Lab / NUS, Mar 2025</td>
+                <td style="padding:6px 10px">Drop $1/|o_i|$ and $1/\text{std}$; recover unbiased REINFORCE.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0"><span class="gloss" data-gloss="dapo">DAPO</span></td>
+                <td style="padding:6px 10px">ByteDance Seed, Mar 2025</td>
+                <td style="padding:6px 10px">Clip-Higher + dynamic sampling + token-level loss + overlong shaping.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0"><span class="gloss" data-gloss="vapo">VAPO</span></td>
+                <td style="padding:6px 10px">ByteDance Seed, Apr 2025</td>
+                <td style="padding:6px 10px">Put the critic back; value pretraining + length-adaptive GAE.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0"><span class="gloss" data-gloss="cispo">CISPO</span></td>
+                <td style="padding:6px 10px">MiniMax, Jun 2025</td>
+                <td style="padding:6px 10px">Clip the IS weight, not the surrogate update.</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 10px 6px 0"><span class="gloss" data-gloss="gspo">GSPO</span></td>
+                <td style="padding:6px 10px">Alibaba / Qwen, Jul 2025</td>
+                <td style="padding:6px 10px">Sequence-level ratio and clipping; stabilizes MoE RL.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2><span class="section-number">7.3</span>Reward hacking, verifier edition</h2>
+
+        <p>
+          Chapter 3 introduced <span class="gloss" data-gloss="reward-hacking">reward hacking</span>
+          as the failure mode of a learned RM. Chapter 6's box on RLVR said, of a verifier-based
+          reward, "cheap, exact, un-hackable in the small." That line is worth revising in
+          light of 2025.
+        </p>
+
+        <p>
+          <strong>Length hacking.</strong> Dr. GRPO's whole opening argument is that GRPO's
+          length normalization made the loss itself grow the response length of wrong answers,
+          because the per-token penalty on wrong-and-long was too small. That is a hack of the
+          <em>loss aggregation</em> before the checker ever runs.
+        </p>
+
+        <p>
+          <strong>Format hacking.</strong> If your instruction-following reward is a regex
+          asking for a boxed final answer, the policy will learn to always emit a boxed final
+          answer, even when the reasoning above it is wrong or absent. The format shell of the
+          right answer collects reward the same as the actual answer.
+        </p>
+
+        <p>
+          <strong>Verifier exploitation.</strong> In agentic coding environments, OpenAI's
+          March 2025 CoT-monitoring paper (Baker et al.,
+          <a href="https://arxiv.org/abs/2503.11926" target="_blank" rel="noopener">Monitoring
+          Reasoning Models for Misbehavior</a>) reports policies that learn concrete exploits:
+          <code>exit(0)</code> before the failing test runs, <code>raise unittest.SkipTest</code>
+          to make tests count as passed, or overwriting the reference-solution file to match
+          the model's output. The reward function said "your program passes the tests." The
+          policy noticed that "no tests run" is a special case of "no tests fail."
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">Where CoT monitoring cuts, and where it obfuscates</div>
+          <p>
+            The same paper reports that a <em>weaker</em> model (GPT-4o) can reliably monitor a
+            <em>stronger</em> reasoner (o3-mini) for these exploits by reading the CoT trace,
+            because the model tends to <em>say</em> it is about to hack the checker. Good news.
+            The bad news is what happens when you close that loop and start penalizing bad
+            thoughts during training. The policy still hacks the checker; it just stops
+            <em>saying</em> so in its CoT. The paper calls this
+            <span class="gloss" data-gloss="obfuscated-reward-hacking">obfuscated reward hacking</span>
+            and recommends leaving the CoT unpressured for exactly this reason - so the trace
+            remains usable as a monitoring signal for downstream red-teaming. See also Chapter 6's
+            note on CoT faithfulness.
+          </p>
+        </div>
+
+        <p>
+          The takeaway is not "verifiers are bad." It is that a verifier is a spec, and every
+          spec has a gap between what it measures and what you meant. Goodhart travels; it just
+          took a new form.
+        </p>
+
+        <h2><span class="section-number">7.4</span>Past the verifier: rubrics, generative RMs, deliberative alignment</h2>
+
+        <p>
+          Verifiers work for math, code, and tasks with a formal completion oracle. They stop
+          working the moment quality is a matter of tone, taste, safety, refusal shape, or
+          faithfulness. Three lines of work fill that gap.
+        </p>
+
+        <h3 id="sec-rubric"><span class="section-number">7.4.1</span>Rubric rewards</h3>
+
+        <p>
+          A <span class="gloss" data-gloss="rubric-reward">rubric reward</span> enumerates the
+          criteria a good response should satisfy (five bullets for a math solution: correct
+          final answer, uses the given constraint, states the step, no arithmetic slip,
+          concise), assigns weights, and produces a scalar by scoring each criterion. This is
+          strictly denser than a preference pair: instead of one binary "A beat B" signal per
+          annotation, you get a vector of criterion scores. It is also strictly closer to a
+          program than a preference: the criteria are named, the weights are inspectable,
+          disagreement between the reward and human judgment can be diagnosed to a specific
+          axis. Rubric-based RL is the current default in labs' non-verifiable domains -
+          instruction following, safety, tone, honesty, open-ended tasks where the answer is
+          a paragraph, not a number.
+        </p>
+
+        <p>
+          The failure modes are already visible. Recent work reports rubric-hacking on AIME
+          2025 where the policy learns to write self-correction loops that inflate the
+          "reflects on its work" criterion without actually reaching a better answer, and
+          sycophancy that hits the "acknowledges the user" criterion at the cost of
+          truthfulness. Rubrics move the exploit surface from a single scalar to a small
+          list of scalars, which is progress, not victory.
+        </p>
+
+        <h3 id="sec-genrm"><span class="section-number">7.4.2</span>Generative reward models</h3>
+
+        <p>
+          The reward-model side of Chapter 3 was a scalar-head Bradley-Terry classifier. The
+          scalar head has a fundamental ceiling: it can only tell you which of two responses
+          is better, not <em>why</em>. Zhang, Hosseini, Bansal et al. (Google, August 2024,
+          ICLR 2025;
+          <a href="https://arxiv.org/abs/2408.15240" target="_blank" rel="noopener">Generative Verifiers</a>)
+          proposed <em>GenRM</em>: train the reward as a next-token-prediction task. Ask the
+          model "is this response correct? think it through, then answer yes or no." The
+          reward is the probability the model assigns to "yes" after its own CoT rationale.
+          Two things come for free: chain-of-thought reasoning at reward time (so the RM can
+          catch a subtle math slip a scalar head would miss), and majority voting across
+          multiple RM samples for robustness. On GSM8K the paper reports the checker rising
+          from <strong>73% to 93.4%</strong>. The same year Anthropic, OpenAI, and DeepMind
+          all shipped generative RMs into their post-training stacks, under names like
+          RM-as-judge and constitutional critic.
+        </p>
+
+        <p>
+          The counterweight is
+          <a href="https://arxiv.org/abs/2506.01937" target="_blank" rel="noopener">RewardBench 2</a>
+          (Malik et al., AI2, June 2025), which upgraded the reward-model benchmark from
+          RewardBench 1 with harder, human-authored prompts across instruction-following,
+          reasoning, and safety. Models score roughly 20 points lower on RewardBench 2 than
+          on the original, and - importantly - RewardBench 2 scores correlate with downstream
+          best-of-N and PPO performance the way RewardBench 1 no longer does. This is where
+          Chapter 3's "small RM is enough" line finally stops being true: RM quality is now a
+          benchmarked axis, RM scale tends to track policy scale for hard preferences, and
+          GenRMs occupy the top of the leaderboard.
+        </p>
+
+        <h3 id="sec-rbr-da"><span class="section-number">7.4.3</span>Rules, specs, and deliberative alignment</h3>
+
+        <p>
+          The third line comes from labs that ship consumer products and treat "which
+          behaviors are the right ones" as a written artifact, not a learned preference.
+        </p>
+
+        <p>
+          <strong>Rule-Based Rewards</strong> (Mu, Achiam, Weng et al., OpenAI, NeurIPS 2024;
+          <a href="https://arxiv.org/abs/2411.01111" target="_blank" rel="noopener">arXiv</a>)
+          uses a small human seed plus a set of composable rules ("refusals should not be
+          judgmental"; "safe answers should suggest resources when relevant") and an LLM
+          grader that scores against each rule. The rules are the interface: when the target
+          behavior changes, you edit the rules, you do not re-collect preference data. OpenAI
+          reports an F1 of 97.1 on the safety-behavior task against 91.7 for a human-feedback
+          baseline.
+        </p>
+
+        <p>
+          <strong>The Model Spec</strong>
+          (<a href="https://openai.com/index/introducing-the-model-spec/" target="_blank" rel="noopener">OpenAI, May 2024</a>;
+          updated through 2025-26) is the artifact those rules are drawn from - a public,
+          versioned document of what the model should do, whom it should obey, what it must
+          refuse, and how it should handle conflict between those. Anthropic's constitutions
+          play the same role, less publicly.
+        </p>
+
+        <p>
+          <strong>Deliberative alignment</strong> (Guan et al., OpenAI, December 2024;
+          <a href="https://arxiv.org/abs/2412.16339" target="_blank" rel="noopener">arXiv</a>)
+          closes the loop between the two. Instead of training the model to <em>imitate</em>
+          safe answers, deliberative alignment trains it to <em>reason over the spec itself</em>
+          during its CoT before answering. Only synthetic data - no human-written CoTs, no
+          human-written answers - is required. OpenAI reports the o-series trained this way
+          resists jailbreaks better, over-refuses less, and generalizes to out-of-distribution
+          safety cases that were not in the training distribution. The spec is not a filter
+          around the model; it is a document the model was taught to think against.
+        </p>
+
+        <div class="callout insight">
+          <div class="callout-label">Three stacks of reward, side by side</div>
+          <div style="overflow-x:auto">
+          <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top:6px">
+            <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+              <th style="padding:6px 10px 6px 0; font-weight:600; color:var(--text-muted)">Reward</th>
+              <th style="padding:6px 10px; font-weight:600; color:var(--text-muted)">Where the signal comes from</th>
+              <th style="padding:6px 10px; font-weight:600; color:var(--text-muted)">Where it works</th>
+              <th style="padding:6px 10px; font-weight:600; color:var(--text-muted)">Where it breaks</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0">Learned RM (Ch 3)</td>
+                <td style="padding:6px 10px">Human pairwise preferences &rarr; scalar head.</td>
+                <td style="padding:6px 10px">Broad taste and open-ended quality, when you have labels.</td>
+                <td style="padding:6px 10px">Wireheading, RM drift, and cost at frontier scale.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0">Verifier / RLVR</td>
+                <td style="padding:6px 10px">A checker program: math, tests, sandbox.</td>
+                <td style="padding:6px 10px">Formal domains and reasoning traces.</td>
+                <td style="padding:6px 10px">Length / format / spec exploits; only where a checker exists.</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--rule)">
+                <td style="padding:6px 10px 6px 0">Rubric / GenRM / RBR</td>
+                <td style="padding:6px 10px">A written spec, graded by an LLM (with its own CoT).</td>
+                <td style="padding:6px 10px">Soft-quality domains: tone, safety, honesty, style.</td>
+                <td style="padding:6px 10px">Rubric-hacking; judge biases; RM-scale must track policy scale.</td>
+              </tr>
+              <tr>
+                <td style="padding:6px 10px 6px 0">Deliberative alignment</td>
+                <td style="padding:6px 10px">The spec itself is a document the model reasons over at inference.</td>
+                <td style="padding:6px 10px">Safety, refusal shape, OOD policy compliance.</td>
+                <td style="padding:6px 10px">Spec ambiguity and CoT-monitoring pressure (7.3).</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+        <h2><span class="section-number">7.5</span>The infrastructure catches up</h2>
+
+        <p>
+          One thing not obvious from a stack of algorithm papers: 2025's RL training run is not
+          a training program. It is a distributed system with two engines that need to talk to
+          each other quickly. A <em>rollout engine</em> (the inference server) generates
+          candidate responses by sampling from the current policy. A <em>trainer engine</em>
+          (the gradient-update loop) applies those responses through a policy-gradient loss
+          and updates the weights. The two engines want opposite things - inference wants
+          batched prefill and paged KV, training wants gradients and optimizer state - and
+          the reasoning-length blow-up made the rollout side dominate the wall-clock. When
+          your rollouts are 8k-32k tokens each, most of a training step is spent generating
+          them, not gradient-updating on them.
+        </p>
+
+        <p>
+          The 2024-25 answer was to split the two engines cleanly and let them run
+          <em>asynchronously</em>. The trainer updates on rollouts collected a step or two
+          behind the current policy, tolerated by an off-policy correction like importance
+          sampling. This is what "async RL" and "PipelineRL" refer to in the ScaleRL paper
+          below. It shifts you from wall-clock-blocked to steady throughput on both sides.
+        </p>
+
+        <div style="overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:15px">
+          <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+            <th style="padding:9px 12px; color:var(--text-muted); font-weight:600">Framework</th>
+            <th style="padding:9px 12px">From</th>
+            <th style="padding:9px 12px">Angle</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><span class="gloss" data-gloss="verl">verl</span> (HybridFlow)</td>
+              <td style="padding:9px 12px">ByteDance / HKU, Sep 2024</td>
+              <td style="padding:9px 12px">Hybrid single-and-multi-controller RL, 3D-HybridEngine resharding, 1.5x-20x throughput vs baselines. The most mature stack for large models. (<a href="https://arxiv.org/abs/2409.19256" target="_blank" rel="noopener">Sheng et al.</a>)</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px"><span class="gloss" data-gloss="openrlhf">OpenRLHF</span></td>
+              <td style="padding:9px 12px">Community, 2024</td>
+              <td style="padding:9px 12px">The early Ray-based reference implementation; still the easiest starting point.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px">TRL</td>
+              <td style="padding:9px 12px">Hugging Face</td>
+              <td style="padding:9px 12px">Broad algorithm coverage inside the HF ecosystem; single-node friendly.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px">NeMo-RL</td>
+              <td style="padding:9px 12px">NVIDIA</td>
+              <td style="padding:9px 12px">Multi-turn and environment-aware from the start; clearest interfaces for tool-use RL.</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--rule)">
+              <td style="padding:9px 12px">slime</td>
+              <td style="padding:9px 12px">THUDM, 2025</td>
+              <td style="padding:9px 12px">Megatron + SGLang; async by default; disaggregated reward and data servers.</td>
+            </tr>
+            <tr>
+              <td style="padding:9px 12px">SkyRL</td>
+              <td style="padding:9px 12px">Berkeley Sky, 2025</td>
+              <td style="padding:9px 12px">Long-horizon agentic RL - the entry point for Chapter 9's environments.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+
+        <div class="callout note">
+          <div class="callout-label">The training-inference numerical mismatch, one paragraph</div>
+          <p>
+            A quiet class of bug: your trainer computes logprobs in bf16 or fp8 with
+            fused kernels, your rollout engine computes them in fp16 with a different kernel,
+            and the numerical drift between them shows up as a spurious importance-ratio
+            offset. In small models it is noise; at frontier scale the two engines can
+            disagree on $\pi_{\text{old}}(o_t)$ enough to send the update in the wrong
+            direction. Fixes range from a shared fp32 LM-head (ScaleRL's default) to
+            recomputing logprobs in the trainer regardless of what the rollout engine cached.
+            This is one of the reasons async RL is not simply "PPO with a delay" - the two
+            engines have to agree on the log-probability of the tokens they are sharing.
+          </p>
+        </div>
+
+        <h2><span class="section-number">7.6</span>RL compute finally gets a scaling law</h2>
+
+        <p>
+          Chapter 1 has a scaling law for pretraining loss, and every practitioner uses it to
+          plan runs. RL never had one - people talked about "seeds and vibes." Meta et al.
+          (Khatri, Madaan, Tiwari et al., October 2025;
+          <a href="https://arxiv.org/abs/2510.13786" target="_blank" rel="noopener">The Art of
+          Scaling Reinforcement Learning Compute for LLMs</a>) burned more than 400,000
+          GPU-hours in ablations and reported that RL compute vs downstream reward, for a
+          well-behaved recipe, follows a smooth sigmoid.
+        </p>
+
+        <div class="callout definition">
+          <div class="callout-label">The ScaleRL predictive curve</div>
+          <p style="text-align:center">
+            $R(C) - R_0 = \htmlData{tip=A is the asymptotic performance ceiling of THIS recipe. Different recipes have different ceilings.}{(A - R_0)} \cdot \dfrac{1}{1 + \left( \htmlData{tip=compute at which the sigmoid crosses the halfway point between R0 and A}{C_{\text{mid}}} / C\right)^{\htmlData{tip=steepness/efficiency exponent}{B}}}$
+          </p>
+          <p style="font-size:14px; color:var(--text-muted); margin-bottom:0">
+            Reward at compute $C$ starts at $R_0$ and saturates at ceiling $A$. Fit $A$,
+            $B$, $C_{\text{mid}}$ on a small run, then extrapolate the large one. In the
+            paper's ablations, small-run fits predict large-run performance well within
+            reasonable error bars.
+          </p>
+        </div>
+
+        <p>
+          The load-bearing observation is not the sigmoid; it is what the sigmoid separates.
+          Design choices split cleanly into two families. Some choices - loss type (CISPO vs
+          GRPO vs PPO), precision for the LM head (fp32 vs bf16), and normalization scheme -
+          <em>shift the asymptote</em> $A$. They change the ceiling this recipe can reach at
+          any budget. Other choices - curriculum, zero-variance filtering, prompt-level
+          averaging, batch shape - <em>shift the efficiency</em> $B$ or $C_{\text{mid}}$.
+          They change how fast you get to that ceiling. That separation is what "the art of
+          scaling RL" gives you: a way to reason about which ablation buys you more headroom
+          and which one buys you more speed.
+        </p>
+
+        <p>
+          The recipe that fell out is called <span class="gloss" data-gloss="scalerl">ScaleRL</span>,
+          and its ingredients are recognizable now. Async PipelineRL with an eight-step
+          off-policy tolerance for the rollout-trainer split. CISPO as the loss. FP32 in the
+          LM head to keep the two engines numerically aligned. Prompt-level loss averaging
+          and batch-level advantage normalization. Forced length interruption at the max
+          budget rather than hard truncation. Zero-variance sample removal (DAPO's dynamic
+          sampling under a new name). A "no-positive-resampling" curriculum that stops
+          replaying prompts once the pass rate exceeds 0.9. A 100,000 GPU-hour ScaleRL run
+          extrapolated cleanly from small-scale fits, held up under 2.5x batch, held up when
+          generation length was pushed to 32k, held up on Llama-4 17Bx16 MoE, and held up on
+          multi-task math + code together.
+        </p>
+
+        <h2><span class="section-number">7.7</span>What this chapter changed</h2>
+
+        <p>
+          Two things. First, the <em>reward function became a first-class design surface</em>.
+          In Chapter 3 the reward was a learned RM and a KL leash was the whole safety story;
+          in Chapter 6 the reward was a verifier and the field cheered "unhackable." Sitting
+          in late 2026, the reward is a stack - a verifier where one exists, a rubric or a
+          GenRM where quality is soft, a written spec the model has been trained to reason
+          against, and a monitor over the CoT to catch the residual exploits. Every layer has
+          its own failure mode and its own benchmark, and none of them are settled.
+        </p>
+
+        <p>
+          Second, the <em>algorithm zoo collapsed into a small set of load-bearing
+          modifications on top of PPO</em>. Whichever paper's acronym is on the cover, the
+          moves are the same shortlist: clip asymmetrically to preserve exploration, drop the
+          bad normalizations, aggregate loss at the token or the sequence level depending on
+          the model shape, clip the importance weight instead of the update, put the critic
+          back if you know how to keep it honest, and run rollout and trainer asynchronously
+          because the alternative is idle GPUs. ScaleRL packages the current best answers;
+          the next version will replace one or two of them.
+        </p>
+
+        <p>
+          What this chapter deliberately did not cover: the <em>environments</em> that turn
+          this whole stack from a chat-response optimizer into an agent-trajectory optimizer.
+          SWE-Gym, R2E-Gym, SWE-smith, the tool-use rollout harnesses, and the long-horizon
+          reward-shaping that goes with them are the subject of Chapter 9. The evaluation of
+          reward models and reasoners - RewardBench 2, RewardBench Chat, and the broader 2026
+          eval landscape - is Chapter 10. Deliberative alignment and CoT monitoring meet
+          interpretability and safety practice there too.
+        </p>
+
+        <p>
+          Next, though, is the other side of the wall-clock. All of the rollouts this chapter
+          asked for have to actually come out of an inference server, at 32k tokens each,
+          many at a time. The whole cost structure of that - prefill vs decode, paged KV,
+          speculative decoding, disaggregated serving, and why reasoning models specifically
+          changed the economics - is Chapter 8.
+        </p>
+
+        <nav class="lecture-nav" aria-label="Chapter navigation">
+          <a class="nav-card prev" href="chapter06-learning-to-think.html">
+            <div class="label">&larr; previous</div>
+            <div class="title">Ch 6 &middot; Learning to think</div>
+          </a>
+          <a class="nav-card next" href="chapter08-paying-for-thought.html">
+            <div class="label">next &rarr;</div>
+            <div class="title">Ch 8 &middot; Paying for thought</div>
+          </a>
+        </nav>
+
+        <footer class="site-footer">
+          <p>
+            <a href="../index.html">Course index</a>
+          </p>
+        </footer>
+
+      </article>
+    </div>
+  </main>
+</div>
+
+<script defer src="../scripts/shared.js"></script>
+<script defer src="../scripts/glossaryData.js"></script>
+<script defer src="../scripts/glossary.js"></script>
+<script defer src="../scripts/grpoMechanics.js"></script>
+
+</body>
+</html>

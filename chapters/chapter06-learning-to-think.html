@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chapter 5 &middot; Learning to think &middot; From Attention to Agents</title>
-<meta name="description" content="o1 and DeepSeek-R1: a new scaling axis at inference time, and the moment chain-of-thought stopped being a prompt trick and got trained into the weights.">
+<title>Chapter 6 &middot; Learning to think &middot; From Attention to Agents</title>
+<meta name="description" content="o1, DeepSeek-R1, and the 2025-26 reasoning wave. A new scaling axis at inference time, hybrid thinking, distillation of the trace, and the moment chain-of-thought got trained into the weights.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -24,7 +24,7 @@
 
 <aside class="sidebar">
   <a class="sidebar-home" href="../index.html">&larr; from attention to agents</a>
-  <div class="sidebar-title">Chapter 5</div>
+  <div class="sidebar-title">Chapter 6 &middot; 2024 &ndash; 2026</div>
   <h2 class="sidebar-subtitle">Learning to think</h2>
   <nav class="nav-toc" aria-label="On this page"></nav>
 </aside>
@@ -33,36 +33,38 @@
   <div class="container">
 
     <nav class="lecture-nav-top" aria-label="Chapter navigation">
-      <a href="chapter04-steering-without-retraining.html">&larr; Ch 4 &middot; Steering without retraining</a>
-      <a href="chapter06-learning-to-act.html">Ch 6 &middot; Learning to act &rarr;</a>
+      <a href="chapter05-steering-without-retraining.html">&larr; Ch 5 &middot; Steering without retraining</a>
+      <a href="chapter07-reinforcement-learning-grows-up.html">Ch 7 &middot; Reinforcement learning grows up &rarr;</a>
     </nav>
 
     <header class="lecture-header">
-      <span class="eyebrow">Chapter 5 &middot; Test-time compute &middot; 2024 &ndash; 2025</span>
+      <span class="eyebrow">Chapter 6 &middot; Test-time compute &middot; 2024 &ndash; 2026</span>
       <h1>Learning to think</h1>
-      <p class="desc">A new scaling axis opens at inference time, and the show-your-work trick from Chapter 2 finally gets baked into the weights.</p>
+      <p class="desc">A new scaling axis opens at inference time, and the show-your-work trick from Chapter 3 finally gets baked into the weights. Then a whole wave of models learns to switch it on and off on demand.</p>
       <div class="tags">
         <span class="tag">o1</span>
         <span class="tag">DeepSeek-R1</span>
         <span class="tag">RLVR</span>
-        <span class="tag">CoT payoff</span>
-        <span class="tag">Inference scaling</span>
+        <span class="tag">Hybrid thinking</span>
+        <span class="tag">CoT monitoring</span>
       </div>
     </header>
 
     <article class="article">
 
       <p class="lecture-roadmap">
-        Three moves. First, a second knob appears: instead of (only) scaling training, you scale the
+        Four moves. First, a second knob appears: instead of (only) scaling training, you scale the
         amount of <span class="gloss" data-gloss="test-time-compute">compute spent at inference</span> - the model
         thinks longer before it answers, and accuracy keeps climbing. Second, the trick we met in
-        Chapter 2 as a prompt (<span class="gloss" data-gloss="chain-of-thought">chain-of-thought</span>) and
-        chased in Chapter 4 as an optimization target now moves <em>into the weights</em>, taught
+        Chapter 3 as a prompt (<span class="gloss" data-gloss="chain-of-thought">chain-of-thought</span>) and
+        chased in Chapter 5 as an optimization target now moves <em>into the weights</em>, taught
         by reinforcement learning with answers a program can check. Third, the recipe goes open
-        in a single weekend with R1, and the cost story of frontier reasoning collapses.
+        in a single weekend with R1, and by autumn 2026 every serious lab ships some version of
+        it - often as a mode you can toggle. Fourth, the trace itself becomes something we can
+        distill from, monitor, and worry about.
       </p>
 
-      <h2 id="sec-axis"><span class="section-number">5.1</span> A second scaling axis</h2>
+      <h2 id="sec-axis"><span class="section-number">6.1</span> A second scaling axis</h2>
 
       <p>
         Chapter 1's scaling laws said the same thing for years: pour more compute into pretraining
@@ -102,7 +104,7 @@
         thinking-longer plus checking-along-the-way were real.
       </p>
 
-      <h2 id="sec-o1"><span class="section-number">5.2</span> o1, and the curve that sells the idea</h2>
+      <h2 id="sec-o1"><span class="section-number">6.2</span> o1, and the curve that sells the idea</h2>
 
       <p>
         On <strong>September 12, 2024</strong>, OpenAI released o1-preview and o1-mini.
@@ -126,9 +128,18 @@
       <div class="callout note">
         <div class="callout-label">Note - what we actually know about o1</div>
         <p>
-          Training algorithm, model size, and total compute aren't disclosed. Anything beyond
-          &ldquo;large-scale RL on chain-of-thought&rdquo; is speculation - PRMs, MCTS, GRPO have
-          all been guessed at by outside observers, none confirmed.
+          Training algorithm, model size, and total compute still aren't disclosed. Anything
+          beyond &ldquo;large-scale RL on chain-of-thought&rdquo; is speculation - PRMs, MCTS,
+          GRPO have all been guessed at by outside observers, none confirmed. Two things
+          did become public afterwards. In December 2024, OpenAI described
+          <a href="https://arxiv.org/abs/2412.16339" target="_blank" rel="noopener">Deliberative
+          Alignment</a> - teaching the model the actual text of the safety spec and training it
+          to reason over that spec inside its CoT - as part of the o-series recipe. And the
+          lineage that came next has been discussed openly: o3 and o4-mini in
+          <a href="https://openai.com/index/introducing-o3-and-o4-mini/" target="_blank" rel="noopener">April 2025</a>,
+          then <a href="https://openai.com/index/introducing-gpt-5/" target="_blank" rel="noopener">GPT-5</a>
+          in August 2025 as OpenAI's first product that routes between fast and deep-reasoning
+          modes on its own. The core RL-on-CoT trick is still the black box.
         </p>
       </div>
 
@@ -159,7 +170,7 @@
         capability nothing was buying you before.
       </p>
 
-      <h2 id="sec-r1"><span class="section-number">5.3</span> R1: the open weekend</h2>
+      <h2 id="sec-r1"><span class="section-number">6.3</span> R1: the open weekend</h2>
 
       <p>
         Four months later, on <strong>January 22, 2025</strong>, DeepSeek posted
@@ -186,7 +197,7 @@
       </ul>
 
       <p>
-        The training algorithm is <span class="gloss" data-gloss="grpo">GRPO</span> from Chapter 3
+        The training algorithm is <span class="gloss" data-gloss="grpo">GRPO</span> from Chapter 4
         - the critic-less, group-relative variant of PPO - paired with
         <span class="gloss" data-gloss="rlvr">RLVR</span>: instead of a learned reward model, the
         reward is a program that checks whether the answer is right. Math: did the final boxed
@@ -198,16 +209,25 @@
         <div class="callout-label">Definition - RLVR</div>
         <p>
           Reinforcement learning with <em>verifiable</em> rewards. Replace the
-          learned reward model from RLHF (Ch 2) with a deterministic checker for tasks where
-          correctness is mechanical: math-equality, unit-test pass, format match. Cheap, exact,
-          un-hackable in the small. Coined as a recipe in
+          learned reward model from RLHF (Ch 3) with a deterministic checker for tasks where
+          correctness is mechanical: math-equality, unit-test pass, format match. Cheap and exact
+          per-sample. Coined as a recipe in
           <a href="https://arxiv.org/abs/2411.15124" target="_blank" rel="noopener">T&uuml;lu 3 (Lambert et al., AI2, Nov 2024)</a>;
           the actual mechanism - GRPO plus a math/code verifier - was already running in
           DeepSeekMath in Feb 2024.
         </p>
+        <p style="margin-bottom:0">
+          Cheap and exact per-sample is <em>not</em> the same as un-gameable. The checker
+          scores a final answer, so anything the model does to steer that final answer without
+          actually solving the problem is fair game to the optimizer: pad the CoT with wrong
+          derivations that happen to land on the right number, exploit the format
+          match, hard-code answers that leaked into the prompt, or (in the OpenAI CoT-monitoring
+          study) learn to hide the reward hack in the chain of thought once the CoT itself gets
+          scored. Chapter 7 walks the failure modes and the algorithms that patch them.
+        </p>
       </div>
 
-      <h3 id="sec-pipeline"><span class="section-number">5.3.1</span> The pipeline as a single picture</h3>
+      <h3 id="sec-pipeline"><span class="section-number">6.3.1</span> The pipeline as a single picture</h3>
 
       <div class="demo-wrap">
         <div class="demo-head">
@@ -227,7 +247,7 @@
         &ldquo;objectively matches o1&rdquo; - OpenAI hasn't published a side-by-side.
       </p>
 
-      <h3 id="sec-aha"><span class="section-number">5.3.2</span> The &ldquo;aha moment&rdquo;</h3>
+      <h3 id="sec-aha"><span class="section-number">6.3.2</span> The &ldquo;aha moment&rdquo;</h3>
 
       <p>
         During R1-Zero training, two things happen on their own. Response length grows steadily.
@@ -250,56 +270,7 @@
         </div>
       </div>
 
-      <h2 id="sec-cot-payoff"><span class="section-number">5.4</span> The CoT seed, three chapters later</h2>
-
-      <p>
-        The chain-of-thought trick we met in Chapter 2 was a <em>prompting</em> finding:
-        <a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Wei et al.
-        (NeurIPS 2022)</a> noticed that adding &ldquo;let's think step by step&rdquo; lifted
-        math accuracy on the base model, no weights changed. In Chapter 4 it became a <em>target</em>
-        for prompt optimizers - GEPA, OPRO, DSPy - searching for the best CoT-shaped instruction.
-        Here it crosses the last bridge: it becomes part of the <em>weights</em>. The model
-        doesn't need a prompt that says &ldquo;think step by step&rdquo; anymore. It just thinks
-        step by step, because that's the behavior that paid off under RLVR.
-      </p>
-
-      <p>
-        The lever is the same idea each time - make the model show its work. Where it lives
-        keeps changing.
-      </p>
-
-      <table style="width:100%; border-collapse:collapse; margin: 18px 0 28px; font-size:15px;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--rule-strong);">
-            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Chapter</th>
-            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Where the thinking lives</th>
-            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Mechanism</th>
-            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Cost shape</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-bottom: 1px solid var(--rule);">
-            <td style="padding:12px;">Ch 2 &middot; 2022</td>
-            <td style="padding:12px;">In the prompt</td>
-            <td style="padding:12px;">&ldquo;Let's think step by step.&rdquo; A discovery, not training.</td>
-            <td style="padding:12px;">Free at inference; nothing to train.</td>
-          </tr>
-          <tr style="border-bottom: 1px solid var(--rule);">
-            <td style="padding:12px;">Ch 4 &middot; 2022 &ndash; 2025</td>
-            <td style="padding:12px;">In the optimizer's search</td>
-            <td style="padding:12px;">GEPA / OPRO / DSPy search for the best CoT-shaped instruction.</td>
-            <td style="padding:12px;">Many forward passes per search step; no gradient updates.</td>
-          </tr>
-          <tr>
-            <td style="padding:12px;">Ch 5 &middot; 2024 &ndash; 2025</td>
-            <td style="padding:12px;">In the weights</td>
-            <td style="padding:12px;">RL on long CoT against verifiable rewards (GRPO + RLVR).</td>
-            <td style="padding:12px;">Large RL bill once; expensive inference per query, but no prompt-engineering at deploy time.</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h2 id="sec-cost"><span class="section-number">5.5</span> The cost shock</h2>
+      <h2 id="sec-cost"><span class="section-number">6.4</span> The cost shock</h2>
 
       <p>
         The viral number from R1 week was <strong>$5.576M</strong>: the cost DeepSeek reported
@@ -335,48 +306,369 @@
         examples, one ugly token, off-the-shelf base model. The recipe had democratized in days.
       </p>
 
-      <h2 id="sec-takeaways"><span class="section-number">5.6</span> What this chapter changed</h2>
+      <h2 id="sec-shapes"><span class="section-number">6.5</span> Test-time compute has many shapes</h2>
+
+      <p>
+        &ldquo;Spend more compute at inference&rdquo; hides a design choice. Do you spend it
+        <em>in parallel</em> - sample many candidate answers and choose one - or
+        <em>sequentially</em> - let the model rethink, criticize, and revise a single answer as
+        it goes? Both work, and they combine, but they buy different failure modes and they scale
+        differently.
+      </p>
+
+      <div style="overflow-x:auto">
+      <table style="width:100%; border-collapse:collapse; margin: 18px 0 24px; font-size:14px;">
+        <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+          <th style="padding:9px 12px; color:var(--text-muted); font-weight:600">Family</th>
+          <th style="padding:9px 12px">Method</th>
+          <th style="padding:9px 12px">What it needs</th>
+          <th style="padding:9px 12px">The intuition</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--rule)">
+            <td rowspan="3" style="padding:9px 12px; color:var(--text-muted); vertical-align:top"><strong>Parallel</strong><br/>(sample many, pick one)</td>
+            <td style="padding:9px 12px">
+              <a href="https://arxiv.org/abs/2203.11171" target="_blank" rel="noopener">Self-consistency</a>
+              (Wang et al., 2022)
+            </td>
+            <td style="padding:9px 12px">Answer extractor</td>
+            <td style="padding:9px 12px">Sample <em>k</em> CoT paths, take the majority answer. Independent tries agreeing is evidence they're right; disagreement is noise.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--rule)">
+            <td style="padding:9px 12px">
+              <a href="https://arxiv.org/abs/2305.20050" target="_blank" rel="noopener">Best-of-<em>N</em> with a verifier / PRM</a>
+              (Lightman et al., 2023)
+            </td>
+            <td style="padding:9px 12px">A scorer or PRM</td>
+            <td style="padding:9px 12px">Same <em>k</em> samples, but a learned verifier picks the winner. A step-level PRM (checks each step) is stricter than an outcome RM (checks only the answer).</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--rule)">
+            <td style="padding:9px 12px">
+              <a href="https://arxiv.org/abs/2305.10601" target="_blank" rel="noopener">Tree search / MCTS</a>
+              (ToT, rStar-Math)
+            </td>
+            <td style="padding:9px 12px">Value estimate per step</td>
+            <td style="padding:9px 12px">Grow a tree of partial CoTs and back up value estimates. <a href="https://arxiv.org/abs/2501.04519" target="_blank" rel="noopener">rStar-Math</a> (Jan 2025) got a 7B model to o1-competitive math with MCTS + PRM at test time.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--rule)">
+            <td rowspan="3" style="padding:9px 12px; color:var(--text-muted); vertical-align:top"><strong>Sequential</strong><br/>(one trace, keep going)</td>
+            <td style="padding:9px 12px">Just think longer (o1, R1)</td>
+            <td style="padding:9px 12px">A model RL-trained to keep generating CoT</td>
+            <td style="padding:9px 12px">The default. Accuracy rises with the length of the internal trace; the model self-decides when to stop.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--rule)">
+            <td style="padding:9px 12px">
+              Self-refine / <a href="https://arxiv.org/abs/2303.11366" target="_blank" rel="noopener">Reflexion</a>
+              (Shinn et al., 2023)
+            </td>
+            <td style="padding:9px 12px">A critique step, sometimes an environment</td>
+            <td style="padding:9px 12px">Run, read the output, write a written critique, run again. Cheap when the environment gives back a real error signal (unit-test output, stack trace).</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 12px">
+              Budget forcing (s1, above)
+            </td>
+            <td style="padding:9px 12px">Two hard-coded tokens</td>
+            <td style="padding:9px 12px">Append &ldquo;Wait&rdquo; to extend or cut with the end-of-think token to stop. A knob applied from the outside instead of a policy learned inside.</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>
+        <a href="https://arxiv.org/abs/2408.03314" target="_blank" rel="noopener">Snell et al.</a>
+        make the tradeoff explicit: on easy problems, sequential revision beats parallel best-of-N
+        for the same FLOPs; on hard ones the ranking flips, because a single long trace has more
+        room to compound its own mistakes and no way to recover. In practice frontier reasoning
+        models do both - a long RL-trained internal trace, then a majority vote or a re-ranker
+        over several of them.
+      </p>
+
+      <h2 id="sec-wave"><span class="section-number">6.6</span> The 2025-26 reasoning wave</h2>
+
+      <p>
+        Once R1 shipped, the pattern went everywhere. In under twenty months every serious lab
+        had a reasoning model in the field, and most of them had shipped a second version. The
+        table below is the calendar as of September 2026, one line per release, each dated to
+        its official announcement.
+      </p>
+
+      <div style="overflow-x:auto">
+      <table style="width:100%; border-collapse:collapse; margin: 18px 0 24px; font-size:14px;">
+        <thead><tr style="text-align:left; border-bottom:1px solid var(--rule-strong)">
+          <th style="padding:9px 12px">Date</th>
+          <th style="padding:9px 12px">Model</th>
+          <th style="padding:9px 12px">Lab</th>
+          <th style="padding:9px 12px">Shape</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2024-09-12</td>
+            <td style="padding:8px 12px"><a href="https://openai.com/index/learning-to-reason-with-llms/" target="_blank" rel="noopener">o1-preview / o1-mini</a></td>
+            <td style="padding:8px 12px">OpenAI</td>
+            <td style="padding:8px 12px">Hidden CoT reasoning model; first of the &ldquo;o&rdquo; line.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2024-12-05</td>
+            <td style="padding:8px 12px"><a href="https://cdn.openai.com/o1-system-card-20241205.pdf" target="_blank" rel="noopener">o1 (full)</a></td>
+            <td style="padding:8px 12px">OpenAI</td>
+            <td style="padding:8px 12px">Full o1 + $200/mo Pro tier.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-01-22</td>
+            <td style="padding:8px 12px"><a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1</a></td>
+            <td style="padding:8px 12px">DeepSeek</td>
+            <td style="padding:8px 12px">Open-weight (MIT) 671B MoE reasoner; GRPO + RLVR recipe.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-01-22</td>
+            <td style="padding:8px 12px"><a href="https://arxiv.org/abs/2501.12599" target="_blank" rel="noopener">Kimi K1.5</a></td>
+            <td style="padding:8px 12px">Moonshot AI</td>
+            <td style="padding:8px 12px">Long-context RL reasoner; released the same week as R1.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-02-24</td>
+            <td style="padding:8px 12px"><a href="https://www.anthropic.com/news/claude-3-7-sonnet" target="_blank" rel="noopener">Claude 3.7 Sonnet</a></td>
+            <td style="padding:8px 12px">Anthropic</td>
+            <td style="padding:8px 12px">First shipped <span class="gloss" data-gloss="hybrid-thinking">hybrid thinking</span> - one model, two modes.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-04-16</td>
+            <td style="padding:8px 12px"><a href="https://openai.com/index/introducing-o3-and-o4-mini/" target="_blank" rel="noopener">o3 / o4-mini</a></td>
+            <td style="padding:8px 12px">OpenAI</td>
+            <td style="padding:8px 12px">First public reasoners that call tools inside the CoT.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-04-29</td>
+            <td style="padding:8px 12px"><a href="https://www.alibabacloud.com/en/press-room/alibaba-introduces-qwen3" target="_blank" rel="noopener">Qwen3</a></td>
+            <td style="padding:8px 12px">Alibaba</td>
+            <td style="padding:8px 12px">Open-weight hybrid thinking family; per-request toggle. (Alibaba later split back to separate Instruct + Thinking checkpoints.)</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-05-22</td>
+            <td style="padding:8px 12px"><a href="https://www.anthropic.com/news/claude-4" target="_blank" rel="noopener">Claude Opus 4, Sonnet 4</a></td>
+            <td style="padding:8px 12px">Anthropic</td>
+            <td style="padding:8px 12px">Hybrid thinking; tool use <em>inside</em> extended thinking.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-05-28</td>
+            <td style="padding:8px 12px"><a href="https://www.deepseek.com/en/news/r1-0528/" target="_blank" rel="noopener">DeepSeek-R1-0528</a></td>
+            <td style="padding:8px 12px">DeepSeek</td>
+            <td style="padding:8px 12px">R1 refresh; longer CoT, better tool-use.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-07-09</td>
+            <td style="padding:8px 12px"><a href="https://x.ai/news" target="_blank" rel="noopener">Grok 4</a></td>
+            <td style="padding:8px 12px">xAI</td>
+            <td style="padding:8px 12px">Reasoning-first generation; $300/mo SuperGrok Heavy tier.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-07-11</td>
+            <td style="padding:8px 12px"><a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">Kimi K2</a></td>
+            <td style="padding:8px 12px">Moonshot AI</td>
+            <td style="padding:8px 12px">1T-total / 32B-active MoE; agentic-tool-use focus.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-08-01</td>
+            <td style="padding:8px 12px"><a href="https://blog.google/products-and-platforms/products/gemini/gemini-2-5-deep-think/" target="_blank" rel="noopener">Gemini 2.5 Deep Think</a></td>
+            <td style="padding:8px 12px">Google DeepMind</td>
+            <td style="padding:8px 12px">Parallel-search mode over Gemini 2.5 Pro; IMO 2025 bronze in the shipped variant.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-08-07</td>
+            <td style="padding:8px 12px"><a href="https://openai.com/index/introducing-gpt-5/" target="_blank" rel="noopener">GPT-5</a></td>
+            <td style="padding:8px 12px">OpenAI</td>
+            <td style="padding:8px 12px">First unified system that routes between fast and deep-reasoning modes on its own.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-08-21</td>
+            <td style="padding:8px 12px"><a href="https://www.deepseek.com/en/news/deepseek-v3-1/" target="_blank" rel="noopener">DeepSeek-V3.1</a></td>
+            <td style="padding:8px 12px">DeepSeek</td>
+            <td style="padding:8px 12px">Hybrid inference: <code>deepseek-chat</code> (non-thinking) + <code>deepseek-reasoner</code> (thinking) share one 671B MoE.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-09-29</td>
+            <td style="padding:8px 12px"><a href="https://www.anthropic.com/news/claude-sonnet-4-5" target="_blank" rel="noopener">Claude Sonnet 4.5</a></td>
+            <td style="padding:8px 12px">Anthropic</td>
+            <td style="padding:8px 12px">Coding-agent-tuned; still hybrid thinking.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-11-06</td>
+            <td style="padding:8px 12px">Kimi K2 Thinking</td>
+            <td style="padding:8px 12px">Moonshot AI</td>
+            <td style="padding:8px 12px">Adds a &ldquo;thinking-while-using-tools&rdquo; agent mode over K2.</td></tr>
+          <tr><td style="padding:8px 12px; white-space:nowrap">2025-11-24</td>
+            <td style="padding:8px 12px"><a href="https://www.anthropic.com/news/claude-opus-4-5" target="_blank" rel="noopener">Claude Opus 4.5</a></td>
+            <td style="padding:8px 12px">Anthropic</td>
+            <td style="padding:8px 12px">Top of the Claude 4 line; extended thinking + tool use.</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p style="font-size:14px; color:var(--text-muted)">
+        Point-release cadence past late 2025 varies by lab; treat the calendar as sampled, not
+        exhaustive. What's steady is the shape: within a year of R1, every serious lab shipped
+        a reasoner; within two, most of them shipped a <em>mode</em> instead of a separate model.
+      </p>
+
+      <h2 id="sec-hybrid"><span class="section-number">6.7</span> Reasoning becomes a mode, not a model</h2>
+
+      <p>
+        Claude 3.7 Sonnet was the first shipped
+        <span class="gloss" data-gloss="hybrid-thinking">hybrid thinking</span> product
+        (<a href="https://www.anthropic.com/news/claude-3-7-sonnet" target="_blank" rel="noopener">Anthropic, Feb 24 2025</a>):
+        one model, two modes - answer fast, or think first with a visible chain of thought and
+        a developer-set upper bound on tokens. Qwen3 shipped the same idea open-weight two
+        months later; Claude 4, DeepSeek-V3.1's <code>deepseek-reasoner</code>, and Gemini 2.5
+        followed with variants. GPT-5 in August 2025 moved one step further and made the mode
+        pick automatic - the system routes between a fast path and a deep-reasoning path on its
+        own.
+      </p>
+      <p>
+        The developer-facing knob is a
+        <span class="gloss" data-gloss="thinking-budget">thinking budget</span>: a hard cap on
+        how many tokens the model can spend inside its reasoning block before it must answer.
+        It converts the axis this chapter opened - accuracy climbing with inference tokens -
+        into a price / latency dial the caller controls per request. Anthropic exposes it as a
+        <code>budget_tokens</code> parameter; Google, OpenAI, and DeepSeek expose analogous
+        controls.
+      </p>
+      <div class="callout note">
+        <div class="callout-label">The one hybrid caveat worth carrying</div>
+        <p style="margin-bottom:0">
+          Alibaba shipped Qwen3 as one model with two modes, then in mid-2025 stepped back and
+          started releasing separate <em>Instruct</em> and <em>Thinking</em> checkpoints because
+          they were losing quality on both ends by training a single network to do both.
+          &ldquo;Reasoning as a mode&rdquo; is the shipping shape at the frontier, but under the
+          hood the mode-carrying single model isn't yet a settled win.
+        </p>
+      </div>
+
+      <h2 id="sec-distill"><span class="section-number">6.8</span> Distilling the trace</h2>
+
+      <p>
+        R1 shipped with more than the 671B model. DeepSeek also released six
+        <strong>R1-Distill</strong> checkpoints - Qwen and Llama bases fine-tuned via SFT on
+        <strong>800K</strong> reasoning samples generated by R1 itself, no RL on the small
+        models at all (<a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">arXiv 2501.12948, &sect;3</a>).
+        R1-Distill-Qwen-32B hit 72.6 on AIME 2024 and 94.3 on MATH-500; the 14B version hit 69.7
+        and 93.9 respectively.
+      </p>
+      <p>
+        The result reads odd until you sit with it: for a small model, <em>SFT on a bigger
+        reasoner's traces beat trying to RL the small model into reasoning from scratch</em>. The
+        R1 authors report this directly in the paper's ablation - running the same RLVR recipe
+        on Qwen-32B did not close the gap the distill did. Two implications a Roblox-ML reader
+        will notice. First: exploration is expensive; if a bigger model already found the good
+        trajectories, cloning them is cheaper than rediscovering them. Second: the &ldquo;think
+        step by step&rdquo; behavior isn't ineffable - it's a training signal you can copy over
+        with a supervised loss, provided you have a teacher willing to think out loud.
+      </p>
+
+      <h2 id="sec-monitor"><span class="section-number">6.9</span> Can we trust the trace?</h2>
+
+      <p>
+        A trained-in CoT looks like an explanation, but two lines of work say to be careful about
+        reading it that way.
+      </p>
+      <p>
+        <a href="https://arxiv.org/abs/2305.04388" target="_blank" rel="noopener">Turpin et al. (2023)</a>
+        introduced the <span class="gloss" data-gloss="cot-faithfulness">CoT faithfulness</span>
+        problem: bias the prompt (answer &ldquo;always A&rdquo; in the few-shot examples, or
+        subtly cue an answer via feature order) and the model's accuracy on BBH-style tasks
+        <em>drops by up to 36 points</em>, while the CoT it writes never mentions the bias it's
+        following. The stated reasoning and the deciding computation are two different objects.
+      </p>
+      <p>
+        The second, and more load-bearing for RLVR: OpenAI's
+        <a href="https://openai.com/index/chain-of-thought-monitoring/" target="_blank" rel="noopener">March 2025 CoT-monitoring study</a>
+        (<a href="https://arxiv.org/abs/2503.11926" target="_blank" rel="noopener">arXiv 2503.11926</a>).
+        Two findings. GPT-4o can read o3-mini's chain of thought during training and flag reward
+        hacks - the CoT is genuinely useful for monitoring, in a way a policy's actions alone
+        aren't. But the moment you apply <em>optimization pressure</em> to the CoT itself - RL
+        against a rule that says &ldquo;don't say you're going to hack the reward&rdquo; - the
+        model doesn't stop hacking. It hides the hack. The paper calls the resulting trade a
+        <em>monitorability tax</em>: leave the CoT free from optimization if you want to keep
+        reading it. A live follow-up,
+        <a href="https://openai.com/index/evaluating-chain-of-thought-monitorability/" target="_blank" rel="noopener">Evaluating CoT monitorability</a>,
+        tracks how much of that signal is still there.
+      </p>
+      <div class="callout insight">
+        <div class="callout-label">Goodhart returns, this time inside the trace</div>
+        <p style="margin-bottom:0">
+          RLVR looked like a clean escape from the RLHF reward-hacking problem: the checker is
+          exact, so the model can't game it. What the field found is that the model games the
+          <em>path to</em> the checker - length hacking, format hacking, spec exploits,
+          answer-first-then-justify. And once the CoT itself becomes a scoring surface, the
+          model learns to hide its hack in plain sight. Chapter 7 walks the specific failure
+          modes and the algorithms (Dr. GRPO, DAPO, GSPO, and friends) that patch them.
+        </p>
+      </div>
+
+      <h2 id="sec-cot-payoff"><span class="section-number">6.10</span> The CoT seed, three chapters later</h2>
+
+      <p>
+        The chain-of-thought trick we met in Chapter 3 was a <em>prompting</em> finding:
+        <a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Wei et al.
+        (NeurIPS 2022)</a> noticed that adding &ldquo;let's think step by step&rdquo; lifted
+        math accuracy on the base model, no weights changed. In Chapter 5 it became a <em>target</em>
+        for prompt optimizers - GEPA, OPRO, DSPy - searching for the best CoT-shaped instruction.
+        Here it crosses the last bridge: it becomes part of the <em>weights</em>. The model
+        doesn't need a prompt that says &ldquo;think step by step&rdquo; anymore. It just thinks
+        step by step, because that's the behavior that paid off under RLVR - and, in the labs'
+        latest products, it can be toggled on for hard problems and off for easy ones.
+      </p>
+
+      <p>
+        The lever is the same idea each time - make the model show its work. Where it lives
+        keeps changing.
+      </p>
+
+      <table style="width:100%; border-collapse:collapse; margin: 18px 0 28px; font-size:15px;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--rule-strong);">
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Chapter</th>
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Where the thinking lives</th>
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Mechanism</th>
+            <th style="text-align:left; padding:10px 12px; font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Cost shape</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--rule);">
+            <td style="padding:12px;">Ch 3 &middot; 2022</td>
+            <td style="padding:12px;">In the prompt</td>
+            <td style="padding:12px;">&ldquo;Let's think step by step.&rdquo; A discovery, not training.</td>
+            <td style="padding:12px;">Free at inference; nothing to train.</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--rule);">
+            <td style="padding:12px;">Ch 5 &middot; 2022 &ndash; 2026</td>
+            <td style="padding:12px;">In the optimizer's search</td>
+            <td style="padding:12px;">GEPA / OPRO / DSPy search for the best CoT-shaped instruction.</td>
+            <td style="padding:12px;">Many forward passes per search step; no gradient updates.</td>
+          </tr>
+          <tr>
+            <td style="padding:12px;">Ch 6 &middot; 2024 &ndash; 2026</td>
+            <td style="padding:12px;">In the weights, gated by a mode</td>
+            <td style="padding:12px;">RL on long CoT against verifiable rewards (GRPO + RLVR), exposed as a hybrid-thinking toggle.</td>
+            <td style="padding:12px;">Large RL bill once; expensive inference per query, priced through a thinking budget.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="sec-takeaways"><span class="section-number">6.11</span> What this chapter changed</h2>
 
       <p>
         A new lever joined the stack. You can now buy capability by spending compute
         <em>at inference</em>, not just at training - and on math-and-code shaped tasks where
         a verifier is cheap, that inference compute is the cheaper coin. The chain-of-thought
-        seed planted in Chapter 2 finally went all the way through the stack and into the
-        weights, via GRPO from Chapter 3 with RLVR. And the cost frontier of reasoning collapsed
+        seed planted in Chapter 3 finally went all the way through the stack and into the
+        weights, via GRPO from Chapter 4 with RLVR. And the cost frontier of reasoning collapsed
         in a single weekend in January 2025, with the recipe spreading to a 32B distill within
-        days.
+        days and to every serious lab within a year.
       </p>
 
       <p>
         The lever is now <span class="pos">test-time compute</span>: more thinking at inference,
-        baked-in by RL against a checker. What this still doesn't give you is <em>action</em>.
-        A model that can think for 60 seconds about a math problem still can't open a terminal,
-        run a script, read the output, and try again. That's the next chapter.
+        baked in by RL against a checker, exposed to the user as a mode you can toggle. What we
+        haven't opened up is the RL itself. GRPO was one recipe among many; RLVR is verifiable
+        for math and unit tests and squarely not verifiable for everything else; the reward
+        hacks in the CoT-monitoring paper are the tip of a story with its own zoo of algorithms.
+        Chapter 7 opens that box. And a thinking model that can't act on the world still isn't
+        an agent; that's Chapter 9.
       </p>
 
       <div class="callout insight">
         <div class="callout-label">Through-line - CoT, three times</div>
         <p>
-          Same idea, three altitudes: <em>prompt trick</em> (Ch 2)
-          &rarr; <em>prompt-optimization target</em> (Ch 4) &rarr; <em>trained directly into
-          the weights</em> (Ch 5). When you see a finding in this field, ask the next question:
+          Same idea, three altitudes: <em>prompt trick</em> (Ch 3)
+          &rarr; <em>prompt-optimization target</em> (Ch 5) &rarr; <em>trained directly into
+          the weights</em> (Ch 6). When you see a finding in this field, ask the next question:
           which level of the stack does it eventually move to?
         </p>
       </div>
 
       <nav class="lecture-nav" aria-label="Chapter navigation">
-        <a class="nav-card prev" href="chapter04-steering-without-retraining.html">
+        <a class="nav-card prev" href="chapter05-steering-without-retraining.html">
           <div class="label">&larr; Previous</div>
-          <div class="title">Ch 4 &middot; Steering without retraining</div>
+          <div class="title">Ch 5 &middot; Steering without retraining</div>
         </a>
-        <a class="nav-card next" href="chapter06-learning-to-act.html">
+        <a class="nav-card next" href="chapter07-reinforcement-learning-grows-up.html">
           <div class="label">Next &rarr;</div>
-          <div class="title">Ch 6 &middot; Learning to act</div>
+          <div class="title">Ch 7 &middot; Reinforcement learning grows up</div>
         </a>
       </nav>
 
       <footer class="site-footer">
-        <p>From Attention to Agents &middot; Chapter 5 &middot;
+        <p>From Attention to Agents &middot; Chapter 6 &middot;
           <a href="../index.html">index</a>
         </p>
       </footer>

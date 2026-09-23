@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/landing.png" width="820" alt="Landing page: 'From Attention to Agents', the through-line question, and the first chapter card on a warm-paper background">
+</p>
+
 <h1 align="center">From Attention to Agents</h1>
 
 <p align="center">
@@ -16,10 +20,6 @@
 Most explanations of modern AI are either a pop-science blur or a stack of disconnected papers. This is the path between: one continuous story for someone who knew CNNs and watched attention arrive in NLP around 2019, and wants the rest of it - RLHF, DPO, GRPO, prompt optimization, reasoning models, agents - as a single arc rather than a reading list.
 
 The through-line is one question: **where does the optimization happen - in the weights, or in the context?** Eight chapters, each turning one lever, every claim cited to its primary source, with live interactive demos.
-
-<p align="center">
-  <img src="assets/landing.png" width="820" alt="Landing page: 'From Attention to Agents', the through-line question, and the first chapter card on a warm-paper background">
-</p>
 
 ## The arc
 

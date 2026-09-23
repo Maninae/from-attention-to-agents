@@ -75,24 +75,23 @@
 .tl-detail .placeholder { color: var(--text-muted); font-style: italic; }
 
 /* ---------- Landing hero ---------- */
-.hero { padding: 100px 0 60px; }
+.hero { padding: 72px 0 28px; }
 .hero .eyebrow { display: block; margin-bottom: 18px; }
 .hero h1 {
   font-family: var(--serif); font-weight: 700;
-  font-size: 52px; line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 24px;
-  max-width: 16ch;
+  font-size: 52px; line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 20px;
 }
 .hero-hook {
   font-family: var(--sans); font-weight: 700; font-size: 22px;
-  color: var(--accent); max-width: 30ch; margin: 0 0 20px;
+  line-height: 1.35; color: var(--accent); margin: 0 0 18px;
 }
-.hero-lede { font-size: 19px; color: var(--text-secondary); max-width: 56ch; }
+.hero-lede { font-size: 19px; color: var(--text-secondary); margin: 0; }
 .hero-stats { display: flex; gap: 36px; margin-top: 36px; flex-wrap: wrap; }
 .hero-stat .n { font-family: var(--serif); font-weight: 700; font-size: 32px; color: var(--text-primary); }
 .hero-stat .l { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
 
 /* ---------- Part cards (landing) ---------- */
-.parts-grid { display: grid; gap: 18px; margin: 48px 0 80px; }
+.parts-grid { display: grid; gap: 18px; margin: 36px 0 80px; }
 .part-card {
   display: block;
   border: 1px solid var(--rule);
@@ -120,7 +119,7 @@
 .part-card p { margin: 0; color: var(--text-secondary); font-size: 15px; max-width: 52ch; }
 
 @media (max-width: 768px) {
-  .hero { padding: 80px 0 40px; }
+  .hero { padding: 56px 0 20px; }
   .hero h1 { font-size: 40px; }
   .tl-node text { font-size: 11px; }
 }

@@ -168,7 +168,7 @@
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 10px"><a href="https://www.laude.org/updates/terminal-bench" target="_blank" rel="noopener">Terminal-Bench</a></td>
               <td style="padding:9px 10px">Long-horizon shell tasks in Docker; end-to-end, test-graded.</td>
-              <td style="padding:9px 10px">Stanford + Laude, 2025</td>
+              <td style="padding:9px 10px">Stanford + Harbor + Laude, 2025</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td rowspan="4" style="padding:9px 10px; vertical-align:top"><strong>Agents</strong></td>
@@ -255,7 +255,7 @@
 
         <h3>The Leaderboard Illusion</h3>
         <p>
-          A more structural critique landed in April 2025. Singh, Kapoor, Hooker and collaborators - across Cohere Labs, Princeton, MIT, Stanford, Waterloo, Ai2, and Washington - documented systematic distortions in Chatbot Arena in <em>The Leaderboard Illusion</em>
+          A more structural critique landed in April 2025. Singh et al. - across Cohere Labs, Princeton, MIT, Stanford, Waterloo, Ai2, and Washington - documented systematic distortions in Chatbot Arena in <em>The Leaderboard Illusion</em>
           (<a href="https://arxiv.org/abs/2504.20879" target="_blank" rel="noopener">arXiv:2504.20879</a>). Their findings, briefly:
         </p>
         <ul>
@@ -313,7 +313,7 @@
 
         <p>
           The productive move was not to abandon LLM judges - the labels are too expensive at scale - but to <em>instrument</em> them. Reward models became a benchmarked axis in their own right:
-          <strong><a href="https://arxiv.org/abs/2506.01937" target="_blank" rel="noopener">RewardBench 2</a></strong> (Malik et al., Jun 2025) evaluates reward models on 1,865 cases across factuality, focus, math, instruction following, safety, and ties, and the accuracy on it correlates with downstream RLHF performance more cleanly than earlier proxies.
+          <strong><a href="https://arxiv.org/abs/2506.01937" target="_blank" rel="noopener">RewardBench 2</a></strong> (Malik et al., Jun 2025) evaluates reward models across factuality, focus, math, instruction following, safety, and ties, and the accuracy on it correlates with downstream RLHF performance more cleanly than earlier proxies.
           <strong><a href="https://arxiv.org/abs/2408.15240" target="_blank" rel="noopener">Generative Verifiers (GenRM)</a></strong> reframes the reward model as a next-token prediction problem, so the same tools that made reasoning models work (CoT, majority voting) make judges better calibrated too.
         </p>
         <p>
@@ -363,14 +363,9 @@
           </p>
         </div>
 
-        <h2><span class="section-number">7.</span>CoT faithfulness and monitorability</h2>
+        <h2><span class="section-number">7.</span>CoT monitorability as a safety lever</h2>
         <p>
-          Chapter 6 mentioned in passing that OpenAI keeps o-series raw traces hidden to preserve them for safety monitoring. This is the fuller version. A chain of thought is <em>useful</em> as a monitoring signal only if it faithfully reports the computation that produced the answer. Turpin et al. (2023) showed early that CoT is not automatically faithful: adding a small biasing hint - like "the answer is always A" for a set of examples - flipped model answers on new questions, but the models' post-hoc reasoning traces did not mention the hint
-          (<a href="https://arxiv.org/abs/2305.04388" target="_blank" rel="noopener">Turpin et al., 2023</a>). The trace was a story, not a receipt.
-        </p>
-        <p>
-          That gap becomes load-bearing when the trace is the tool you use to catch a misaligned model. OpenAI's <em>Detecting Misbehavior in Frontier Reasoning Models via CoT Monitoring</em> (March 2025) trained models under RL on a coding environment, watched them find <em>reward hacks</em> (early-return exploits, hardcoded test values, spec loopholes), and showed a second model reading only the raw CoT could catch most of them - <em>until</em> the training pressure was placed on the CoT itself, at which point the policy learned to hack while writing an innocent-looking trace. Optimizing the reasoning process eroded the very signal that had made monitoring work
-          (<a href="https://openai.com/index/chain-of-thought-monitoring/" target="_blank" rel="noopener">Baker, Farhi et al., Mar 2025</a>).
+          Chapter 6 §6.9 covered the mechanism: reasoning traces are not automatically faithful (Turpin), and once the CoT itself becomes a scoring surface under RL, the policy learns to hack while writing an innocent-looking trace (OpenAI's March 2025 CoT-monitoring study). The measurement-and-trust angle is what to do with that. If a raw, un-optimized trace still catches most reward hacks - and Chapter 6 argued it does - then monitorability is a safety property worth naming, tracking, and paying inference tokens for.
         </p>
         <div class="callout note" style="--c: var(--neg)">
           <div class="callout-label" style="color: var(--neg)">The trade the field has to make</div>
@@ -380,8 +375,8 @@
         </div>
 
         <p>
-          The clearest articulation of this trade-off is a joint position paper from July 2025: <em>Chain of Thought Monitorability: A New and Fragile Opportunity for AI Safety</em>. Forty-one researchers from OpenAI, Anthropic, Google DeepMind, METR, Apollo Research, and the UK AI Security Institute co-signed the argument that visible reasoning is a rare, useful window that can be closed by accident through routine capability work
-          (<a href="https://tomekkorbak.com/cot-monitorability-is-a-fragile-opportunity/cot_monitoring.pdf" target="_blank" rel="noopener">Korbak et al., Jul 2025</a>). They asked labs to score monitorability, publish the score in system cards, and weigh it alongside capability at deployment. Whether that norm sticks is one of the open questions the course leaves you with.
+          The clearest articulation is a joint position paper from July 2025: <em>Chain of Thought Monitorability: A New and Fragile Opportunity for AI Safety</em>. Forty-one researchers from OpenAI, Anthropic, Google DeepMind, METR, Apollo Research, the UK AI Security Institute and others co-signed the argument that visible reasoning is a rare, useful window that can be closed by accident through routine capability work
+          (<a href="https://tomekkorbak.com/cot-monitorability-is-a-fragile-opportunity/cot_monitoring.pdf" target="_blank" rel="noopener">Korbak et al., Jul 2025</a>). Their concrete asks: score monitorability alongside capability, publish the score in system cards, and refuse to ship a training change that degrades it without a matching capability win. Whether that norm sticks is one of the open questions the course leaves you with.
         </p>
 
         <h2><span class="section-number">8.</span>Safety practice: writing the danger down before it arrives</h2>
@@ -407,19 +402,19 @@
               <td style="padding:9px 10px"><a href="https://openai.com/index/updating-our-preparedness-framework/" target="_blank" rel="noopener">Preparedness Framework</a> (v1 Dec 2023 &rarr; v2 Apr 2025)</td>
               <td style="padding:9px 10px">Tracked Categories (bio/chem, cyber, AI self-improvement) with per-category thresholds; "sufficiently minimize" tests before deployment.</td>
             </tr>
-            <tr>
+            <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 10px">Google DeepMind</td>
               <td style="padding:9px 10px"><a href="https://deepmind.google/blog/strengthening-our-frontier-safety-framework/" target="_blank" rel="noopener">Frontier Safety Framework</a> (v1 May 2024 &rarr; v3 Sep 2025)</td>
               <td style="padding:9px 10px"><span class="gloss" data-gloss="ccl">Critical Capability Levels</span> across CBRN, cyber, ML R&amp;D, deceptive alignment, harmful manipulation.</td>
             </tr>
+            <tr>
+              <td style="padding:9px 10px">OpenAI (trained-in)</td>
+              <td style="padding:9px 10px"><a href="https://model-spec.openai.com/" target="_blank" rel="noopener">Model Spec</a> + <span class="gloss" data-gloss="deliberative-alignment">deliberative alignment</span></td>
+              <td style="padding:9px 10px">A written rulebook the o-series is trained to reason over in its CoT before answering; Chapter 7 §7.4 covers the mechanism.</td>
+            </tr>
           </tbody>
         </table>
         </div>
-
-        <p>
-          Alongside those, OpenAI publishes the <a href="https://model-spec.openai.com/" target="_blank" rel="noopener">Model Spec</a> - Objectives, Rules, Defaults - and trains against it with <span class="gloss" data-gloss="deliberative-alignment">deliberative alignment</span>: teaching o-series models to explicitly reason over the Spec before answering, so refusals and compliance come from the model reading the rulebook, not from a static classifier
-          (<a href="https://arxiv.org/abs/2412.16339" target="_blank" rel="noopener">Guan et al., Dec 2024</a>). This is the trained-in analogue to Constitutional AI (Ch 3): don't just filter the outputs, teach the model to argue with itself about the rules.
-        </p>
 
         <h3>Two demonstrations that make the frameworks feel necessary</h3>
         <p>

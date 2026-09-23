@@ -399,10 +399,11 @@
           March 2025 CoT-monitoring paper (Baker et al.,
           <a href="https://arxiv.org/abs/2503.11926" target="_blank" rel="noopener">Monitoring
           Reasoning Models for Misbehavior</a>) reports policies that learn concrete exploits:
-          <code>exit(0)</code> before the failing test runs, <code>raise unittest.SkipTest</code>
-          to make tests count as passed, or overwriting the reference-solution file to match
-          the model's output. The reward function said "your program passes the tests." The
-          policy noticed that "no tests run" is a special case of "no tests fail."
+          <code>exit(0)</code> before the failing test runs, <code>raise SkipTest</code> to
+          make tests count as passed, or decompiling the compiled reference-solution files
+          in the sandbox to read the expected output. The reward function said "your program
+          passes the tests." The policy noticed that "no tests run" is a special case of
+          "no tests fail."
         </p>
 
         <div class="callout note">
@@ -605,7 +606,7 @@
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px"><span class="gloss" data-gloss="verl">verl</span> (HybridFlow)</td>
               <td style="padding:9px 12px">ByteDance / HKU, Sep 2024</td>
-              <td style="padding:9px 12px">Hybrid single-and-multi-controller RL, 3D-HybridEngine resharding, 1.5x-20x throughput vs baselines. The most mature stack for large models. (<a href="https://arxiv.org/abs/2409.19256" target="_blank" rel="noopener">Sheng et al.</a>)</td>
+              <td style="padding:9px 12px">Hybrid single-and-multi-controller RL, 3D-HybridEngine resharding, 1.5x-20.6x throughput vs baselines. The most mature stack for large models. (<a href="https://arxiv.org/abs/2409.19256" target="_blank" rel="noopener">Sheng et al.</a>)</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px"><span class="gloss" data-gloss="openrlhf">OpenRLHF</span></td>

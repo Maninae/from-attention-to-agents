@@ -147,6 +147,19 @@
           </p>
         </div>
 
+        <div class="callout note">
+          <div class="callout-label">The 2017 block, nine years later</div>
+          <p>
+            Every piece of the block you just met has been replaced by something better since.
+            Pre-norm instead of post-norm; RMSNorm instead of LayerNorm; SwiGLU instead of the
+            ReLU-family feed-forward; rotary position embeddings (RoPE) instead of sinusoidal
+            adds; grouped-query or multi-head latent attention instead of vanilla multi-head.
+            The 2017 skeleton survived; the tissue on it was swapped out one paper at a time.
+            <a href="chapter02-inside-a-modern-pretraining-run.html">Chapter 2</a> walks through
+            what a frontier block looks like in 2026 and why each swap earned its place.
+          </p>
+        </div>
+
         <h2><span class="section-number">2.</span>Pretrain once, fine-tune cheap</h2>
         <p>
           The Transformer arrived at the same moment NLP was figuring out a separate trick:
@@ -278,7 +291,92 @@
           The conventional wisdom was about to be wrong.
         </p>
 
-        <h2><span class="section-number">3.</span>The doorstep of scale</h2>
+        <h2><span class="section-number">3.</span>Tokens: what actually enters the network</h2>
+        <p>
+          Both GPT and BERT are described in terms of "words," but that is a small lie the
+          diagrams tell. Neither model sees words. Both see integer <em>token</em> ids, and
+          the mapping from a raw string to that id sequence - the
+          <span class="gloss" data-gloss="tokenizer">tokenizer</span> - is a design
+          decision as consequential as the number of layers. It is worth pausing on, because
+          it is the piece a CV background does not fill in.
+        </p>
+        <p>
+          The classical NMT trick was one token per word plus an <code>&lt;unk&gt;</code>
+          bucket for everything rare. That works until you meet a name, a hashtag, a URL, or
+          an inflected form the training set never saw. In 2015,
+          <a href="https://arxiv.org/abs/1508.07909" target="_blank" rel="noopener">Sennrich, Haddow, and Birch</a>
+          adapted an old data-compression algorithm called
+          <span class="gloss" data-gloss="byte-pair-encoding">byte pair encoding</span> (BPE)
+          to the vocabulary problem. Start with a base alphabet of characters; find the most
+          frequent adjacent pair; merge it into a new symbol; repeat a few tens of thousands
+          of times. What you get is a mixed vocabulary of full common words plus subword
+          fragments that stitch together to spell the rest. "Unbelievable" might land as
+          <code>un</code>+<code>bel</code>+<code>iev</code>+<code>able</code>. Nothing is
+          out-of-vocabulary any more.
+        </p>
+        <p>
+          BPE (and its close cousin WordPiece, which BERT ships with) became the default
+          overnight. GPT-2 pushed it one step further in 2019 with
+          <span class="gloss" data-gloss="byte-level-bpe">byte-level BPE</span>: run the
+          merges over UTF-8 bytes instead of Unicode characters. The base alphabet is 256
+          bytes, fixed, so any string in any script decodes without an
+          <code>&lt;unk&gt;</code> token - emoji, Chinese, code, binary garbage all just
+          work. GPT-2's vocabulary was 50,257 tokens
+          (<a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf" target="_blank" rel="noopener">Radford et al., 2019</a>).
+          That number is worth remembering as a baseline, because it does not stay put.
+        </p>
+
+        <div class="callout definition">
+          <div class="callout-label">The vocabulary keeps growing</div>
+          <p>
+            Bigger vocabularies compress harder text into fewer tokens, which cuts context
+            length and speeds decoding. The frontier lineage since GPT-2:
+          </p>
+          <ul style="margin:8px 0 8px 22px; padding:0">
+            <li>GPT-2 (2019): 50,257 tokens, byte-level BPE.</li>
+            <li>GPT-3.5 / GPT-4 (2022-23): <code>cl100k_base</code>, roughly 100k tokens, exposed through OpenAI's
+              <a href="https://github.com/openai/tiktoken" target="_blank" rel="noopener">tiktoken</a> library.</li>
+            <li>Llama 3 (2024): 128,000 tokens, tiktoken-derived; roughly 15% fewer tokens per English string than Llama 2's 32k vocabulary
+              (<a href="https://ai.meta.com/blog/meta-llama-3/" target="_blank" rel="noopener">Meta, 2024</a>).</li>
+            <li>GPT-4o (2024): <code>o200k_base</code>, roughly 200k tokens; the non-English compression gains are dramatic.</li>
+          </ul>
+          <p style="margin-bottom:0">
+            Google's <a href="https://arxiv.org/abs/1808.06226" target="_blank" rel="noopener">SentencePiece</a>
+            (Kudo &amp; Richardson, 2018) is the tokenizer library the Llama, Gemma, Mistral,
+            and Qwen families are built on. It bundles BPE and Kudo's unigram algorithm and
+            treats whitespace as a normal character, so the same code trains a tokenizer for
+            English, Japanese, or SMILES without special casing.
+          </p>
+        </div>
+
+        <p>
+          The details matter more than they look. Whether digits get split one at a time or
+          grouped in threes decides whether a model can add six-digit numbers reliably; Llama
+          3 chunks numbers 0-999 as single tokens and splits longer integers into left-aligned
+          three-digit blocks
+          (<a href="https://www.beren.io/2024-05-11-Integer-tokenization-is-now-much-less-insane/" target="_blank" rel="noopener">Millidge, 2024</a>).
+          Whether whitespace and punctuation are their own tokens or fused with the next word
+          decides how code gets represented. Whether the vocabulary reserves slots for rare
+          scripts decides whether the same context window holds a page of English or a page of
+          Thai. Every serious lab treats the tokenizer as a first-class part of the model
+          release, not a preprocessing detail.
+        </p>
+
+        <div class="callout note">
+          <div class="callout-label">A path not taken (yet)</div>
+          <p>
+            A parallel line of work asks whether we need a tokenizer at all. ByT5 (2021) fed
+            raw UTF-8 bytes to a Transformer and paid a 4-8x sequence-length tax for it.
+            <a href="https://arxiv.org/abs/2412.09871" target="_blank" rel="noopener">Byte Latent Transformer (Pagnoni et al., 2024)</a>
+            revives the idea with dynamic patching: byte streams are grouped into
+            variable-length "patches" by predicted entropy, so hard regions get more compute
+            and easy runs collapse. BLT scales cleanly to 8B parameters and beats a
+            tokenized-model baseline at matched inference cost. The tokenizer is not dead, but
+            it is no longer the only option.
+          </p>
+        </div>
+
+        <h2><span class="section-number">4.</span>The doorstep of scale</h2>
         <p>
           February 2019. OpenAI announces
           <a href="https://openai.com/research/better-language-models" target="_blank" rel="noopener">GPT-2</a>
@@ -309,7 +407,7 @@
           The second was the staged release itself. It was the first time a frontier lab said,
           out loud, "this model is too dangerous to release." That sentence is going to come
           back - it's the seed of the entire <span class="pos">alignment</span> story
-          in <a href="chapter02-teaching-it-to-be-helpful.html">Chapter 2</a>.
+          in <a href="chapter03-teaching-it-to-be-helpful.html">Chapter 3</a>.
         </p>
 
         <div class="callout insight">

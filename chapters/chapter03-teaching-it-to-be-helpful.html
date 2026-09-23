@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chapter 2 · Teaching it to be helpful - From Attention to Agents</title>
-<meta name="description" content="2022 and the alignment lever: RLHF, InstructGPT, ChatGPT, and chain-of-thought. How a document completer became a helpful assistant - and where chain-of-thought first showed up, as a prompt trick.">
+<title>Chapter 3 · Teaching it to be helpful - From Attention to Agents</title>
+<meta name="description" content="2022 and the alignment lever: RLHF, InstructGPT, ChatGPT, chain-of-thought, and the AI-feedback line (Constitutional AI, RLAIF). How a document completer became a helpful assistant, and where chain-of-thought first showed up as a prompt trick.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-title">Chapter 2 · 2022</div>
+    <div class="sidebar-title">Chapter 3 · 2022</div>
     <div class="sidebar-subtitle">Teaching it to be helpful</div>
     <a class="sidebar-home" href="../index.html">&larr; All chapters</a>
     <nav class="nav-toc"></nav>
@@ -29,24 +29,28 @@
     <div class="container">
 
       <nav class="lecture-nav-top" aria-label="Chapter navigation">
-        <a href="chapter01-scale-is-a-strategy.html">&larr; Ch 1 &middot; Scale is a strategy</a>
-        <a href="chapter03-the-recipe-gets-cheaper.html">Ch 3 &middot; The recipe gets cheaper &rarr;</a>
+        <a href="chapter02-inside-a-modern-pretraining-run.html">&larr; Ch 2 &middot; Inside a modern pretraining run</a>
+        <a href="chapter04-the-recipe-gets-cheaper.html">Ch 4 &middot; The recipe gets cheaper &rarr;</a>
       </nav>
 
       <header class="lecture-header">
-        <p class="eyebrow">Chapter 2 &middot; 2022 &middot; lever: alignment</p>
+        <p class="eyebrow">Chapter 3 &middot; 2022 &middot; lever: alignment</p>
         <h1>Teaching it to be helpful</h1>
         <p class="desc">
-          GPT-3 could write, but it could not answer. It was trained to continue documents, not
-          to follow you. 2022 is the year one group at OpenAI closed that gap with a single recipe
-          shipped twice - once as a paper, once as a product - while another group at Google,
-          almost in passing, showed the model could already reason if you just asked it to show
-          its work.
+          A base model out of a modern pretraining run is still a document completer. It knows
+          more than any 2020 model and it is a lot cheaper to serve, but ask it "explain
+          photosynthesis" and it may respond with a homework worksheet. 2022 is the year one
+          group at OpenAI closed that gap with a single recipe shipped twice - once as a paper,
+          once as a product - while another group at Google, almost in passing, showed the model
+          could already reason if you just asked it to show its work. A third line, later in the
+          year, started replacing the human labeler with the model itself.
         </p>
         <div class="tags">
           <span class="tag">RLHF</span>
           <span class="tag">InstructGPT</span>
           <span class="tag">ChatGPT</span>
+          <span class="tag">Constitutional AI</span>
+          <span class="tag">RLAIF</span>
           <span class="tag">CoT</span>
           <span class="tag">BBH</span>
         </div>
@@ -62,8 +66,9 @@
           <span class="gloss" data-gloss="sft">SFT</span> &rarr;
           <span class="gloss" data-gloss="reward-model">reward model</span> &rarr;
           <span class="gloss" data-gloss="ppo">PPO</span>), the product launch that turned it into
-          the iPhone moment of AI, and one small prompting trick on the side that we will return
-          to twice more in this book.
+          the iPhone moment of AI, a second alignment line where the labeler is a model reading a
+          written constitution instead of a human, and one small prompting trick on the side
+          that we will return to twice more in this book.
         </p>
 
         <h2><span class="section-number">1.</span>The gap a base model leaves open</h2>
@@ -156,9 +161,18 @@
         </p>
         <p>
           The detail that always surprises: InstructGPT's biggest policy is 175B parameters, but
-          its reward model is only <strong>6B</strong>. A small judge is enough. The reward model
-          does not need to write - it only needs to recognize.
-          (<a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Ouyang 2022, &sect;3.5</a>.)
+          its reward model is only <strong>6B</strong>. In 2022 the reward model did not need to
+          write - it only needed to recognize. That claim aged unevenly. As preferences got harder
+          (multi-step reasoning, code, long-context critique), frontier practice pushed RM quality
+          up, often close to policy scale, and turned RM performance into a benchmarked axis of
+          its own with <span class="gloss" data-gloss="rewardbench">RewardBench</span> and its
+          harder 2025 successor. <span class="gloss" data-gloss="genrm">Generative reward models</span> -
+          judges that think out loud in a CoT before producing a score - now beat classifier RMs
+          of the same size on hard problems. Chapter 7 goes into this in detail; for the 2022
+          recipe, a 6B classifier was enough.
+          (<a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Ouyang 2022, &sect;3.5</a>;
+          <a href="https://arxiv.org/abs/2506.01937" target="_blank" rel="noopener">Malik et al., RewardBench 2, 2025</a>;
+          <a href="https://arxiv.org/abs/2408.15240" target="_blank" rel="noopener">Zhang et al., Generative Verifiers, 2024</a>.)
         </p>
 
         <h3>Stage 3 &middot; PPO, with a leash</h3>
@@ -248,7 +262,53 @@
           </p>
         </div>
 
-        <h2><span class="section-number">4.</span>The other thing that happened in 2022: just ask it to show its work</h2>
+        <h2><span class="section-number">4.</span>The labeler bottleneck, and how to replace the labeler</h2>
+        <p>
+          Every stage of the InstructGPT recipe leans on hired humans. Demonstrations for SFT are
+          written by them. Preference comparisons for the RM are ranked by them. And the reward
+          model that PPO then chases is only as good as the ~33k comparisons those forty labelers
+          produced. Scaling this pipeline to a new domain - code, math, long-form writing, safety
+          for a language you don't speak - meant paying more people to rank more outputs. That is
+          the labeler bottleneck.
+        </p>
+        <p>
+          Anthropic's <span class="gloss" data-gloss="constitutional-ai">Constitutional AI</span>
+          (Bai et al., December 2022) proposed a way around it: hand the ranking job to the model
+          itself, steered by a short written <em>constitution</em> of principles. The recipe has two
+          stages. First, "SL-CAI": the assistant produces a response, the model critiques its own
+          response against the constitution, revises it, and is then supervised-fine-tuned on those
+          revisions. Second, "RL from AI Feedback" (<span class="gloss" data-gloss="rlaif">RLAIF</span>):
+          for each prompt, sample two responses, ask an AI evaluator - prompted with the same
+          principles - which one is better, train a preference model on those AI-generated labels,
+          and run PPO against it. The claim in the abstract is the striking one:
+          <em>"we are able to train a harmless but non-evasive AI assistant [...] without any human
+          labels identifying harmful outputs."</em>
+          (<a href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener">Bai et al., 2022</a>.)
+        </p>
+        <p>
+          Google made the head-to-head comparison a year later. Lee et al. found that on
+          summarization and helpful-dialogue, RLAIF was <em>comparable</em> to RLHF - even when
+          the AI labeler was the same size as the policy - and they showed a stripped-down
+          variant they called direct-RLAIF, where the LLM produces the reward online during RL with
+          no separately-trained RM at all. Human preference labels stopped being the only source
+          of alignment signal.
+          (<a href="https://arxiv.org/abs/2309.00267" target="_blank" rel="noopener">Lee et al., 2023</a>.)
+        </p>
+        <div class="callout note">
+          <div class="callout-label">Why "constitution" and not "reward model"</div>
+          <p>
+            A written constitution is a specification, in English. Editing it is a code change,
+            reviewable in a pull request; you know exactly which principle produced which behavior.
+            Editing a reward model is training a new neural network from scratch on tens of
+            thousands of comparisons. Constitutional AI is not just cheaper - it moves the
+            alignment signal from a black-box model into a document a human can read. The idea
+            comes back in Chapter 7 under different names: OpenAI's Rule-Based Rewards, its
+            Model Spec, deliberative alignment. The pattern is the same: replace human labels with
+            an evaluator that follows a written rulebook.
+          </p>
+        </div>
+
+        <h2><span class="section-number">5.</span>The other thing that happened in 2022: just ask it to show its work</h2>
         <p>
           Five weeks before InstructGPT, a different paper out of Google Brain - Wei, Wang,
           Schuurmans, and colleagues - pointed out something almost embarrassing. If you give a
@@ -305,12 +365,12 @@
           prompt-level interventions can register as real progress.
         </p>
 
-        <h2><span class="section-number">5.</span>What this chapter plants for later</h2>
+        <h2><span class="section-number">6.</span>What this chapter plants for later</h2>
         <p>
           Chain-of-thought arrives here as a <strong>prompt trick</strong> - zero weights touched.
-          That framing is going to grow twice. In Chapter 4 we will see the same idea promoted
+          That framing is going to grow twice. In Chapter 5 we will see the same idea promoted
           into an <em>optimization target</em>: GEPA and friends search for the best CoT-shaped
-          prompt automatically, treating wording as something you can optimize. In Chapter 5 the
+          prompt automatically, treating wording as something you can optimize. In Chapter 6 the
           idea grows again, this time directly into the weights: o1 and DeepSeek-R1 train models
           to produce long internal reasoning traces by reinforcement learning on verifiable
           rewards. "Make the model show its work" surfaces at three different layers of the
@@ -319,16 +379,16 @@
         <div class="callout note">
           <div class="callout-label">Three appearances of the same idea</div>
           <p>
-            <strong>Ch 2 (here):</strong> CoT as a prompt trick. No training. Few-shot exemplars
+            <strong>Ch 3 (here):</strong> CoT as a prompt trick. No training. Few-shot exemplars
             include intermediate reasoning, the model copies the pattern.<br>
-            <strong>Ch 4:</strong> CoT as a search target. Automatic prompt-optimization methods
+            <strong>Ch 5:</strong> CoT as a search target. Automatic prompt-optimization methods
             evolve the wording of those exemplars. The prompt becomes a parameter.<br>
-            <strong>Ch 5:</strong> CoT as a trained capability. RL on verifiable rewards bakes the
+            <strong>Ch 6:</strong> CoT as a trained capability. RL on verifiable rewards bakes the
             "think step by step" trace into the weights themselves.
           </p>
         </div>
 
-        <h2><span class="section-number">6.</span>The recipe is great. It is also a mess.</h2>
+        <h2><span class="section-number">7.</span>The recipe is great. It is also a mess.</h2>
         <p>
           Read the InstructGPT paper carefully and the cost shows up everywhere. Forty labelers
           on contract. ~13,000 demonstrations. ~33,000 ranked comparisons. Three sequential
@@ -349,12 +409,12 @@
       </article>
 
       <nav class="lecture-nav" aria-label="Chapter navigation">
-        <a class="nav-card prev" href="chapter01-scale-is-a-strategy.html">
-          <div class="label">&larr; Previous &middot; Chapter 1</div>
-          <div class="title">Scale is a strategy</div>
+        <a class="nav-card prev" href="chapter02-inside-a-modern-pretraining-run.html">
+          <div class="label">&larr; Previous &middot; Chapter 2</div>
+          <div class="title">Inside a modern pretraining run</div>
         </a>
-        <a class="nav-card next" href="chapter03-the-recipe-gets-cheaper.html">
-          <div class="label">Next &middot; Chapter 3 &rarr;</div>
+        <a class="nav-card next" href="chapter04-the-recipe-gets-cheaper.html">
+          <div class="label">Next &middot; Chapter 4 &rarr;</div>
           <div class="title">The recipe gets cheaper</div>
         </a>
       </nav>

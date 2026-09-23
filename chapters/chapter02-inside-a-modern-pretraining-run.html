@@ -270,7 +270,7 @@
           honest.
         </p>
 
-        <h2><span class="section-number">4.</span> Attention and the KV cache</h2>
+        <h2 id="sec-attn"><span class="section-number">4.</span> Attention and the KV cache</h2>
         <p>
           At training time, standard multi-head attention costs $O(L^2 d)$ per layer. That has
           not changed. What has changed is the cost people design against, which is not training
@@ -575,8 +575,8 @@
           may or may not show its work. Ask it what its policy is on unsafe requests and it does
           not have one. Pretraining has taught it the substrate: what the world talks about, in
           what order, in what registers. It has not taught it that there is a user across the
-          table who wants an answer to a specific question. That is what Chapter 1 hinted at with
-          the phrase <span class="gloss" data-gloss="intent-alignment-gap">intent-alignment gap</span>.
+          table who wants an answer to a specific question. That is the
+          <span class="gloss" data-gloss="intent-alignment-gap">intent-alignment gap</span>.
           Chapter 3 is where a small team at OpenAI closes it with a three-stage recipe called
           RLHF, ships the result as ChatGPT, and quietly plants the seed of chain-of-thought.
         </p>

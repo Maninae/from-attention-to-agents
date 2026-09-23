@@ -477,7 +477,7 @@
           <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-12-01</td>
             <td style="padding:8px 12px"><a href="https://api-docs.deepseek.com/updates" target="_blank" rel="noopener">DeepSeek-V3.2 + V3.2-Speciale</a></td>
             <td style="padding:8px 12px">DeepSeek</td>
-            <td style="padding:8px 12px">Open-weight hybrid (chat + reasoner) upgrade; a distinct <code>Speciale</code> variant for reasoning workloads.</td></tr>
+            <td style="padding:8px 12px">Open-weight hybrid (chat + reasoner) upgrade, alongside a time-limited <code>V3.2-Speciale</code> endpoint at V3.2 pricing.</td></tr>
           <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2025-12-03</td>
             <td style="padding:8px 12px"><a href="https://en.wikipedia.org/wiki/Gemini_(language_model)" target="_blank" rel="noopener">Gemini 3 Deep Think</a></td>
             <td style="padding:8px 12px">Google DeepMind</td>
@@ -518,6 +518,10 @@
             <td style="padding:8px 12px"><a href="https://api-docs.deepseek.com/news/news260910" target="_blank" rel="noopener">DeepSeek-V4.1-Flash</a></td>
             <td style="padding:8px 12px">DeepSeek</td>
             <td style="padding:8px 12px">Asymmetric causal encoder / decoder MoE, 8B in / 16B out active; a quarter of the HBM and an eighth of the SSD of V4-Flash for KV cache.</td></tr>
+          <tr style="border-bottom:1px solid var(--rule)"><td style="padding:8px 12px; white-space:nowrap">2026-09-21</td>
+            <td style="padding:8px 12px"><a href="https://en.wikipedia.org/wiki/Grok_(chatbot)" target="_blank" rel="noopener">Grok 4.7</a></td>
+            <td style="padding:8px 12px">xAI</td>
+            <td style="padding:8px 12px">Point release on the Grok 4 line, pre-announced by Musk as landing within three weeks of Grok 4.6; capability-mode details not yet described in a primary source at the time of writing.</td></tr>
           <tr><td style="padding:8px 12px; white-space:nowrap">2026-09-22</td>
             <td style="padding:8px 12px"><a href="https://www.anthropic.com/news/claude-opus-5-5" target="_blank" rel="noopener">Claude Opus 5.5</a></td>
             <td style="padding:8px 12px">Anthropic</td>
@@ -554,9 +558,10 @@
         <span class="gloss" data-gloss="thinking-budget">thinking budget</span>: a hard cap on
         how many tokens the model can spend inside its reasoning block before it must answer.
         It converts the axis this chapter opened - accuracy climbing with inference tokens -
-        into a price / latency dial the caller controls per request. Anthropic exposes it as a
-        <code>budget_tokens</code> parameter; Google, OpenAI, and DeepSeek expose analogous
-        controls.
+        into a price / latency dial the caller controls per request. Anthropic exposed it as an integer
+        <code>budget_tokens</code> parameter on the Claude 4-era models and moved to an adaptive-thinking
+        <code>effort</code> knob on the Claude 5 line; Google, OpenAI, and DeepSeek expose analogous
+        controls. Chapter 8 has the API details.
       </p>
       <div class="callout note">
         <div class="callout-label">The one hybrid caveat worth carrying</div>

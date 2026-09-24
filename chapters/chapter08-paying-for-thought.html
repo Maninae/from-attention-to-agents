@@ -174,12 +174,12 @@
       </p>
 
       <p>
-        The second lever, applied in the same engine, is <strong>continuous batching</strong> -
-        the term
+        The second lever, applied in the same engine, is <strong>continuous batching</strong>
+        (the term
         <a href="https://www.anyscale.com/blog/continuous-batching-llm-inference" target="_blank" rel="noopener">Anyscale popularized in mid-2023</a>
         for the iteration-level scheduling
         <a href="https://www.usenix.org/conference/osdi22/presentation/yu" target="_blank" rel="noopener">Orca (Yu et al., OSDI 2022)</a>
-        first shipped. Static batching waits for the longest sequence in the batch to finish
+        first shipped). Static batching waits for the longest sequence in the batch to finish
         before serving the next request; continuous batching lets finished sequences leave the
         batch mid-step, and new requests join at the next decode iteration. Combined with paged
         memory, an H100 that used to sit at ~30% utilization sits near 90%.

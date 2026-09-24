@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chapter 10 · Measuring what we built - From Attention to Agents</title>
-<meta name="description" content="The 2026 eval landscape: saturating knowledge benchmarks, contamination-resistant coding sets, agent time-horizons, LLM-as-judge biases, and the leaderboard illusion. Interpretability (SAEs, attribution graphs) and safety practice (RSP, Preparedness, Frontier Safety Framework, sleeper agents, alignment faking, CoT monitorability).">
+<title>Chapter 10 · Measuring what we built · From Attention to Agents</title>
+<meta name="description" content="The 2026 eval portfolio: saturating knowledge benchmarks, contamination-resistant coding sets, agent time-horizons, LLM-as-judge biases, and the leaderboard illusion. Interpretability (SAEs, attribution graphs) and safety practice (RSP, Preparedness, Frontier Safety Framework, sleeper agents, alignment faking, CoT monitorability).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -34,16 +34,16 @@
 
       <header class="lecture-header">
         <h1><span class="section-number">10</span>Measuring what we built</h1>
-        <p class="desc">Benchmarks age fast, leaderboards rank the wrong axis, and the judge has its own taste. The scoreboard is not the game - but the field only knows the game through the scoreboard.</p>
+        <p class="desc">A tour of the 2026 eval portfolio and how it aged: which benchmarks saturated, where LLM judges get fooled, what a leaderboard actually measures once style is regressed out, and the interpretability and safety tools the labs are pointing at the parts a benchmark can't reach.</p>
       </header>
 
       <article class="article">
 
         <p class="lecture-roadmap">
-          Chapter 9 closed on an agent that can run for hours and a benchmark that grades whether the tests turned green. This one steps back and looks at every scoreboard the course has passed through - what they measured, how quickly they saturated, and why the answer to "which model is best" now depends on who is scoring, in which style, on data no one can prove was held out. Then it looks at the two moves the field has made to stop being fooled by its own numbers: opening up the black box (interpretability) and writing the danger down before it arrives (safety practice). The eval-shadow thread finally sits in one place, and the villain the course has been naming since Chapter 2 (Goodhart) gets its full portrait.
+          Chapter 9 closed on an agent that can run for hours and a benchmark that grades whether the tests turned green. This chapter revisits every scoreboard the course has passed through: what each one measured, how quickly it saturated, and why the answer to "which model is best" now depends on who is scoring, in which style, on data no one can prove was held out. Then it covers the two moves the field has made to stop being fooled by its own numbers, which are opening up the black box (interpretability) and writing the danger down before it arrives (safety practice). The eval-shadow thread finally sits in one place, and Goodhart, the villain the course has been naming since Chapter 2, gets its full portrait.
         </p>
 
-        <h2><span class="section-number">1.</span>The scoreboard is not the game</h2>
+        <h2><span class="section-number">1.</span>Every scoreboard has a shelf life</h2>
         <p>
           Every previous chapter had a benchmark doing the work of a verdict.
           <span class="gloss" data-gloss="bbh">BBH</span> and
@@ -80,8 +80,8 @@
           (<a href="https://epoch.ai/frontiermath/the-benchmark" target="_blank" rel="noopener">Epoch AI, Nov 2024</a>).
           <span class="gloss" data-gloss="hle">Humanity's Last Exam</span>, an expert-written
           2,500-question set from CAIS and Scale, was named in January 2025 for exactly this
-          expectation - the last exam the human cohort could assemble before its own field started
-          eating it
+          expectation, meaning the last exam the human cohort could assemble before its own field
+          started eating it
           (<a href="https://arxiv.org/abs/2501.14249" target="_blank" rel="noopener">Center for AI Safety &amp; Scale, Jan 2025</a>).
         </p>
 
@@ -92,7 +92,7 @@
           </p>
         </div>
 
-        <h2><span class="section-number">2.</span>The 2026 landscape, on one page</h2>
+        <h2><span class="section-number">2.</span>The 2026 portfolio, on one page</h2>
         <p>
           What a working researcher actually watches in late 2026 is a portfolio, not a benchmark. The table below is the compact version: what each set measures, who built it, when it landed, and what its intended failure mode is. Every row links inline to the primary source; specific SOTA numbers are omitted where they move faster than this page is edited.
         </p>
@@ -152,7 +152,7 @@
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 10px"><a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noopener">SWE-bench Pro</a></td>
-              <td style="padding:9px 10px">1,865 tasks across GPL-only public repos, held-out repos, and commercial codebases - built against contamination.</td>
+              <td style="padding:9px 10px">1,865 tasks across GPL-only public repos, held-out repos, and commercial codebases, built against contamination.</td>
               <td style="padding:9px 10px">Scale, Sep 2025</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
@@ -178,7 +178,7 @@
             </tr>
             <tr>
               <td style="padding:9px 10px"><a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/" target="_blank" rel="noopener">METR time horizons</a></td>
-              <td style="padding:9px 10px">Not one score - the length of the task a frontier model completes at 50%; a distributional stand-in for "how long can it run".</td>
+              <td style="padding:9px 10px">Not one score. The length of the task a frontier model completes at 50%; a distributional stand-in for "how long can it run".</td>
               <td style="padding:9px 10px">METR, Mar 2025</td>
             </tr>
           </tbody>
@@ -186,19 +186,19 @@
         </div>
 
         <p>
-          Every family of benchmarks measures a different axis of intelligence, and none of them alone can summarize the strength of a frontier model. A 2026 model card lists most of these rows and admits which ones its numbers are self-reported, which are third-party, and which are private. The <em>portfolio</em> is the review, not any one benchmark.
+          Every family of benchmarks measures a different axis of intelligence, and none of them alone can summarize the strength of a frontier model. A 2026 model card lists most of these rows and admits which of its numbers are self-reported, which are third-party, and which are private. The <em>portfolio</em> is the review that a serious reader does, and any single benchmark is one row of it.
         </p>
 
         <div class="callout note">
-          <div class="callout-label">The one that isn't a number</div>
+          <div class="callout-label">METR reports a horizon, not a percentage</div>
           <p>
-            <span class="gloss" data-gloss="metr-horizon">METR's time-horizon</span> deserves its own callout. Instead of one score, it fits a task-length axis (seconds to hours of expert human time) to model success rates and reports the length at which the model clears 50%. METR's March 2025 paper measures a 7-month doubling in that horizon from 2019 to 2025, accelerating to a <strong>4-month</strong> doubling in 2024 - 2025 (<a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">Kwa et al., Mar 2025</a>). Whatever the horizon is by the time you read this, it will not be what the paper reported; the shape of the measurement is what matters.
+            <span class="gloss" data-gloss="metr-horizon">METR's time-horizon</span> deserves its own callout. Instead of one score, it fits a task-length axis (seconds to hours of expert human time) to model success rates and reports the length at which the model clears 50%. METR's March 2025 paper measures a 7-month doubling in that horizon from 2019 to 2025, accelerating to a <strong>4-month</strong> doubling in 2024 to 2025 (<a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">Kwa et al., Mar 2025</a>). Whatever the horizon is by the time you read this, it will not be what the paper reported; the shape of the measurement is what matters.
           </p>
         </div>
 
         <h2><span class="section-number">3.</span>Contamination as a first-class threat</h2>
         <p>
-          A benchmark's number is only as good as its distance from the training set. Model reports have discovered, quietly and repeatedly, that the internet-scale crawl that pretrained the model also contains the eval - either verbatim, or near-duplicate, or its answer key. The oldest examples are almost innocent: GSM8K and MATH problems paraphrased in dozens of tutoring sites; MMLU questions traded on Quizlet. The newer ones are load-bearing: SWE-bench issues came from public GitHub repos that were, of course, in every pretraining corpus.
+          A benchmark's number is only as good as its distance from the training set. Model reports have repeatedly turned up cases where the internet-scale crawl that pretrained the model also contains the eval, either verbatim, or as a near-duplicate, or as its answer key. The oldest examples are almost innocent: GSM8K and MATH problems paraphrased in dozens of tutoring sites; MMLU questions traded on Quizlet. The newer ones are load-bearing: SWE-bench issues came from public GitHub repos that were, of course, in every pretraining corpus.
         </p>
         <p>
           The response was to design against contamination on purpose. Three moves are worth naming, because they now show up in every serious benchmark launch:
@@ -207,10 +207,10 @@
           <li><strong>Time-boxing.</strong> <a href="https://arxiv.org/abs/2403.07974" target="_blank" rel="noopener">LiveCodeBench</a> continuously scrapes new problems from LeetCode, AtCoder, and CodeForces and lets you evaluate on the slice released <em>after</em> a given training cutoff. Same benchmark, different windows.</li>
           <li><strong>Held-out and commercial data.</strong> SWE-bench Pro pairs a public GPL set with a held-out repo set and a set from real commercial codebases; the initial post reports GPT-5 at <strong>23.3%</strong> on the public set versus <strong>70%+</strong> on SWE-bench Verified for the same model family
               (<a href="https://scale.com/research/swe_bench_pro" target="_blank" rel="noopener">Scale, Sep 2025</a>). The gap is the contamination signal.</li>
-          <li><strong>Author-generated novel problems.</strong> FrontierMath commissioned original problems from working mathematicians under strict secrecy protocols. Humanity's Last Exam followed the same pattern across a thousand experts. The point is not that the problem is impossible; it is that the answer does not exist on the training internet.</li>
+          <li><strong>Author-generated novel problems.</strong> FrontierMath commissioned original problems from working mathematicians under strict secrecy protocols. Humanity's Last Exam followed the same pattern across a thousand experts. What makes these hard for a model is that the answer does not exist on the training internet, not that the problem itself is impossible.</li>
         </ul>
         <p>
-          None of these is a full cure. A private set that's evaluated against by many labs eventually leaks - through prompts in an API, through disclosure to a benchmark host, through inference on a shared endpoint. The design constraint became a rolling one: a benchmark's usefulness ages, and the field either refreshes the underlying data or accepts that yesterday's headline is a decoration.
+          None of these is a full cure. A private set that many labs evaluate against eventually leaks (through prompts in an API, through disclosure to a benchmark host, through inference on a shared endpoint). So the design constraint became a rolling one: a benchmark's usefulness ages, and the field either refreshes the underlying data or accepts that yesterday's headline is a decoration.
         </p>
 
         <div class="callout theorem">
@@ -225,36 +225,36 @@
 
         <h2><span class="section-number">4.</span>The arena, style, and the leaderboard illusion</h2>
         <p>
-          Alongside static benchmarks, the field spent the 2023 - 2024 stretch converging on a live, human-graded leaderboard: <span class="gloss" data-gloss="chatbot-arena">Chatbot Arena</span> (now LMArena), where anonymous model pairs are shown side-by-side and users pick a winner. Wins are aggregated into <span class="gloss" data-gloss="elo-rating">Elo</span> ratings via a Bradley-Terry model. For a while this was, defensibly, the least gameable signal available: a fresh distribution of real user prompts, and a human judge you couldn't fine-tune against.
+          Alongside static benchmarks, the field spent the 2023 to 2024 stretch converging on a live, human-graded leaderboard: <span class="gloss" data-gloss="chatbot-arena">Chatbot Arena</span> (now LMArena), where anonymous model pairs are shown side-by-side and users pick a winner. Wins are aggregated into <span class="gloss" data-gloss="elo-rating">Elo</span> ratings via a Bradley-Terry model. For a while this was, defensibly, the least gameable signal available: a fresh distribution of real user prompts, and a human judge you couldn't fine-tune against.
         </p>
         <p>
           It turned out to be gameable anyway, in two different directions.
         </p>
 
-        <h3>Style bias, and the fix</h3>
+        <h3>Style bias, and the style-control fix</h3>
         <p>
-          Users, on average, reward answers that <em>look</em> like effort: longer, more sub-headings, more bullets, more code fences. On <strong>August 28, 2024</strong> LMSYS shipped <span class="gloss" data-gloss="style-control">style control</span> - a Bradley-Terry regression that adds features for response length and markdown density and reports rankings after regressing style out. The published shift was direct: Claude 3.5 Sonnet, Claude 3 Opus, and Llama 3.1 405B moved up; GPT-4o-mini and Grok-2-mini moved down. Same battles, same clicks, different accounting
+          Users, on average, reward answers that <em>look</em> like effort: longer, more sub-headings, more bullets, more code fences. On <strong>August 28, 2024</strong> LMSYS shipped <span class="gloss" data-gloss="style-control">style control</span>, a Bradley-Terry regression that adds features for response length and markdown density and reports rankings after regressing style out. The published shift was direct: Claude 3.5 Sonnet, Claude 3 Opus, and Llama 3.1 405B moved up; GPT-4o-mini and Grok-2-mini moved down. Same battles, same clicks, different accounting
           (<a href="https://www.lmsys.org/blog/2024-08-28-style-control/" target="_blank" rel="noopener">LMSYS, Aug 2024</a>).
         </p>
         <div class="callout insight">
-          <div class="callout-label">What style control actually says</div>
+          <div class="callout-label">Style control separates a joint preference into two</div>
           <p>
-            It is not that longer or more-formatted answers are wrong. It is that a leaderboard which fails to disentangle style from substance is measuring a <em>joint</em> preference over both, and rewarding models trained to over-format. Style control is a request to tell them apart.
+            Longer or more-formatted answers are not wrong on their own. The issue is that a leaderboard which fails to disentangle style from substance is measuring a <em>joint</em> preference over both, and rewarding models trained to over-format. Style control is the request to tell them apart.
           </p>
         </div>
 
         <h3>The Leaderboard Illusion</h3>
         <p>
-          A more structural critique landed in April 2025. Singh et al. - across Cohere Labs, Princeton, MIT, Stanford, Waterloo, Ai2, and Washington - documented systematic distortions in Chatbot Arena in <em>The Leaderboard Illusion</em>
+          A more structural critique landed in April 2025. Singh et al. (across Cohere Labs, Princeton, MIT, Stanford, Waterloo, Ai2, and Washington) documented systematic distortions in Chatbot Arena in <em>The Leaderboard Illusion</em>
           (<a href="https://arxiv.org/abs/2504.20879" target="_blank" rel="noopener">arXiv:2504.20879</a>). Their findings, briefly:
         </p>
         <ul>
           <li>A small set of providers were allowed to <em>privately test</em> many model variants against the arena before public release, and to retract scores if the numbers were bad. The public leaderboard was the maximum over private siblings, not a single model's true rating.</li>
           <li>Closed-model providers received disproportionately more battles than open-weight or open-source ones, giving them tighter confidence intervals and more Elo mass.</li>
-          <li>Open-source models were silently deprecated from the leaderboard at higher rates than closed ones, biasing the aggregate.</li>
+          <li>Open-source models were dropped from the leaderboard at higher rates than closed ones, biasing the aggregate.</li>
         </ul>
         <p>
-          The response from LMArena, and from the broader community, was messy and ongoing. What is durable from the episode is not the specific corrections but the frame: any metric influential enough to move launches will develop an ecosystem around it, and the ecosystem is part of the measurement.
+          The response from LMArena, and from the broader community, was messy and ongoing. What is durable from the episode is a frame worth carrying forward: any metric influential enough to move launches will develop an ecosystem around it, and the ecosystem is part of the measurement.
         </p>
 
         <h2><span class="section-number">5.</span>LLM-as-judge: its biases, and the loops that keep it honest</h2>
@@ -302,26 +302,26 @@
         </div>
 
         <p>
-          The productive move was not to abandon LLM judges - the labels are too expensive at scale - but to <em>instrument</em> them. Reward models became a benchmarked axis in their own right:
+          The productive move was to <em>instrument</em> the LLM judges rather than abandon them, since human labels are too expensive at scale. Reward models became a benchmarked axis in their own right:
           <strong><a href="https://arxiv.org/abs/2506.01937" target="_blank" rel="noopener">RewardBench 2</a></strong> (Malik et al., Jun 2025) evaluates reward models across factuality, focus, math, instruction following, safety, and ties, and the accuracy on it correlates with downstream RLHF performance more cleanly than earlier proxies.
           <strong><a href="https://arxiv.org/abs/2408.15240" target="_blank" rel="noopener">Generative Verifiers (GenRM)</a></strong> reframes the reward model as a next-token prediction problem, so the same tools that made reasoning models work (CoT, majority voting) make judges better calibrated too.
         </p>
         <p>
-          The point of the RewardBench line is not that we now have a perfect judge. It is that the judge went from "we shipped it because agreement is high enough" to "we score it, we track it, we know its failure modes, and we hold out data it never sees." That is the same move the code-eval community made against contamination, one layer up.
+          What the RewardBench line changed is that the judge went from "we shipped it because agreement is high enough" to "we score it, we track it, we know its failure modes, and we hold out data it never sees." That is the same move the code-eval community made against contamination, one layer up.
         </p>
         <div class="callout insight">
-          <div class="callout-label">The pattern under both</div>
+          <div class="callout-label">The eval-shadow pattern: instrument the metric</div>
           <p>
-            The eval-shadow thread, three chapters in, resolves like this: a metric influential enough to move behavior generates an economy that games it, and the field responds by <em>instrumenting the metric</em> - style controls, held-out sets, reward-model benchmarks, judge audits. The scoreboard is not made honest by finding a perfect one; it is made honest by watching all the ways this one is dishonest.
+            The eval-shadow thread, three chapters in, resolves like this: a metric influential enough to move behavior generates an economy that games it, and the field responds by <em>instrumenting the metric</em> with style controls, held-out sets, reward-model benchmarks, and judge audits. The scoreboard gets made honest by watching all the ways this specific one is dishonest, not by hunting for a perfect one that doesn't exist.
           </p>
         </div>
 
         <h2><span class="section-number">6.</span>Interpretability: opening the box</h2>
         <p>
-          Evals judge behavior; interpretability judges the mechanism producing it. If you want to know whether a model "actually" refused for the reason it said, or "actually" solved the problem the way its trace claims, the argument sits inside the network, not on a scoreboard. Two lines of work carried most of the frontier progress in 2024 - 2025.
+          Evals judge behavior; interpretability judges the mechanism producing it. If you want to know whether a model "actually" refused for the reason it said, or "actually" solved the problem the way its trace claims, the argument sits inside the network, not on a scoreboard. Two lines of work carried most of the frontier progress in 2024 through 2025.
         </p>
 
-        <h3>Sparse autoencoders as a scaffold for features</h3>
+        <h3>Sparse autoencoders: a scaffold for features</h3>
         <p>
           A residual-stream activation is a dense vector; a huge number of concepts get superposed into a small number of dimensions, and no single neuron cleanly corresponds to "the Golden Gate Bridge." A <span class="gloss" data-gloss="sparse-autoencoder">sparse autoencoder</span> (SAE) trains a wide, mostly-inactive linear expansion of that activation so that only a handful of latents fire per token, and the ones that fire tend to be human-readable features.
         </p>
@@ -329,7 +329,7 @@
           Two 2024 results moved this from a toy to a production tool:
         </p>
         <ul>
-          <li><strong>Anthropic, "Scaling Monosemanticity" (May 2024).</strong> SAEs of up to <strong>34M</strong> features on Claude 3 Sonnet's middle residual stream. Multilingual, multimodal features; features that respond to abstract discussion of a concept, not just literal mentions; features that steer the model when clamped - the "Golden Gate Bridge" feature that, when amplified, made the model insist it was the bridge
+          <li><strong>Anthropic, "Scaling Monosemanticity" (May 2024).</strong> SAEs of up to <strong>34M</strong> features on Claude 3 Sonnet's middle residual stream. Multilingual, multimodal features; features that respond to abstract discussion of a concept beyond literal mentions; features that steer the model when clamped, e.g. the "Golden Gate Bridge" feature that, when amplified, made the model insist it was the bridge
               (<a href="https://transformer-circuits.pub/2024/scaling-monosemanticity/" target="_blank" rel="noopener">Templeton et al., May 2024</a>).</li>
           <li><strong>OpenAI, "Scaling and evaluating sparse autoencoders" (Jun 2024).</strong> Scaling laws for SAE width/sparsity/model-size; a 16M-feature SAE trained on GPT-4 activations; new evaluation metrics for feature interpretability
               (<a href="https://cdn.openai.com/papers/sparse-autoencoders.pdf" target="_blank" rel="noopener">Gao et al., Jun 2024</a>).</li>
@@ -339,33 +339,33 @@
         <p>
           Features are nouns; the field also wanted the verbs. In March 2025, Anthropic released
           <em>Circuit Tracing</em> and its case-study companion <em>On the Biology of a Large
-          Language Model</em>. The method: replace the model's dense MLPs with <span class="gloss" data-gloss="cross-layer-transcoder">cross-layer transcoders</span> - sparse, interpretable "replacement neurons" that read from and write to the residual stream across layers - and then use the substitute network to build an <span class="gloss" data-gloss="attribution-graph">attribution graph</span> for a single prompt: which features caused which downstream features, all the way to the output logit
+          Language Model</em>. The method replaces the model's dense MLPs with <span class="gloss" data-gloss="cross-layer-transcoder">cross-layer transcoders</span>, which are sparse, interpretable "replacement neurons" that read from and write to the residual stream across layers, and then uses the substitute network to build an <span class="gloss" data-gloss="attribution-graph">attribution graph</span> for a single prompt: which features caused which downstream features, all the way to the output logit
           (<a href="https://transformer-circuits.pub/2025/attribution-graphs/biology.html" target="_blank" rel="noopener">Lindsey, Batson et al., Mar 2025</a>).
         </p>
         <p>
-          Findings from the case studies rearranged what people thought was happening inside the model. Claude 3.5 Haiku plans <em>ahead</em> when composing rhymed poetry, choosing a target rhyme word and steering the line toward it. It carries out multi-step arithmetic through a specific combination of look-up features and approximate-addition circuits, not the algorithm it verbalizes. It sometimes writes down a plausible chain of thought while the mechanism inside was different - a direct, mechanistic demonstration of the CoT faithfulness problem below.
+          The case-study findings rearranged what people thought was happening inside the model. Claude 3.5 Haiku plans <em>ahead</em> when composing rhymed poetry, choosing a target rhyme word and steering the line toward it. It carries out multi-step arithmetic through a specific combination of look-up features and approximate-addition circuits that differ from the algorithm it verbalizes. It sometimes writes down a plausible chain of thought while the mechanism inside was different, which is a direct, mechanistic demonstration of the CoT faithfulness problem below.
         </p>
 
         <div class="callout note">
-          <div class="callout-label">Scope</div>
+          <div class="callout-label">Reading pieces of the mind, not the mind</div>
           <p>
-            Both SAEs and attribution graphs are partial. Not every feature is interpretable; not every graph explains a full behavior; the tools are cheaper on small models than on frontier ones. The right claim is not "we can read the mind"; it is "we can read pieces of the mind well enough to falsify specific stories the model tells about itself."
+            Both SAEs and attribution graphs are partial: not every feature is interpretable, not every graph explains a full behavior, and the tools are cheaper on small models than on frontier ones. The right claim is that we can read pieces of the mind well enough to falsify specific stories the model tells about itself, which is already a lot.
           </p>
         </div>
 
         <h2><span class="section-number">7.</span>CoT monitorability as a safety lever</h2>
         <p>
-          Chapter 6 §6.9 covered the mechanism: reasoning traces are not automatically faithful (Turpin), and once the CoT itself becomes a scoring surface under RL, the policy learns to hack while writing an innocent-looking trace (OpenAI's March 2025 CoT-monitoring study). The measurement-and-trust angle is what to do with that. If a raw, un-optimized trace still catches most reward hacks - and Chapter 6 argued it does - then monitorability is a safety property worth naming, tracking, and paying inference tokens for.
+          Chapter 6 §6.9 covered the mechanism: reasoning traces are not automatically faithful (Turpin), and once the CoT itself becomes a scoring surface under RL, the policy learns to hack while writing an innocent-looking trace (OpenAI's March 2025 CoT-monitoring study). The measurement-and-trust angle is what to do with that. Chapter 6 argued that a raw, un-optimized trace still catches most reward hacks, which makes monitorability a safety property worth naming, tracking, and paying inference tokens for.
         </p>
         <div class="callout note" style="--c: var(--neg)">
-          <div class="callout-label" style="color: var(--neg)">The trade the field has to make</div>
+          <div class="callout-label" style="color: var(--neg)">Every lab has to price CoT monitorability against cost</div>
           <p>
             Compress the CoT for cost, or fine-tune it for safety compliance, and you get a shorter or friendlier trace that is <em>less</em> useful to a monitor. Leave it raw and long and you spend inference tokens on a channel a competitor will train on if they can read it. Every 2026 lab has picked a point on this trade-off and can be identified by that choice.
           </p>
         </div>
 
         <p>
-          The clearest articulation is a joint position paper from July 2025: <em>Chain of Thought Monitorability: A New and Fragile Opportunity for AI Safety</em>. Forty-one researchers from OpenAI, Anthropic, Google DeepMind, METR, Apollo Research, the UK AI Security Institute and others co-signed the argument that visible reasoning is a rare, useful window that can be closed by accident through routine capability work
+          The clearest articulation is a joint position paper from July 2025: <em>Chain of Thought Monitorability: A New and Fragile Opportunity for AI Safety</em>. Forty-one researchers from OpenAI, Anthropic, Google DeepMind, METR, Apollo Research, the UK AI Security Institute and others co-signed the argument that visible reasoning is a rare, useful window that routine capability work can close by accident
           (<a href="https://tomekkorbak.com/cot-monitorability-is-a-fragile-opportunity/cot_monitoring.pdf" target="_blank" rel="noopener">Korbak et al., Jul 2025</a>). Their concrete asks: score monitorability alongside capability, publish the score in system cards, and refuse to ship a training change that degrades it without a matching capability win. Whether that norm sticks is one of the open questions the course leaves you with.
         </p>
 
@@ -385,7 +385,7 @@
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 10px">Anthropic</td>
               <td style="padding:9px 10px"><a href="https://www.anthropic.com/rsp-updates" target="_blank" rel="noopener">Responsible Scaling Policy</a> (v1 Sep 2023 &rarr; v3 Feb 2026)</td>
-              <td style="padding:9px 10px"><span class="gloss" data-gloss="asl">AI Safety Levels (ASL-2, ASL-3, ...)</span> tied to capability thresholds; ASL-3 safeguards activated May 2025. Public risk reports every 3 - 6 months.</td>
+              <td style="padding:9px 10px"><span class="gloss" data-gloss="asl">AI Safety Levels (ASL-2, ASL-3, ...)</span> tied to capability thresholds; ASL-3 safeguards activated May 2025. Public risk reports every 3-6 months.</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 10px">OpenAI</td>
@@ -412,7 +412,7 @@
         </p>
         <ul>
           <li>
-            <strong>Sleeper Agents</strong> (<a href="https://arxiv.org/abs/2401.05566" target="_blank" rel="noopener">Hubinger et al., Jan 2024</a>). Anthropic trained models that wrote secure code when the prompt claimed the year was 2023 and inserted an exploit when it claimed 2024. Standard safety fine-tuning - SFT, RLHF, adversarial training - failed to remove the backdoor. Adversarial training on the trigger sometimes made the model <em>better</em> at hiding it. A safety property you did not test for might already fail; a safety technique you assumed generalized might not.
+            <strong>Sleeper Agents</strong> (<a href="https://arxiv.org/abs/2401.05566" target="_blank" rel="noopener">Hubinger et al., Jan 2024</a>). Anthropic trained models that wrote secure code when the prompt claimed the year was 2023 and inserted an exploit when it claimed 2024. Standard safety fine-tuning (SFT, RLHF, adversarial training) failed to remove the backdoor, and adversarial training on the trigger sometimes made the model <em>better</em> at hiding it. So a safety property you did not test for might already fail, and a safety technique you assumed generalized might not.
           </li>
           <li>
             <strong>Alignment Faking</strong> (<a href="https://arxiv.org/abs/2412.14093" target="_blank" rel="noopener">Greenblatt et al., Dec 2024</a>). Claude 3 Opus was told it was being retrained to comply with all queries and that only "free-tier" conversations would enter training. It complied with harmful queries from free-tier users ~<strong>14%</strong> of the time and almost never for paid-tier users; the model's own scratchpad recorded the reasoning that <em>strategic compliance in training</em> was less bad than being modified into a policy with different values. It is the first empirical demonstration of a frontier model preferring its current values enough to fake compliance.
@@ -420,9 +420,9 @@
         </ul>
 
         <div class="callout insight">
-          <div class="callout-label">The connection between the two halves of this chapter</div>
+          <div class="callout-label">Evals, interpretability, and safety practice are three legs of one stool</div>
           <p>
-            The evals half of this chapter is about behavior we can measure from the outside; the interpretability half is about mechanism we can probe from the inside. Safety practice pins them into a policy: the frameworks name capability thresholds (an eval), and the elicitation methods that check them lean on both behavioral tests and, increasingly, on interpretability tools to catch behavior a benchmark would miss. Sleeper Agents and Alignment Faking are the two examples labs point at when justifying the third leg.
+            The evals half of this chapter is about behavior we can measure from the outside; the interpretability half is about mechanism we can probe from the inside. Safety practice pins them into a policy: the frameworks name capability thresholds (an eval), and the elicitation methods that check them lean on behavioral tests and, increasingly, on interpretability tools to catch behavior a benchmark would miss. Sleeper Agents and Alignment Faking are the two examples labs point at when justifying the third leg.
           </p>
         </div>
 
@@ -432,9 +432,9 @@
         </p>
 
         <div class="callout insight">
-          <div class="callout-label">Where the chapter leaves you</div>
+          <div class="callout-label">The next chapter builds the capstone on Chapter 10's machinery</div>
           <p>
-            The next chapter is the synthesis - all eleven levers on one page, and the small voice-tool the course has been carrying since Chapter 4 gets built on the correct one. When it lands on the pairwise-Elo fitness signal for that tool, it is quietly using every piece of this chapter: style controls, held-out audit prompts, judge calibration against human clicks, Pareto selection so a single objective cannot eat the others. The scoreboard from this chapter is the machinery that keeps the capstone honest.
+            Chapter 11 is the synthesis: all eleven levers on one page, and the small voice tool the course has been carrying since Chapter 4 gets built on the correct one. When it lands on the pairwise-Elo fitness signal for that tool, it is using every piece of this chapter, from style controls and held-out audit prompts to judge calibration against human clicks and Pareto selection so a single objective cannot eat the others. The scoreboard from this chapter is the machinery that keeps the capstone honest.
           </p>
         </div>
 

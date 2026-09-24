@@ -174,7 +174,6 @@
     .bt-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .bt-chip {
       font-family: var(--mono); font-size: 11px;
-      text-transform: uppercase; letter-spacing: 0.06em;
       padding: 5px 9px; border: 1px solid var(--rule);
       background: var(--bg-elevated); color: var(--text-secondary);
       border-radius: 999px; cursor: pointer;
@@ -185,8 +184,7 @@
     .bt-axis { stroke: var(--rule-strong); stroke-width: 1; }
     .bt-grid { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 2 4; }
     .bt-tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
-    .bt-axis-label { font-family: var(--mono); font-size: 10px; fill: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.08em; }
+    .bt-axis-label { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
     .bt-line { fill: none; stroke-width: 2; opacity: 0.55; }
     .bt-line.dim { opacity: 0.14; }
     .bt-line.active { opacity: 1; stroke-width: 2.75; }
@@ -209,7 +207,7 @@
     }
     .bt-readout .bt-r-sub {
       font-family: var(--mono); font-size: 11px; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;
+      margin-bottom: 8px;
     }
     .bt-readout .bt-r-what { font-size: 14px; color: var(--text-secondary); margin: 0 0 6px 0; }
     .bt-readout .bt-r-note { font-size: 13.5px; color: var(--text-secondary); margin: 0; }

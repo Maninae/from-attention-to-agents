@@ -182,7 +182,8 @@
         first shipped). Static batching waits for the longest sequence in the batch to finish
         before serving the next request; continuous batching lets finished sequences leave the
         batch mid-step, and new requests join at the next decode iteration. Combined with paged
-        memory, an H100 that used to sit at ~30% utilization sits near 90%.
+        memory, the GPU no longer idles while one long sequence finishes, which is where most
+        of the throughput gain comes from.
       </p>
 
       <div class="callout definition">

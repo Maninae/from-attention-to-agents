@@ -47,8 +47,8 @@
     .pl-stage.pending { opacity: 0.55; }
 
     .pl-stage-num {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
-      color: var(--text-muted); text-transform: uppercase;
+      font-family: var(--mono); font-size: 10px;
+      color: var(--text-muted);
     }
     .pl-stage-name {
       font-family: var(--sans); font-weight: 700; font-size: 15px;
@@ -74,10 +74,6 @@
       border-top: 1px solid var(--rule);
       padding-top: 16px;
     }
-    .pl-eyebrow {
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--accent);
-    }
     .pl-headline {
       font-family: var(--sans); font-weight: 600; font-size: 17px;
       color: var(--text-primary); margin: 4px 0 10px;
@@ -90,8 +86,8 @@
       padding: 10px 12px; background: var(--bg-surface);
     }
     .pl-cell .lab {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-muted); margin-bottom: 3px;
     }
     .pl-cell .val {
       font-family: var(--sans); font-size: 14px; color: var(--text-primary);
@@ -124,10 +120,9 @@
       num: '0',
       name: 'Base GPT-3',
       out: '175B params · document completer',
-      eyebrow: 'Starting point',
       headline: 'A 175B-parameter base model that completes text but does not follow instructions.',
       input: 'pretraining corpus (web, books)',
-      output: 'GPT-3 · a base language model',
+      output: 'GPT-3, a base language model',
       note: 'Trained to predict the next token. Asked a question, it may continue with another question, drift, or refuse. The whole pipeline below is about closing that intent gap.',
     },
     {
@@ -135,7 +130,6 @@
       num: '1',
       name: 'SFT',
       out: 'supervised policy',
-      eyebrow: 'Stage 1 · imitation',
       headline: 'Show the model what good answers look like, then fine-tune on those examples.',
       input: '~13k labeler-written demonstrations',
       output: 'an SFT policy that imitates the demonstrators',
@@ -146,22 +140,20 @@
       num: '2',
       name: 'Reward model',
       out: '6B scalar reward',
-      eyebrow: 'Stage 2 · preferences become a number',
       headline: 'Collect pairwise comparisons; train a small model to predict which output a labeler would prefer.',
       input: '~33k prompts × 4–9 ranked completions',
       output: 'a 6B reward model (RM) outputting a scalar',
-      note: 'The RM is trained with a Bradley-Terry loss: <code>L = −log σ(r(x, y_w) − r(x, y_l))</code>. The reward <em>difference</em> between a preferred and rejected response is treated as the log-odds of preference. Notably the RM is only 6B even when the policy is 175B — a small judge is enough.',
+      note: 'The RM is trained with a Bradley-Terry loss: <code>L = −log σ(r(x, y_w) − r(x, y_l))</code>. The reward <em>difference</em> between a preferred and rejected response is treated as the log-odds of preference. The RM is only 6B even when the policy is 175B, since a small judge is enough for 2022-era preferences.',
     },
     {
       id: 'ppo',
       num: '3',
       name: 'PPO',
       out: 'aligned policy',
-      eyebrow: 'Stage 3 · climb the reward, but not too far',
       headline: 'Use the reward model as a learned reward signal; optimize the SFT policy with PPO.',
       input: 'fresh prompts + the frozen reward model + the SFT model as a KL anchor',
       output: 'an aligned policy (the InstructGPT model)',
-      note: 'The PPO objective adds a KL penalty to the SFT model so the policy does not drift into reward-hacked gibberish. <strong>Headline result:</strong> a 1.3B InstructGPT was preferred over 175B GPT-3 — 100× fewer parameters, simply aligned to intent.',
+      note: 'The PPO objective adds a KL penalty to the SFT model so the policy does not drift into reward-hacked gibberish. <strong>Headline result:</strong> a 1.3B InstructGPT was preferred over 175B GPT-3, with 100× fewer parameters, simply aligned to intent.',
     },
   ];
 
@@ -188,7 +180,6 @@
       <div class="pl-track" id="pl-track">${stagesHtml}</div>
       <div class="pl-arrows" id="pl-arrows">${arrowsHtml}</div>
       <div class="pl-panel">
-        <div class="pl-eyebrow" id="pl-eyebrow"></div>
         <div class="pl-headline" id="pl-headline"></div>
         <div class="pl-grid">
           <div class="pl-cell">
@@ -210,7 +201,6 @@
 
   const stageEls = Array.from(mount.querySelectorAll('.pl-stage'));
   const arrowEls = Array.from(mount.querySelectorAll('.pl-arrows span[data-arrow]'));
-  const eyebrowEl = mount.querySelector('#pl-eyebrow');
   const headlineEl = mount.querySelector('#pl-headline');
   const inputEl = mount.querySelector('#pl-input');
   const outputEl = mount.querySelector('#pl-output');
@@ -231,7 +221,6 @@
     arrowEls.forEach((el, j) => {
       el.classList.toggle('lit', j < i);
     });
-    eyebrowEl.textContent = s.eyebrow;
     headlineEl.textContent = s.headline;
     inputEl.innerHTML = s.input;
     outputEl.innerHTML = s.output;

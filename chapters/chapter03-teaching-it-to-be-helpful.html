@@ -37,11 +37,11 @@
         <p class="desc">
           A base model out of a modern pretraining run is still a document completer. It knows
           more than any 2020 model and it is a lot cheaper to serve, but ask it "explain
-          photosynthesis" and it may respond with a homework worksheet. 2022 is the year one
-          group at OpenAI closed that gap with a single recipe shipped twice - once as a paper,
-          once as a product - while another group at Google, almost in passing, showed the model
-          could already reason if you just asked it to show its work. A third line, later in the
-          year, started replacing the human labeler with the model itself.
+          photosynthesis" and it may respond with a homework worksheet. In 2022, one group at
+          OpenAI closed that gap with a single recipe shipped twice (once as the InstructGPT
+          paper, once as ChatGPT), while another group at Google pointed out that the model could
+          already reason if you asked it to show its work. A third line, later in the year, began
+          replacing the human labeler with the model itself.
         </p>
       </header>
 
@@ -49,31 +49,32 @@
 
         <p class="lecture-roadmap">
           A <span class="gloss" data-gloss="base-lm">base language model</span> predicts the next
-          token in a document - it does not know there is a user across the table. The intent gap
-          is the whole motivation for <em>post-training</em>. This chapter walks the recipe that
-          closed it (<span class="gloss" data-gloss="rlhf">RLHF</span> via
+          token in a document; it does not know there is a user across the table. The intent gap
+          is the motivation for <em>post-training</em>. This chapter walks the recipe that closed
+          it (<span class="gloss" data-gloss="rlhf">RLHF</span> via
           <span class="gloss" data-gloss="sft">SFT</span> &rarr;
           <span class="gloss" data-gloss="reward-model">reward model</span> &rarr;
           <span class="gloss" data-gloss="ppo">PPO</span>), the product launch that turned it into
           the iPhone moment of AI, a second alignment line where the labeler is a model reading a
-          written constitution instead of a human, and one small prompting trick on the side
-          that we will return to twice more in this book.
+          written constitution, and one small prompting trick (chain-of-thought) that we will
+          return to twice more in this book.
         </p>
 
-        <h2><span class="section-number">1.</span>The gap a base model leaves open</h2>
+        <h2><span class="section-number">1.</span>A base model does not know there is a user</h2>
         <p>
           Ask a base GPT-3 "Explain photosynthesis to me." A model trained on the open web will
-          often respond by continuing the document - maybe a list of related homework questions,
-          maybe a confident non-answer, maybe nothing at all. It is doing exactly what it was
-          trained to do: predict the next token of plausible internet text. The pretraining
-          objective never mentioned the word <em>user</em>.
+          often respond by continuing the document. It might produce a list of related homework
+          questions, or a confident non-answer, or nothing at all. It is doing what it was trained
+          to do: predict the next token of plausible internet text. The pretraining objective
+          never mentioned the word <em>user</em>.
         </p>
         <p>
           Ouyang et al. named the gap directly. The opening line of the InstructGPT paper:
           <em>"We show an avenue for aligning language models with user intent on a wide range of
           tasks by fine-tuning with human feedback."</em> The three properties they wanted out the
-          other side were already in the air - <span class="gloss" data-gloss="helpful-honest-harmless">helpful, honest, and harmless</span> (the "3 H's", from
-          Askell et al. 2021) - and the paper became the canonical recipe for getting there.
+          other side (<span class="gloss" data-gloss="helpful-honest-harmless">helpful, honest, and
+          harmless</span>, the "3 H's" from Askell et al. 2021) were already in the air, and the
+          paper became the canonical recipe for getting there.
           (<a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Ouyang et al., 2022</a>;
           <a href="https://arxiv.org/abs/2112.00861" target="_blank" rel="noopener">Askell et al., 2021</a>.)
         </p>
@@ -84,7 +85,7 @@
             A pretrained LM is optimized to <strong>predict the next token</strong> over a giant
             text corpus. A useful assistant is optimized to <strong>satisfy the user's request</strong>.
             Those objectives overlap, but they are not the same. Closing the gap means moving the
-            model's behavior from "completes documents" toward "answers questions" - without
+            model's behavior from "completes documents" toward "answers questions", without
             destroying the knowledge it learned in pretraining. That move is post-training.
           </p>
         </div>
@@ -103,7 +104,7 @@
           </ol>
         </div>
         <p>
-          Each stage builds on the previous one - stage 2's comparisons rank the outputs of
+          Each stage builds on the previous one. Stage 2's comparisons rank the outputs of
           stage 1's policy, and stage 3's PPO updates stage 1's model using stage 2's reward.
           Walk through the pipeline below. Click any stage, or hit play.
         </p>
@@ -119,46 +120,47 @@
         <h3>Stage 1 &middot; SFT, the cheap foundation</h3>
         <p>
           Hire about 40 labelers through Upwork and Scale AI. Sample prompts from real API traffic
-          and from the labelers' own imaginations. Have them write the ideal completion - the
-          response a careful, well-informed human would give. Then supervised-fine-tune the base
+          and from the labelers' own imaginations. Have them write the ideal completion, the kind
+          of response a careful, well-informed human would give. Then supervised-fine-tune the base
           GPT-3 on the resulting (prompt, ideal completion) pairs.
         </p>
         <p>
-          This step alone moves the model dramatically. It learns the surface form of helpfulness:
-          start with a direct answer, use the user's terminology, avoid drifting. SFT is by far
-          the cheapest of the three stages and does most of the visible work. The next two stages
-          push past what demonstrations can teach.
+          This step alone moves the model a lot. It learns the surface form of helpfulness: start
+          with a direct answer, use the user's terminology, avoid drifting off topic. SFT is by
+          far the cheapest of the three stages and does most of the visible work. The next two
+          stages push past what demonstrations can teach.
         </p>
 
         <h3>Stage 2 &middot; the reward model is a small judge</h3>
         <p>
           You can write a few thousand demonstrations. You cannot write a million. To scale,
           InstructGPT switches from <em>generation</em> to <em>comparison</em>: a labeler is shown
-          4 to 9 candidate responses to one prompt and ranks them. Comparisons are easier than
-          writing - and they directly capture relative preference, which is what you ultimately want.
+          4 to 9 candidate responses to one prompt and ranks them. Comparisons are easier to
+          produce than demonstrations, and they directly capture relative preference, which is
+          what you ultimately want.
         </p>
         <p>
           A reward model is a transformer with a scalar head. It is trained on the pairwise
           comparisons with a simple loss: for each pair where <span class="pos">y<sub>w</sub></span>
           was preferred over <span class="neg">y<sub>l</sub></span>, push the reward of the winner above the
-          loser. The loss is the <span class="gloss" data-gloss="bradley-terry">Bradley-Terry</span> form
-          - the reward <em>difference</em> is the log-odds that a labeler will prefer the first
-          response:
+          loser. The loss is the <span class="gloss" data-gloss="bradley-terry">Bradley-Terry</span>
+          form, where the reward <em>difference</em> is the log-odds that a labeler will prefer
+          the first response:
         </p>
         <p style="text-align:center">
           $\mathcal{L}_{\text{RM}} = -\log \sigma\!\left(\, \htmlData{tip=scalar reward the RM assigns to the preferred response y_w}{r_\phi(x, y_w)} - \htmlData{tip=scalar reward the RM assigns to the rejected response y_l}{r_\phi(x, y_l)} \,\right)$
         </p>
         <p>
-          The detail that always surprises: InstructGPT's biggest policy is 175B parameters, but
-          its reward model is only <strong>6B</strong>. In 2022 the reward model did not need to
-          write - it only needed to recognize. That claim aged unevenly. As preferences got harder
-          (multi-step reasoning, code, long-context critique), frontier practice pushed RM quality
-          up, often close to policy scale, and turned RM performance into a benchmarked axis of
-          its own with <span class="gloss" data-gloss="rewardbench">RewardBench</span> and its
-          harder 2025 successor. <span class="gloss" data-gloss="genrm">Generative reward models</span> -
-          judges that think out loud in a CoT before producing a score - now beat classifier RMs
-          of the same size on hard problems. Chapter 7 goes into this in detail; for the 2022
-          recipe, a 6B classifier was enough.
+          One detail: InstructGPT's biggest policy is 175B parameters, but its reward model is
+          only <strong>6B</strong>. In 2022 the reward model did not need to write; it only needed
+          to recognize good writing when it saw it. That claim aged unevenly. As preferences got
+          harder (multi-step reasoning, code, long-context critique), frontier practice pushed RM
+          quality up, often close to policy scale, and turned RM performance into a benchmarked
+          axis of its own with <span class="gloss" data-gloss="rewardbench">RewardBench</span> and
+          its harder 2025 successor. <span class="gloss" data-gloss="genrm">Generative reward
+          models</span>, judges that think out loud in a CoT before producing a score, now beat
+          classifier RMs of the same size on hard problems. Chapter 7 goes into this in detail;
+          for the 2022 recipe, a 6B classifier was enough.
           (<a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Ouyang 2022, &sect;3.5</a>;
           <a href="https://arxiv.org/abs/2506.01937" target="_blank" rel="noopener">Malik et al., RewardBench 2, 2025</a>;
           <a href="https://arxiv.org/abs/2408.15240" target="_blank" rel="noopener">Zhang et al., Generative Verifiers, 2024</a>.)
@@ -169,30 +171,29 @@
           Now the reward model is frozen and used as the reward function for reinforcement
           learning. Sample a prompt, have the policy produce a response, score it with the RM,
           push the policy's weights in the direction that earns more reward. The optimizer is
-          PPO - chosen for stability rather than elegance.
+          PPO, chosen for its stability under noisy reward signals.
         </p>
         <p>
           The catch is reward hacking. A policy that purely climbs the RM will drift into
-          word-salad that scores high but reads as gibberish - the RM has its own blind spots,
-          and the policy will find them. So PPO adds a <span class="gloss" data-gloss="kl-penalty">KL penalty</span>
+          word-salad that scores high but reads as gibberish, because the RM has its own blind
+          spots and the policy will find them. So PPO adds a <span class="gloss" data-gloss="kl-penalty">KL penalty</span>
           to the SFT model: at each step, penalize how far the policy's token distribution has
-          drifted from the SFT policy's distribution. The leash keeps it honest.
+          drifted from the SFT policy's distribution.
         </p>
         <div class="callout note">
-          <div class="callout-label">Why a KL anchor, not a clip</div>
+          <div class="callout-label">The KL anchor is a brake on Goodhart drift</div>
           <p>
             The RM is a finite-sample approximation of human preference. If the policy is allowed
             to climb it without bound, the gap between RM score and actual human preference widens
-            - classic <em>Goodhart's law</em>. The KL penalty caps how much the policy can move
-            away from a known-decent starting point per step, slowing the divergence. It is not a
-            fix; it is a brake. Reward hacking is going to come back in every later chapter.
+            (classic <em>Goodhart's law</em>). The KL penalty caps how much the policy can move
+            away from a known-decent starting point per step, slowing the divergence. It slows the
+            drift; it does not remove it. Reward hacking will come back in every later chapter.
           </p>
         </div>
 
         <h3>The result that made the recipe famous</h3>
         <p>
-          The numbers are sharp enough to be worth memorizing. On the labelers' held-out
-          preference ratings:
+          On the labelers' held-out preference ratings:
         </p>
         <div style="overflow-x:auto">
         <table style="width:100%; border-collapse:collapse; margin:18px 0; font-size:15px">
@@ -203,7 +204,7 @@
           <tbody>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px">1.3B InstructGPT vs 175B GPT-3</td>
-              <td style="padding:9px 12px"><span class="pos">preferred</span> - despite 100&times; fewer params</td>
+              <td style="padding:9px 12px"><span class="pos">preferred</span>, despite 100&times; fewer params</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px">175B InstructGPT vs 175B GPT-3 (no few-shot)</td>
@@ -217,10 +218,10 @@
         </table>
         </div>
         <p>
-          A 100&times;-smaller post-trained model preferred to a giant raw one. Most of the
-          knowledge was already there in GPT-3; the missing piece was knowing what was being
-          asked of it. Alignment unlocked the existing capability rather than adding new
-          capability - a pattern that will recur.
+          A 100&times;-smaller post-trained model was preferred to a giant raw one. Most of the
+          knowledge was already in GPT-3; the missing piece was knowing what was being asked of
+          it. Alignment unlocked existing capability rather than adding new capability, a pattern
+          that will recur.
           (<a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Ouyang 2022, Fig. 1</a>.)
         </p>
 
@@ -237,27 +238,27 @@
           What followed was the fastest consumer adoption curve in the history of software. A
           million users in roughly five days, ~100M monthly actives by January 2023 according to
           UBS / SimilarWeb estimates reported by Reuters. The model itself was barely different
-          from InstructGPT. The interface and the moment were.
+          from InstructGPT; the interface and the timing were what changed.
           (<a href="https://www.reuters.com/technology/chatgpt-sets-record-fastest-growing-user-base-analyst-note-2023-02-01/" target="_blank" rel="noopener">Reuters, Feb 1, 2023</a>.)
         </p>
         <div class="callout insight">
-          <div class="callout-label">Why this hit when the API had been live for years</div>
+          <div class="callout-label">The API had been live for two years; the chatbox changed the audience</div>
           <p>
-            GPT-3 had a public API since June 2020. The leap from API to chatbox is small in code,
-            enormous in audience. RLHF made the model <em>conversational</em> instead of merely
-            completing - and conversation is the medium most humans already speak. Alignment was
-            the technical change; the UI was the product change. They arrived together, which is
-            how a research preview becomes a cultural artifact.
+            GPT-3 had a public API since June 2020. The jump from API to chatbox is small in code,
+            enormous in audience. RLHF turned the model <em>conversational</em> instead of
+            document-completing, and conversation is the medium most humans already speak.
+            Alignment was the technical change, the UI was the product change, and they arrived
+            in the same month.
           </p>
         </div>
 
-        <h2><span class="section-number">4.</span>The labeler bottleneck, and how to replace the labeler</h2>
+        <h2><span class="section-number">4.</span>Replacing the human labeler with the model itself</h2>
         <p>
           Every stage of the InstructGPT recipe leans on hired humans. Demonstrations for SFT are
-          written by them. Preference comparisons for the RM are ranked by them. And the reward
-          model that PPO then chases is only as good as the ~33k comparisons those forty labelers
-          produced. Scaling this pipeline to a new domain - code, math, long-form writing, safety
-          for a language you don't speak - meant paying more people to rank more outputs. That is
+          written by them. Preference comparisons for the RM are ranked by them. The reward model
+          that PPO then chases is only as good as the ~33k comparisons those forty labelers
+          produced. Scaling this pipeline to a new domain (code, math, long-form writing, safety
+          for a language you don't speak) meant paying more people to rank more outputs. That is
           the labeler bottleneck.
         </p>
         <p>
@@ -267,8 +268,8 @@
           stages. First, "SL-CAI": the assistant produces a response, the model critiques its own
           response against the constitution, revises it, and is then supervised-fine-tuned on those
           revisions. Second, "RL from AI Feedback" (<span class="gloss" data-gloss="rlaif">RLAIF</span>):
-          for each prompt, sample two responses, ask an AI evaluator - prompted with the same
-          principles - which one is better, train a preference model on those AI-generated labels,
+          for each prompt, sample two responses, ask an AI evaluator (prompted with the same
+          principles) which one is better, train a preference model on those AI-generated labels,
           and run PPO against it. The claim in the abstract is the striking one:
           <em>"we are able to train a harmless but non-evasive AI assistant [...] without any human
           labels identifying harmful outputs."</em>
@@ -276,42 +277,42 @@
         </p>
         <p>
           Google made the head-to-head comparison a year later. Lee et al. found that on
-          summarization and helpful-dialogue, RLAIF was <em>comparable</em> to RLHF - even when
-          the AI labeler was the same size as the policy - and they showed a stripped-down
-          variant they called direct-RLAIF, where the LLM produces the reward online during RL with
-          no separately-trained RM at all. Human preference labels stopped being the only source
-          of alignment signal.
+          summarization and helpful-dialogue, RLAIF was <em>comparable</em> to RLHF even when the
+          AI labeler was the same size as the policy, and they showed a stripped-down variant
+          called direct-RLAIF, where the LLM produces the reward online during RL with no
+          separately-trained RM at all. Human preference labels stopped being the only source of
+          alignment signal.
           (<a href="https://arxiv.org/abs/2309.00267" target="_blank" rel="noopener">Lee et al., 2023</a>.)
         </p>
         <div class="callout note">
-          <div class="callout-label">Why "constitution" and not "reward model"</div>
+          <div class="callout-label">A constitution is a specification you can edit like source code</div>
           <p>
             A written constitution is a specification, in English. Editing it is a code change,
-            reviewable in a pull request; you know exactly which principle produced which behavior.
+            reviewable in a pull request, and you can trace which principle produced which behavior.
             Editing a reward model is training a new neural network from scratch on tens of
-            thousands of comparisons. Constitutional AI is not just cheaper - it moves the
-            alignment signal from a black-box model into a document a human can read. The idea
-            comes back in Chapter 7 under different names: OpenAI's Rule-Based Rewards, its
-            Model Spec, deliberative alignment. The pattern is the same: replace human labels with
-            an evaluator that follows a written rulebook.
+            thousands of comparisons. Beyond being cheaper, Constitutional AI moves the alignment
+            signal from a black-box model into a document a human can read. The idea comes back
+            in Chapter 7 under different names: OpenAI's Rule-Based Rewards, its Model Spec,
+            deliberative alignment. In each case, human labels are replaced by an evaluator that
+            follows a written rulebook.
           </p>
         </div>
 
-        <h2><span class="section-number">5.</span>The other thing that happened in 2022: just ask it to show its work</h2>
+        <h2><span class="section-number">5.</span>Chain-of-thought: reasoning falls out of a prompt change</h2>
         <p>
-          Five weeks before InstructGPT, a different paper out of Google Brain - Wei, Wang,
-          Schuurmans, and colleagues - pointed out something almost embarrassing. If you give a
-          large language model a few worked examples of step-by-step reasoning and then ask it your
-          question, its accuracy on multi-step problems goes up. A lot. No weights moved.
+          Five weeks before InstructGPT, a different paper out of Google Brain (Wei, Wang,
+          Schuurmans, and colleagues) reported a simple result. If you give a large language model
+          a few worked examples of step-by-step reasoning and then ask it your question, its
+          accuracy on multi-step problems goes up sharply, with no weights touched.
           (<a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Wei et al., 2022</a>.)
         </p>
         <p>
-          The technique is so simple it feels like cheating. Prepend a few demonstrations like
+          The change is small. Prepend a few demonstrations like
           "Q: ... A: <em>First we ... then we ... so the answer is 27.</em>" instead of "Q: ... A:
           27." The model picks up the pattern and produces its own intermediate steps before
           committing to a final answer. This is <span class="gloss" data-gloss="chain-of-thought">chain-of-thought</span>
-          prompting. The improvement is largest where you most need it: arithmetic, multi-step
-          word problems, symbolic manipulation.
+          prompting. The improvement is largest on the tasks where reasoning steps actually help:
+          arithmetic, multi-step word problems, symbolic manipulation.
         </p>
 
         <div class="callout example">
@@ -323,49 +324,47 @@
 
         <p>
           The headline number from the paper: PaLM 540B with 8-shot chain-of-thought reached
-          <strong>56.9%</strong> on GSM8K, where the prior state-of-the-art - a fine-tuned GPT-3
-          with a learned verifier - was 55%. With an external calculator the same setup pushed to
-          58.6%. Prompt engineering matched and then beat a system that touched weights.
+          <strong>56.9%</strong> on GSM8K, where the prior state-of-the-art (a fine-tuned GPT-3
+          with a learned verifier) was 55%. With an external calculator the same setup pushed to
+          58.6%. A prompt change matched and then beat a system that had touched weights.
         </p>
 
         <p>
-          The other observation buried in the paper turned out to matter more than the headline:
-          chain-of-thought <em>only helps once the model is large enough</em>. Below roughly 100B
-          parameters, asking for reasoning steps mostly hurts. Above it, the gap opens up
-          dramatically. Wei and colleagues named the pattern a few months later in a companion
-          paper: <span class="gloss" data-gloss="emergent-ability">emergent ability</span> - a
-          capability that appears suddenly with scale rather than improving smoothly.
+          A second observation in the paper matters more than the headline: chain-of-thought
+          <em>only helps once the model is large enough</em>. Below roughly 100B parameters,
+          asking for reasoning steps mostly hurts. Above it, the gap opens up. Wei and colleagues
+          named the pattern a few months later in a companion paper: <span class="gloss" data-gloss="emergent-ability">emergent
+          ability</span>, a capability that appears at scale rather than improving smoothly.
           (<a href="https://arxiv.org/abs/2206.07682" target="_blank" rel="noopener">Wei et al., "Emergent Abilities of Large Language Models," 2022</a>.)
         </p>
 
         <h3>BBH: the eval bed for the seed</h3>
         <p>
-          Numbers on GSM8K are not enough to establish that reasoning has been unlocked broadly.
+          Numbers on GSM8K alone are not enough to show that reasoning has been unlocked broadly.
           Later in 2022, Suzgun et al. cut a 23-task subset out of BIG-Bench called
-          <span class="gloss" data-gloss="bbh">BIG-Bench Hard</span> (BBH) - chosen because prior
-          model evaluations had <em>failed</em> to beat the average human rater on them. The
-          residual hard pile. With plain prompting, large models still trailed humans. Add
-          chain-of-thought, and Codex (code-davinci-002) surpassed the average human on
-          <strong>17 of 23</strong> tasks; PaLM 540B on 10 of 23.
+          <span class="gloss" data-gloss="bbh">BIG-Bench Hard</span> (BBH), chosen because prior
+          model evaluations had <em>failed</em> to beat the average human rater on them. With
+          plain prompting, large models still trailed humans. Add chain-of-thought, and Codex
+          (code-davinci-002) surpassed the average human on <strong>17 of 23</strong> tasks; PaLM
+          540B on 10 of 23.
           (<a href="https://arxiv.org/abs/2210.09261" target="_blank" rel="noopener">Suzgun et al., 2022</a>.)
         </p>
         <p>
-          BBH is going to be the eval shadow over the next three chapters. "+X points on BBH"
-          appears in almost every prompt-optimization paper from 2022 onward. The point of the
-          benchmark is not to be the final word on reasoning - it is to be a hard-enough bar that
-          prompt-level interventions can register as real progress.
+          BBH will show up as the eval shadow over the next three chapters. "+X points on BBH"
+          appears in almost every prompt-optimization paper from 2022 onward. The benchmark's job
+          is to be a hard-enough bar that prompt-level interventions can register as real
+          progress.
         </p>
 
-        <h2><span class="section-number">6.</span>What this chapter plants for later</h2>
+        <h2><span class="section-number">6.</span>The CoT seed grows twice more in this book</h2>
         <p>
-          Chain-of-thought arrives here as a <strong>prompt trick</strong> - zero weights touched.
-          That framing is going to grow twice. In Chapter 5 we will see the same idea promoted
-          into an <em>optimization target</em>: GEPA and friends search for the best CoT-shaped
-          prompt automatically, treating wording as something you can optimize. In Chapter 6 the
-          idea grows again, this time directly into the weights: o1 and DeepSeek-R1 train models
-          to produce long internal reasoning traces by reinforcement learning on verifiable
-          rewards. "Make the model show its work" surfaces at three different layers of the
-          stack. The seed is here.
+          Chain-of-thought arrives here as a <strong>prompt trick</strong> with no weights touched.
+          That framing grows twice. In Chapter 5 the same idea becomes an <em>optimization target</em>:
+          GEPA and its cousins search for the best CoT-shaped prompt automatically, treating
+          wording as a parameter you can optimize. In Chapter 6 the idea moves directly into the
+          weights: o1 and DeepSeek-R1 train models to produce long internal reasoning traces by
+          reinforcement learning on verifiable rewards. "Make the model show its work" surfaces at
+          three different layers of the stack, and this is the first.
         </p>
         <div class="callout note">
           <div class="callout-label">Three appearances of the same idea</div>
@@ -379,22 +378,22 @@
           </p>
         </div>
 
-        <h2><span class="section-number">7.</span>The recipe is great. It is also a mess.</h2>
+        <h2><span class="section-number">7.</span>The recipe works, and it is expensive to run</h2>
         <p>
           Read the InstructGPT paper carefully and the cost shows up everywhere. Forty labelers
           on contract. ~13,000 demonstrations. ~33,000 ranked comparisons. Three sequential
-          training runs, each on top of the previous one. PPO is famously high-variance - small
-          hyperparameter changes wreck a run. You need a frozen reference policy in memory to
-          compute the KL penalty, a separate critic to estimate value, and the reward model
-          alongside the policy you are actually updating. Four models loaded at once, and an RL
+          training runs, each on top of the previous one. PPO is high-variance in practice, and
+          small hyperparameter changes wreck a run. You need a frozen reference policy in memory
+          to compute the KL penalty, a separate critic to estimate value, and the reward model
+          alongside the policy you are actually updating: four models loaded at once, plus an RL
           loop on top.
         </p>
         <p>
-          It works. It also screams to be simplified. The next chapter is the cost curve breaking
-          downward: <strong>DPO</strong> drops the reward model <em>and</em> the RL loop and
-          learns directly from preference pairs with a single classification loss;
-          <strong>GRPO</strong> keeps RL but drops the critic by using a sampled group as its own
-          baseline. The same alignment, with fewer moving parts and a much shorter cycle time.
+          The next chapter follows the cost curve as it breaks downward. <strong>DPO</strong>
+          drops the reward model <em>and</em> the RL loop, learning directly from preference pairs
+          with a single classification loss; <strong>GRPO</strong> keeps RL but drops the critic
+          by using a sampled group as its own baseline. The alignment target is the same; the
+          machinery underneath gets much smaller.
         </p>
 
       </article>

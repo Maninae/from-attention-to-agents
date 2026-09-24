@@ -35,24 +35,23 @@
         <h1 style="font-size:46px; font-weight:700; line-height:1.1; margin:14px 0 18px; letter-spacing:-0.02em"><span class="section-number">0</span>Where you left off
         </h1>
         <p class="lecture-roadmap">
-          The last time you looked, NLP was a zoo of bespoke models - LSTMs with attention
+          The last time you looked, NLP was a zoo of bespoke models: LSTMs with attention
           bolted on for translation, CNNs for sentence classification, hand-engineered features
           everywhere else. By the end of 2019 the zoo was gone, replaced by one architecture and
           one recipe: a Transformer, pretrained on a pile of text, fine-tuned for whatever you
           needed. This chapter re-anchors you at that swap. We walk the 2017 paper that made it
           possible, then the 2018&ndash;2019 split between BERT and GPT that decided what
-          "pretraining" would mean for the decade. By the end you'll be standing exactly where
-          GPT-2 stood at the close of 2019 - on the doorstep of scale.
+          "pretraining" would mean for the decade. By the end you'll be standing where
+          GPT-2 stood at the close of 2019, one push away from scale.
         </p>
 
         <h2><span class="section-number">1.</span>One architecture, no recurrence</h2>
         <p>
-          June 2017. Eight authors at Google publish a paper with a cocky title and a quiet
-          abstract: "Attention Is All You Need"
+          June 2017. Eight authors at Google publish a paper titled "Attention Is All You Need"
           (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Vaswani et al., 2017</a>).
           The headline result is a new state of the art on WMT 2014 English&ndash;German
-          translation, <strong>28.4 BLEU</strong> - two points over the previous best
-          - trained in 3.5 days on eight P100 GPUs. The architecture is "based solely on
+          translation, <strong>28.4 BLEU</strong> (two points over the previous best),
+          trained in 3.5 days on eight P100 GPUs. The architecture is "based solely on
           attention mechanisms, dispensing with recurrence and convolutions entirely."
         </p>
         <p>
@@ -68,8 +67,8 @@
         <div class="callout definition">
           <div class="callout-label">Self-attention, in one line</div>
           <p>
-            Project every token into three vectors - <em>query</em>, <em>key</em>,
-            <em>value</em> - then let every position aggregate a weighted mix of every
+            Project every token into three vectors (<em>query</em>, <em>key</em>,
+            <em>value</em>), then let every position aggregate a weighted mix of every
             other position's value, weighted by how well its query matches the other's key:
           </p>
           <p style="text-align:center">
@@ -83,10 +82,10 @@
         </div>
 
         <p>
-          The "why" is mostly about hardware. An RNN must finish position <em>i</em> before it
-          can start <em>i+1</em> - the sequence is the unrolling. Self-attention has no such
-          dependency: every position attends to every other in a single matmul. On a GPU, that
-          difference is the whole game.
+          The "why" is mostly about hardware. An RNN has to finish position <em>i</em> before it
+          can start <em>i+1</em>, because the sequence <em>is</em> the unrolling. Self-attention
+          has no such dependency: every position attends to every other in a single matmul. On a
+          GPU, that difference is what lets you actually stack the layer deep.
         </p>
 
         <div class="demo-wrap">
@@ -103,14 +102,14 @@
           floating-point work per layer but only $O(1)$ sequential operations, while a recurrent
           layer is $O(n \cdot d^2)$ work and $O(n)$ sequential
           (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Vaswani et al., 2017, &sect;4</a>).
-          Quadratic-in-sequence cost is the price the paper pays for total parallelism. In the GPU
-          era, that trade was a gift.
+          Quadratic-in-sequence cost is the price the paper pays for total parallelism, and on
+          GPUs the trade paid off immediately.
         </p>
 
-        <h3>What the block looks like up close</h3>
+        <h3>What one encoder block contains</h3>
         <p>
-          One encoder block is a small, repeatable unit - the kind of thing that gets
-          stacked <em>N</em> = 6 times in the base model. Hover any sub-block.
+          One encoder block is a small, repeatable unit that gets stacked
+          <em>N</em> = 6 times in the base model. Hover any sub-block.
         </p>
 
         <div class="demo-wrap">
@@ -122,35 +121,35 @@
         </div>
 
         <p>
-          Two pieces deserve a flag because they're what makes deep stacks <em>trainable</em>, not
-          just expressible. The
+          Two pieces deserve a flag because they're what makes deep stacks trainable rather
+          than only expressible. The
           <span class="gloss" data-gloss="positional-encoding">positional encoding</span> added at
           the bottom is non-negotiable: without it, swap any two input tokens and self-attention
           gives the same answer (the operation is permutation-equivariant). And the residual
           connections threading around every sub-layer let gradients reach the bottom of a deep
-          stack - lift them out and training falls apart.
+          stack; lift them out and training falls apart.
         </p>
 
         <div class="callout insight">
-          <div class="callout-label">The bitter lesson, applied early</div>
+          <div class="callout-label">General computation plus more compute beats clever inductive bias</div>
           <p>
             Convolution bakes in spatial locality. Recurrence bakes in left-to-right time.
-            Self-attention bakes in nothing - any token can attend to any other. The
-            Transformer is the reader's first concrete instance of what Rich Sutton called
-            <a href="http://www.incompleteideas.net/IncIdeas/BitterLesson.html" target="_blank" rel="noopener">the bitter lesson</a>:
-            general computation plus more compute beats clever inductive bias. It's a pattern
-            you'll see again in every chapter that follows.
+            Self-attention bakes in almost nothing about structure: any token can attend to any
+            other. This is the reader's first concrete instance of what Rich Sutton called
+            <a href="http://www.incompleteideas.net/IncIdeas/BitterLesson.html" target="_blank" rel="noopener">the bitter lesson</a>,
+            and the same trade shows up on every later lever this course covers.
           </p>
         </div>
 
         <div class="callout note">
-          <div class="callout-label">The 2017 block, nine years later</div>
+          <div class="callout-label">Every sub-block has been replaced since 2017</div>
           <p>
             Every piece of the block you just met has been replaced by something better since.
             Pre-norm instead of post-norm; RMSNorm instead of LayerNorm; SwiGLU instead of the
             ReLU-family feed-forward; rotary position embeddings (RoPE) instead of sinusoidal
             adds; grouped-query or multi-head latent attention instead of vanilla multi-head.
-            The 2017 skeleton survived; the tissue on it was swapped out one paper at a time.
+            The overall topology from 2017 is what carried forward; the components inside it
+            got replaced one paper at a time.
             <a href="chapter02-inside-a-modern-pretraining-run.html">Chapter 2</a> walks through
             what a frontier block looks like in 2026 and why each swap earned its place.
           </p>
@@ -160,7 +159,7 @@
         <p>
           The Transformer arrived at the same moment NLP was figuring out a separate trick:
           <span class="gloss" data-gloss="transfer-learning">transfer learning</span>. Computer
-          vision had been doing it for years - train a CNN on ImageNet, lop off the head,
+          vision had been doing it for years: train a CNN on ImageNet, lop off the head,
           fine-tune on your tiny task dataset. NLP held out longer because words don't have an
           ImageNet, but by 2018 two papers showed what the language-side version looked like.
           <a href="https://arxiv.org/abs/1801.06146" target="_blank" rel="noopener">ULMFiT (Howard &amp; Ruder)</a>
@@ -189,8 +188,8 @@
         <p>
           The shape was simple and consequential: a
           <span class="gloss" data-gloss="decoder-only">decoder-only</span> Transformer, looking
-          only at tokens to its left, generating one token at a time. That asymmetry - the
-          model can only see the past - is what makes it good at generation.
+          only at tokens to its left, generating one token at a time. That asymmetry, where the
+          model can only see the past, is what makes it good at generation.
         </p>
 
         <h3>BERT: an encoder that fills in blanks</h3>
@@ -200,8 +199,8 @@
           and the score tables collapse: <strong>+7.7</strong> on the GLUE average,
           <strong>93.2 F1</strong> on SQuAD v1.1, new state of the art on eleven tasks at once.
           The architecture is the
-          <span class="gloss" data-gloss="encoder-only">encoder half</span> of the Transformer,
-          but the real move is the training objective. Instead of predicting the next token
+          <span class="gloss" data-gloss="encoder-only">encoder half</span> of the Transformer;
+          the training objective is where the shift lives. Instead of predicting the next token
           autoregressively, BERT masks 15% of the input tokens at random and asks the model to
           fill them back in
           (<a href="https://aclanthology.org/N19-1423/" target="_blank" rel="noopener">Devlin et al., NAACL 2019</a>).
@@ -215,7 +214,7 @@
             unmasked context to the left <em>and</em> right:
           </p>
           <p style="text-align:center">
-            $\mathcal{L}_{\mathrm{MLM}} = -\sum_{i \in \mathcal{M}} \log p_\theta\!\left( x_i \mid \htmlData{tip=the input sequence with all masked positions hidden - the model sees both left and right context}{x_{\setminus \mathcal{M}}} \right)$
+            $\mathcal{L}_{\mathrm{MLM}} = -\sum_{i \in \mathcal{M}} \log p_\theta\!\left( x_i \mid \htmlData{tip=the input sequence with all masked positions hidden, so the model sees both left and right context}{x_{\setminus \mathcal{M}}} \right)$
           </p>
           <p style="font-size:14px; color:var(--text-muted); margin-bottom:0">
             Bidirectional context is the unlock. Next-token prediction can only ever look left;
@@ -233,7 +232,7 @@
           once.
         </p>
 
-        <h3>The split that decided what came next</h3>
+        <h3>Same machine, two directions</h3>
         <p>
           GPT and BERT are the same machine pointed in two directions. The contrast looks small
           on paper and turned out to define the next half-decade.
@@ -259,8 +258,8 @@
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">Natural fit</td>
-              <td style="padding:9px 12px">Classification, QA, retrieval - <em>understanding</em></td>
-              <td style="padding:9px 12px">Text generation - <em>writing</em></td>
+              <td style="padding:9px 12px">Classification, QA, retrieval (<em>understanding</em>)</td>
+              <td style="padding:9px 12px">Text generation (<em>writing</em>)</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">Sizes shipped</td>
@@ -270,7 +269,7 @@
             <tr>
               <td style="padding:9px 12px; color:var(--text-muted)">Use pattern</td>
               <td style="padding:9px 12px">Pretrain, then <span class="gloss" data-gloss="fine-tuning">fine-tune</span> on every new task</td>
-              <td style="padding:9px 12px">Pretrain, then fine-tune - soon, just prompt</td>
+              <td style="padding:9px 12px">Pretrain, then fine-tune; soon, just prompt</td>
             </tr>
           </tbody>
         </table>
@@ -278,23 +277,20 @@
 
         <p>
           For a year, BERT looked like the winner. It dominated every leaderboard a CV person
-          would recognize - the GLUE benchmark, SQuAD, classification tasks of every shape
-          - and the academic community fanned out into a small industry of variants
-          (RoBERTa, ALBERT, DistilBERT). GPT-1 was a strong paper that got less attention. The
-          conventional wisdom said: encoders are how you do NLP now.
-        </p>
-        <p>
-          The conventional wisdom was about to be wrong.
+          would recognize (GLUE, SQuAD, classification tasks of every shape), and the academic
+          community fanned out into a small industry of variants (RoBERTa, ALBERT, DistilBERT).
+          GPT-1 was a strong paper that got less attention, and the conventional wisdom said
+          encoders were how you did NLP now.
         </p>
 
         <h2><span class="section-number">3.</span>Tokens: what actually enters the network</h2>
         <p>
-          Both GPT and BERT are described in terms of "words," but that is a small lie the
-          diagrams tell. Neither model sees words. Both see integer <em>token</em> ids, and
-          the mapping from a raw string to that id sequence - the
-          <span class="gloss" data-gloss="tokenizer">tokenizer</span> - is a design
-          decision as consequential as the number of layers. It is worth pausing on, because
-          it is the piece a CV background does not fill in.
+          Both GPT and BERT are usually described in terms of "words," but the diagrams are
+          simplifying. Neither model sees words. Both see integer <em>token</em> ids, and the
+          mapping from a raw string to that id sequence, the
+          <span class="gloss" data-gloss="tokenizer">tokenizer</span>, is a design decision as
+          consequential as the number of layers. It is worth pausing on, because it is the
+          piece a CV background does not fill in.
         </p>
         <p>
           The classical NMT trick was one token per word plus an <code>&lt;unk&gt;</code>
@@ -316,8 +312,8 @@
           <span class="gloss" data-gloss="byte-level-bpe">byte-level BPE</span>: run the
           merges over UTF-8 bytes instead of Unicode characters. The base alphabet is 256
           bytes, fixed, so any string in any script decodes without an
-          <code>&lt;unk&gt;</code> token - emoji, Chinese, code, binary garbage all just
-          work. GPT-2's vocabulary was 50,257 tokens
+          <code>&lt;unk&gt;</code> token, whether it is emoji, Chinese, code, or binary
+          garbage. GPT-2's vocabulary was 50,257 tokens
           (<a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf" target="_blank" rel="noopener">Radford et al., 2019</a>).
           That number is worth remembering as a baseline, because it does not stay put.
         </p>
@@ -359,7 +355,7 @@
         </p>
 
         <div class="callout note">
-          <div class="callout-label">A path not taken (yet)</div>
+          <div class="callout-label">Byte-level models can skip the tokenizer entirely</div>
           <p>
             A parallel line of work asks whether we need a tokenizer at all. ByT5 (2021) fed
             raw UTF-8 bytes to a Transformer and paid a 4-8x sequence-length tax for it.
@@ -367,8 +363,8 @@
             revives the idea with dynamic patching: byte streams are grouped into
             variable-length "patches" by predicted entropy, so hard regions get more compute
             and easy runs collapse. BLT scales cleanly to 8B parameters and beats a
-            tokenized-model baseline at matched inference cost. The tokenizer is not dead, but
-            it is no longer the only option.
+            tokenized-model baseline at matched inference cost. Tokenizer-free training is a
+            live alternative again, though it has not displaced tokenizers at the frontier.
           </p>
         </div>
 
@@ -383,50 +379,47 @@
           push out a 124M model, then a 355M, then a 774M over the year, and finally release the
           full <strong>1.5B-parameter</strong> version
           <a href="https://openai.com/index/gpt-2-1-5b-release/" target="_blank" rel="noopener">on 5 November 2019</a>.
-          Same shape as GPT-1 - decoder-only Transformer, next-token prediction - 
-          48 layers deep, trained on roughly 40 GB of text scraped from outbound Reddit links
-          with at least three karma (the WebText corpus).
+          Same shape as GPT-1 (decoder-only Transformer, next-token prediction), 48 layers deep,
+          trained on roughly 40 GB of text scraped from outbound Reddit links with at least
+          three karma (the WebText corpus).
         </p>
         <p>
           Two findings from the GPT-2 paper landed harder than the model itself.
         </p>
         <p>
           The first was <em>zero-shot</em> task performance. Without any task-specific
-          fine-tuning - no labeled examples, no gradient updates - GPT-2 set a new
-          state of the art on 7 of 8 language-modeling benchmarks just by reading a prompt that
-          described the task. Translation, summarization, question answering: ask in plain
-          English, get an answer back. Quality was rough, but the curve was unmistakable. Task
-          structure was being learned implicitly, from the data, without anyone telling the
-          model what the tasks were.
+          fine-tuning (no labeled examples, no gradient updates), GPT-2 set a new state of the
+          art on 7 of 8 language-modeling benchmarks just by reading a prompt that described the
+          task. Translation, summarization, question answering: ask in plain English, get an
+          answer back. Quality was rough, but the curve was unmistakable. Task structure was
+          being learned implicitly from the data, without anyone telling the model what the
+          tasks were.
         </p>
         <p>
           The second was the staged release itself. It was the first time a frontier lab said,
-          out loud, "this model is too dangerous to release." That sentence is going to come
-          back - it's the seed of the entire <span class="pos">alignment</span> story
-          in <a href="chapter03-teaching-it-to-be-helpful.html">Chapter 3</a>.
+          out loud, "this model is too dangerous to release." That sentence seeds the
+          <span class="pos">alignment</span> story in
+          <a href="chapter03-teaching-it-to-be-helpful.html">Chapter 3</a>.
         </p>
 
         <div class="callout insight">
-          <div class="callout-label">The bet the field just made</div>
+          <div class="callout-label">Pretrain-then-adapt is the field's new default</div>
           <p>
-            By late 2019 a clean picture has formed. One architecture - the Transformer
-            - replaces RNNs, CNNs-bolted-onto-attention, and every task-specific contraption.
+            By late 2019 a clean picture has formed. One architecture, the Transformer,
+            replaces RNNs, CNNs-bolted-onto-attention, and every task-specific contraption.
             <span class="gloss" data-gloss="pretraining">Pretraining</span> on raw text
             replaces hand-labeled supervision. Fine-tuning replaces architecture design. The
             question stops being <em>"what model for this task?"</em> and starts being
-            <em>"how big, on what data, to do what?"</em> Attention, in the literal sense, ate
-            everything.
+            <em>"how big, on what data, to do what?"</em>
           </p>
         </div>
 
         <p>
-          GPT-2 also leaves a thread dangling. Zero-shot worked - barely. Fine-tuning still
-          beat it on every task that mattered. The decoder-only side of the family looked like an
-          interesting curiosity; the encoder side looked like the future. A reasonable bet at the
-          close of 2019 would have been that scaling BERT was the next move.
-        </p>
-        <p>
-          The next chapter is what happened instead.
+          GPT-2 also leaves a thread dangling. Zero-shot worked, but only barely. Fine-tuning
+          still beat it on every task that mattered. The decoder-only side of the family looked
+          like an interesting curiosity; the encoder side looked like the future. A reasonable
+          bet at the close of 2019 would have been that scaling BERT was the next move. Chapter 1
+          follows the decoder-only line instead, to GPT-3.
         </p>
 
         <nav class="lecture-nav">

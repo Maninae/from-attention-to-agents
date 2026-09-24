@@ -1,5 +1,5 @@
 /* ============================================================
-   RNN vs Transformer parallelism — a deterministic stepper.
+   RNN vs Transformer parallelism: a deterministic stepper.
    Two rows of n tokens. Press "step" or "play": the RNN row
    lights up one position per step, left-to-right. The
    Transformer row lights up all n positions at step 1.
@@ -39,9 +39,9 @@
       <span class="pa-counter" id="pa-counter">step 0 / ${MAX_STEPS}</span>
     </div>
     <p class="pa-note">
-      Same input, same total work in spirit. The RNN must finish position <em>i</em> before it can
-      start <em>i+1</em>; the Transformer reads everything in one parallel pass. On a GPU, the
-      second pattern wins.
+      Same input, same total work in spirit. An RNN has to finish position <em>i</em> before it
+      can start <em>i+1</em>; the Transformer reads everything in one parallel pass, which is
+      what a GPU wants.
     </p>
   `;
   mount.innerHTML = html;
@@ -52,7 +52,7 @@
     .pa-row { border:1px solid var(--rule); border-radius:10px; padding:14px 16px; background:var(--bg-elevated); }
     .pa-label { font-family:var(--mono); font-size:12px; color:var(--text-secondary); margin-bottom:10px;
       display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .pa-tag { font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.08em;
+    .pa-tag { font-family:var(--mono); font-size:11px;
       color:var(--text-muted); border:1px solid var(--rule); border-radius:999px; padding:2px 8px; }
     .pa-tag-accent { color:var(--accent); border-color:var(--accent-border); }
     .pa-cells { display:flex; gap:8px; flex-wrap:wrap; }

@@ -1,9 +1,9 @@
 /* ============================================================
-   In-context learning mini demo — what GPT-3 showed in 2020.
+   In-context learning mini demo: what GPT-3 showed in 2020.
    The same instruction with 0, 1, or 3 demonstrations placed in
    the prompt; output crystallizes as demos appear. No model is
-   actually called. The outputs are canned strings — the point is
-   the SHAPE of the conditioning, not a live inference.
+   actually called. The outputs are canned strings, so the point
+   is the SHAPE of the conditioning, not a live inference.
    Self-contained IIFE. Mounts into #icl-demo.
    ============================================================ */
 (function () {
@@ -21,15 +21,15 @@
   const QUERY = 'pencil';
 
   // Canned "model outputs" at each shot count. The 0-shot output is
-  // deliberately a refusal-style document continuation — that's the
+  // deliberately a refusal-style document continuation, which is the
   // base-LM-as-document-completer shape Ch1 wants to plant for Ch2.
   const OUTPUTS = {
     0: { text: '...into Pig Latin, a children’s word game in which English syllables are rearranged according to a set of simple rules.',
-         right: false, note: 'no demos - the base model continues the document instead of doing the task.' },
+         right: false, note: 'No demos: the base model continues the document instead of doing the task.' },
     1: { text: 'pencil-way',
-         right: false, note: '1 demo - the model copied the surface form of "apple-way" instead of inferring the rule.' },
+         right: false, note: '1 demo: the model copied the surface form of "apple-way" instead of inferring the rule.' },
     3: { text: 'encil-pay',
-         right: true,  note: '3 demos - with enough examples the underlying rule (move first consonant cluster to the end + "ay") snaps into place. No weights changed.' },
+         right: true,  note: '3 demos: with enough examples the underlying rule (move first consonant cluster to the end and add "ay") snaps into place. No weights changed.' },
   };
 
   const css = `
@@ -48,8 +48,8 @@
       background: var(--bg-elevated); padding: 14px 16px;
     }
     .icl-tag {
-      font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 8px;
+      font-family: var(--mono); font-size: 12px;
+      color: var(--text-muted); margin-bottom: 8px;
     }
     .icl-prompt, .icl-output {
       font-family: var(--mono); font-size: 13px; line-height: 1.55;

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scale is a strategy - From Attention to Agents · Chapter 1</title>
-<meta name="description" content="2020 to 2022 (and the correction afterward): GPT-3 turned a frozen model into a programmable interface, Kaplan and Chinchilla turned bigger-is-better into a budget calculation, inference costs and the data wall re-priced that calculation, and the architecture from Chapter 0 quietly absorbed vision through ViT and CLIP.">
+<meta name="description" content="2020 to 2022 (and the correction afterward): GPT-3 turned a frozen model into a programmable interface, Kaplan and Chinchilla turned bigger-is-better into a budget calculation, inference costs and the data wall re-priced that calculation, and the architecture from Chapter 0 absorbed vision through ViT and CLIP.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
           Push the same transformer harder and three things happen at once. The model
           starts learning new tasks at inference time from examples in the prompt. The
           loss curve becomes a power law you can read off like a price tag. And the
-          architecture quietly walks into vision, because patches turn out to be tokens.
+          same architecture walks into vision, because patches turn out to be tokens.
         </p>
       </header>
 
@@ -49,13 +49,14 @@
         <p class="lecture-roadmap">
           Chapter 0 ended with a bet: one architecture plus pretraining could replace the
           zoo of bespoke models. This chapter is what happens when you press the "more"
-          button on that bet for three years. The deliverable is not a smarter model -
-          it is a <em>smarter way to plan</em>. By the end, prompting has replaced fine-tuning
-          as the default interface, capability has a power-law graph, Chinchilla has caught
-          the field undertraining its giants, and the transformer has crossed into vision.
-          The chapter closes by breaking its own rule: Chinchilla was the answer for
-          <em>training</em> compute and turned out to be the wrong answer once you had to
-          deploy the model, which is what Chapter 2 picks up.
+          button on that bet for three years. What comes out is not a smarter model so
+          much as a <em>smarter way to plan spending</em> on one. By the end, prompting
+          has replaced fine-tuning as the default interface, capability has a power-law
+          graph, Chinchilla has caught the field undertraining its giants, and the
+          transformer has crossed into vision. The chapter closes by walking back its own
+          answer: Chinchilla was compute-optimal for <em>training</em>, and turned out to
+          be the wrong target once you had to deploy the model, which is what Chapter 2
+          picks up.
         </p>
 
         <h2><span class="section-number">1.</span> The shift in posture</h2>
@@ -65,7 +66,7 @@
           updates or fine-tuning, with tasks and few-shot demonstrations specified purely
           via text interaction with the model." Read that twice. The model is
           <span class="gloss" data-gloss="frozen-model">frozen</span>. The task is described
-          in English. The training signal - if you can still call it that - is a
+          in English. The training signal, if you can still call it that, is a
           handful of examples typed into the context window. This is
           <span class="gloss" data-gloss="in-context-learning">in-context learning</span>,
           and it broke the loop everyone had been running since the BERT era.
@@ -79,19 +80,17 @@
         </p>
 
         <div class="callout insight">
-          <div class="callout-label">The interface shift</div>
+          <div class="callout-label">Programming a model became writing for one</div>
           <p>
-            Programming a model became writing for a model. That is the
-            sentence the rest of this course is a slow-motion reaction to. Once the prompt
-            is the interface, "the prompt" becomes something worth studying, something
-            worth optimizing, eventually something worth searching over. Chapters 3, 5,
-            and 11 all live in this consequence.
+            Once the prompt is the interface, "the prompt" becomes something worth
+            studying, something worth optimizing, eventually something worth searching over.
+            Chapters 3, 5, and 11 all live in that consequence.
           </p>
         </div>
 
         <h3><span class="section-number">1.1</span> In-context learning, on one screen</h3>
         <p>
-          Same instruction, same query, three different prompts - the only thing that
+          Same instruction, same query, three different prompts; the only thing that
           changes is how many demonstrations sit in the context. The model output is
           canned for this widget; the point is the shape of the conditioning, not a live
           inference.
@@ -113,10 +112,10 @@
           prompt as a <em>selector</em> over a huge superposition of latent capabilities.
         </p>
 
-        <h2><span class="section-number">2.</span> The shape of the bet</h2>
+        <h2><span class="section-number">2.</span> Capability becomes a graph you can plan against</h2>
         <p>
-          The shock of GPT-3 was not just what it could do - it was that the result was
-          <em>predictable</em>. Six months earlier,
+          The load-bearing surprise of GPT-3 was not what it could do; it was that the
+          result was <em>predictable</em>. Six months earlier,
           <a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener">Kaplan et al. 2020</a>
           had published the curves. Loss as a power law in compute. Loss as a power law in
           parameters. Loss as a power law in data. Each clean, each spanning multiple
@@ -128,11 +127,11 @@
         <div class="callout definition">
           <div class="callout-label"><span class="gloss" data-gloss="power-law">power law</span></div>
           <p>
-            A relationship of the form $L(C) = A \cdot C^{-\alpha}$ - a straight line on
-            log-log axes. The exponent $\alpha$ tells you how much loss drops per decade of
-            compute. Kaplan reports $\alpha_C \approx 0.05$ for compute, $\alpha_N \approx 0.076$
-            for parameters, $\alpha_D \approx 0.095$ for data, fit across more than seven
-            orders of magnitude.
+            A relationship of the form $L(C) = A \cdot C^{-\alpha}$, which is a straight
+            line on log-log axes. The exponent $\alpha$ tells you how much loss drops per
+            decade of compute. Kaplan reports $\alpha_C \approx 0.05$ for compute,
+            $\alpha_N \approx 0.076$ for parameters, $\alpha_D \approx 0.095$ for data, fit
+            across more than seven orders of magnitude.
           </p>
         </div>
 
@@ -145,9 +144,9 @@
           <span class="gloss" data-gloss="compute-optimal">a function you can plan against</span>.
         </p>
         <p>
-          GPT-3 was the existence proof attached to that line. 175 billion parameters - 
-          "10x more than any previous non-sparse language model," in the paper's own
-          framing - trained on hundreds of billions of tokens, sampled with weighting from
+          GPT-3 was the existence proof attached to that line: 175 billion parameters
+          ("10x more than any previous non-sparse language model," in the paper's own
+          framing), trained on hundreds of billions of tokens sampled with weighting from
           a corpus of roughly 570B tokens. The compute bill was on the order of thousands
           of petaflop/s-days. Numbers that would have sounded absurd in 2019 read, in
           retrospect, as exactly the dose Kaplan's exponents predicted.
@@ -155,8 +154,8 @@
 
         <h3><span class="section-number">2.1</span> The line, on log-log axes</h3>
         <p>
-          Slide the budget. Both curves obey the same power law - 
-          $L = A \cdot C^{-\alpha}$ - with the same exponent. They differ only in
+          Slide the budget. Both curves obey the same power law
+          ($L = A \cdot C^{-\alpha}$) with the same exponent. They differ only in
           their prefactor $A$, which is set by <em>how</em> you spend the budget across
           parameters and tokens.
         </p>
@@ -173,8 +172,8 @@
           The orange curve traces Kaplan's prescription: pour most of the budget into
           parameters, keep data modest, stop before convergence. The teal curve traces what
           Chinchilla would later find is actually compute-optimal: scale params and tokens
-          together. Same exponent, lower prefactor, lower loss at every budget. The gap is
-          the chapter's pivot - and the next section's subject.
+          together. Same exponent, lower prefactor, lower loss at every budget. The gap
+          between the two curves is what the next section is about.
         </p>
 
         <h2><span class="section-number">3.</span> Chinchilla, or: eat your spinach</h2>
@@ -196,21 +195,22 @@
 
         <p>
           The proof was a model named Chinchilla: <strong>70B params, 1.4T
-          tokens</strong> - same compute budget as Gopher's 280B params on 300B tokens.
-          Quarter the parameters, four times the data. Same money. The 70B model
+          tokens</strong>, on the same compute budget as Gopher's 280B params on 300B
+          tokens. Quarter the parameters, four times the data. Same money. The 70B model
           <em>uniformly and significantly outperformed</em> Gopher (280B), GPT-3 (175B),
           Jurassic-1 (178B), and Megatron-Turing (530B), including 67.5% on
-          <span class="gloss" data-gloss="mmlu">MMLU</span> - seven points above Gopher.
+          <span class="gloss" data-gloss="mmlu">MMLU</span>, seven points above Gopher.
         </p>
 
         <div class="callout insight">
-          <div class="callout-label">What Chinchilla actually changed</div>
+          <div class="callout-label">Chinchilla shifts the ratio, not the scaling law</div>
           <p>
-            Not the existence of the scaling law. Just the ratio. The 2020 giants had been
-            overweighting params and underweighting data. Re-anchored on the right ratio,
-            the same hardware buys a noticeably better model. After Chinchilla, every
-            serious lab refits its data pipeline first and its parameter count second.
-            LLaMA 1, Mistral, and the whole open-weights wave that arrives in
+            The power law itself stays. What moves is the ratio of parameters to tokens
+            per unit compute. The 2020 giants had been overweighting params and
+            underweighting data; re-anchored on the right ratio, the same hardware buys a
+            noticeably better model. After Chinchilla, every serious lab refits its data
+            pipeline first and its parameter count second. LLaMA 1, Mistral, and the whole
+            open-weights wave that arrives in
             <a href="chapter04-the-recipe-gets-cheaper.html">Chapter 4</a> all sit downstream
             of the 70B / 1.4T ratio.
           </p>
@@ -234,8 +234,8 @@
             </tr>
             <tr style="border-bottom: 1px solid var(--rule);">
               <td style="padding: 10px 12px;">Train to convergence?</td>
-              <td style="padding: 10px 12px; color: var(--neg); font-weight: 600;">No - stop early</td>
-              <td style="padding: 10px 12px; color: var(--pos); font-weight: 600;">Yes - feed more tokens</td>
+              <td style="padding: 10px 12px; color: var(--neg); font-weight: 600;">No; stop early</td>
+              <td style="padding: 10px 12px; color: var(--pos); font-weight: 600;">Yes; keep feeding tokens</td>
             </tr>
             <tr style="border-bottom: 1px solid var(--rule);">
               <td style="padding: 10px 12px;">Reference 70B model would use</td>
@@ -253,20 +253,20 @@
         <p>
           A subtle but important thing the table does not show: Chinchilla did not refute
           Kaplan, it refit him. The power-law form survives. The mistake was in the
-          corner of (N, D) space that had been sampled. The lesson is methodological as
-          much as numerical - if your scaling law was fit on undertrained models, do not
+          corner of (N, D) space Kaplan had sampled. The lesson is methodological as
+          much as numerical: if your scaling law was fit on undertrained models, do not
           extrapolate it.
         </p>
 
         <h3><span class="section-number">3.2</span> Compute-optimal is not deployment-optimal</h3>
         <p>
-          A frontier lab in 2026 does not train Chinchilla-optimal models, and it is worth
-          being explicit about why - because "Chinchilla is the answer" is where the
-          reader would be if the chapter ended at the table above. Chinchilla answers a
-          narrow question: for a fixed pool of <em>training</em> compute, what (N, D) split
-          minimizes loss? A production model spends most of its life doing inference. Once
-          you write down the joint cost of training plus a realistic amount of serving,
-          the optimal shifts.
+          A frontier lab in 2026 does not train Chinchilla-optimal models. The reason is
+          worth being explicit about, because the table above would otherwise leave the
+          reader with "Chinchilla is the answer." Chinchilla answers a narrow question:
+          for a fixed pool of <em>training</em> compute, what (N, D) split minimizes loss?
+          A production model spends most of its life doing inference. Once you write down
+          the joint cost of training plus a realistic amount of serving, the optimum
+          shifts.
         </p>
         <p>
           <a href="https://arxiv.org/abs/2401.00448" target="_blank" rel="noopener">Sardana et al. (2023)</a>
@@ -280,18 +280,18 @@
         <p>
           The empirical answer showed up in
           <a href="https://arxiv.org/abs/2407.21783" target="_blank" rel="noopener">Llama 3 (Grattafiori et al., 2024)</a>.
-          The 8B model is trained on 15 trillion tokens - about <strong>1,875 tokens per
-          parameter</strong>, roughly two orders of magnitude past Chinchilla-optimal - and
+          The 8B model is trained on 15 trillion tokens (about <strong>1,875 tokens per
+          parameter</strong>, roughly two orders of magnitude past Chinchilla-optimal), and
           Meta explicitly notes that loss was still improving log-linearly when they stopped.
           Chinchilla says you should not do that. Inference math says you absolutely should.
         </p>
 
         <div class="callout insight">
-          <div class="callout-label">Chinchilla in one sentence, corrected</div>
+          <div class="callout-label">Frontier labs over-train small models because deployment cost dwarfs training cost</div>
           <p>
-            Chinchilla is compute-optimal for training; frontier labs now over-train
-            smaller models because deployment cost dwarfs training cost. The scaling law
-            still holds. The <em>objective</em> people optimize is different.
+            Chinchilla is compute-optimal for training. The scaling law still holds; the
+            <em>objective</em> people optimize under it has moved from training loss per
+            training dollar to answer quality per lifetime dollar.
           </p>
         </div>
 
@@ -311,18 +311,17 @@
           then tried to measure how many tokens actually exist. Their estimate: the effective
           stock of quality-adjusted public human text is on the order of
           <strong>300 trillion tokens</strong>, and frontier training runs will exhaust it
-          somewhere between 2026 and 2032 - earlier if over-training keeps intensifying.
+          somewhere between 2026 and 2032, earlier if over-training keeps intensifying.
           That is the <span class="gloss" data-gloss="data-wall">data wall</span>. It is
           why every frontier lab now spends serious effort on filtering (DCLM,
           FineWeb-Edu, Nemotron-CC), on synthetic data pipelines (the phi line), and on
-          reasoning-model self-play - all of which
-          <a href="chapter02-inside-a-modern-pretraining-run.html">Chapter 2</a> takes apart.
+          reasoning-model self-play. <a href="chapter02-inside-a-modern-pretraining-run.html">Chapter 2</a> takes those pipelines apart.
         </p>
 
         <h2><span class="section-number">4.</span> Naming the noun: foundation models</h2>
         <p>
           By mid-2021, a strange thing had happened. The same pretrained model was being
-          adapted - via fine-tuning, prompting, or both - for translation, summarization,
+          adapted (via fine-tuning, prompting, or both) for translation, summarization,
           code generation, search, classification, and a long tail of bespoke tasks.
           One model underneath, hundreds of applications on top. The field needed a
           noun for that thing.
@@ -338,21 +337,19 @@
           The label has stuck.
         </p>
         <div class="callout note">
-          <div class="callout-label">A naming caveat</div>
+          <div class="callout-label">The CRFM report popularized the term rather than coining it</div>
           <p>
-            "Foundation model" was popularized, not coined, by the CRFM report - the term
-            had appeared in adjacent contexts before. Safer phrasing for the historical
-            record: the noun was <em>crystallized</em> by Stanford in August 2021. What
-            mattered for the field was less the etymology and more that everyone now had
-            the same word for the substrate.
+            "Foundation model" had appeared in adjacent contexts before the CRFM report;
+            what Stanford did in August 2021 was <em>crystallize</em> it, so everyone
+            now had the same word for the substrate.
           </p>
         </div>
 
         <h2><span class="section-number">5.</span> The transformer walks into vision</h2>
         <p>
-          The same two years quietly settled an older debate. Convolutions had ruled
-          vision since 2012; attention had ruled NLP since 2017. Two papers stapled them
-          together by noticing that the staple was unnecessary.
+          The same two years settled an older debate. Convolutions had ruled vision since
+          2012; attention had ruled NLP since 2017. Two papers stapled the sides together
+          by noticing that the staple was unnecessary.
         </p>
         <p>
           <a href="https://arxiv.org/abs/2010.11929" target="_blank" rel="noopener">ViT (Dosovitskiy et al. 2020)</a>:
@@ -361,41 +358,41 @@
           token, feed them into a vanilla transformer encoder. From the paper: "a pure
           transformer applied directly to sequences of image patches can perform very
           well on image classification tasks." With enough pretraining data, ViT matched
-          or beat the best CNNs - using none of the convolutional inductive bias people
-          had spent a decade engineering in.
+          or beat the best CNNs while using none of the convolutional inductive bias
+          people had spent a decade engineering in.
         </p>
         <p>
           <a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">CLIP (Radford et al. 2021)</a>
           went further. Scrape 400 million (image, caption) pairs from the web. Train one
           encoder for images and one for text using a
           <span class="gloss" data-gloss="contrastive-learning">contrastive</span>
-          objective - pull matching pairs together in a shared embedding space, push
+          objective: pull matching pairs together in a shared embedding space, push
           mismatched ones apart. The result was
           <span class="gloss" data-gloss="zero-shot-transfer">zero-shot ImageNet at
           ResNet-50 accuracy</span>, without ever seeing the 1.28M ImageNet training
-          images. Vision had learned to speak the same prompt-able dialect.
+          images. Vision had learned to accept the same prompt-able interface.
         </p>
 
         <div class="callout insight">
-          <div class="callout-label">For the CV reader</div>
+          <div class="callout-label">The transformer generalizes across modalities once given enough data</div>
           <p>
             If your last touchpoint with vision was 2019 ResNets and EfficientNets, this
-            is the era where the convnet stops being the only game. ViT does not retire
-            the CNN - convolutions remain excellent on small-data regimes - but it
-            shows the same architecture from Chapter 0 generalizes across modalities once
-            you give it enough data. Multimodality is a recurring thread, not a separate
-            chapter. It returns in Chapter 11 when the native-multimodal frontier shows up.
+            is the era where the convnet stops being the only option. ViT does not retire
+            the CNN (convolutions remain excellent on small-data regimes), but it shows
+            the same architecture from Chapter 0 generalizing across modalities once you
+            give it enough data. Multimodality is a recurring thread through the course;
+            it returns in Chapter 11 when the native-multimodal frontier shows up.
           </p>
         </div>
 
-        <h2><span class="section-number">6.</span> The gap that opens Chapter 2</h2>
+        <h2><span class="section-number">6.</span> The real objective is lifetime cost, not training loss</h2>
         <p>
           The chapter has done its scale story twice over: capability follows a power law,
           and the ratio of parameters to tokens is the knob that decides how efficient the
-          spend is. But the last two subsections just showed that the "compute-optimal"
-          answer is compute-optimal for a fake objective. A real production model has to
-          live somewhere, be served to millions of requests, run inside a memory and
-          latency budget. And the token stream that feeds all of it is finite.
+          spend is. But the last two subsections showed that "compute-optimal" is only
+          compute-optimal for training loss. A production model has to live somewhere, be
+          served to millions of requests, run inside a memory and latency budget. And the
+          token stream that feeds all of it is finite.
         </p>
         <p>
           That reframes the question the field spent 2022 answering. It is no longer
@@ -407,7 +404,7 @@
         <p>
           <a href="chapter02-inside-a-modern-pretraining-run.html">Chapter 2</a> is the
           answer to that reframed question. It walks through what a frontier pretraining
-          run actually spends its budget on in 2026 - the data pipeline (filtering, dedup,
+          run actually spends its budget on in 2026: the data pipeline (filtering, dedup,
           decontamination, synthetic augmentation), the architecture updates the 2017 block
           has absorbed (MoE, MLA/GQA, RoPE + long-context stages, RMSNorm, SwiGLU), the
           numerics (BF16 master weights and FP8 forward passes), the optimizer beyond AdamW
@@ -420,11 +417,11 @@
         <div class="callout note">
           <div class="callout-label">The levers so far</div>
           <p>
-            Chapter 0 turned the <strong>architecture</strong> lever - one stack of
-            self-attention replaced a zoo. Chapter 1 turned the <strong>scale</strong> lever
+            Chapter 0 turned the <strong>architecture</strong> lever, replacing a zoo with
+            one stack of self-attention. Chapter 1 turned the <strong>scale</strong> lever
             and then discovered the objective it was optimizing was too narrow. Chapter 2
-            turns the <strong>efficiency</strong> lever - the same compute, spent better on
-            data, architecture, and numerics. Same story of levers, different rung.
+            turns the <strong>efficiency</strong> lever: the same compute, spent better on
+            data, architecture, and numerics.
           </p>
         </div>
 
@@ -434,7 +431,7 @@
           <li><strong>Capability became predictable.</strong> Loss is a power law in compute, params, and data. Bigger-is-better stops being a hunch; it is a graph you can read.</li>
           <li><strong>The ratio matters, but not the one Chinchilla published.</strong> The 2020-era giants were undertrained; Chinchilla fixed the training-compute ratio; inference cost then re-fixed it in the other direction, and the data wall is starting to fix it a third time.</li>
           <li><strong>One model became the substrate.</strong> "Foundation model" is the noun the field needed once everything downstream was a thin wrapper on the same pretrained backbone.</li>
-          <li><strong>Vision joined.</strong> ViT and CLIP show the transformer is not a text architecture - it is a token architecture. Patches are tokens.</li>
+          <li><strong>Vision joined.</strong> ViT and CLIP show the transformer is a token architecture, not a text architecture. Patches are tokens.</li>
           <li><strong>The next lever is efficiency.</strong> Chapter 2 opens the hood on a modern pretraining run: data pipeline, MoE, MLA/GQA, FP8, Muon, the whole stack that fits under "spend the compute better."</li>
         </ul>
 

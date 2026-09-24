@@ -1,12 +1,12 @@
 /* ============================================================
-   Scaling laws — Kaplan (2020) vs Chinchilla (2022).
+   Scaling laws: Kaplan (2020) vs Chinchilla (2022).
    Two power-law curves on a log-log plot, with a budget slider
    that walks a point along each curve. Same compute C, two
    different allocations between params (N) and data (D):
      Kaplan: most of C goes to N, D held modest.
      Chinchilla: N and D scale together (compute-optimal).
-   The gap between the two curves IS the chapter's thesis as a
-   single picture.
+   The gap between the two curves is the chapter's thesis in
+   one picture.
    Self-contained IIFE. Mounts into #scaling-demo.
    Plain SVG. Determinism: no randomness, fixed math.
    ============================================================ */
@@ -22,7 +22,7 @@
   // gap reflects allocation, not a fundamental change in physics.
   const ALPHA = 0.057;       // Kaplan's compute exponent, rounded
   const A_KAPLAN = 5.6;      // prefactor (tuned so curves pass through realistic points)
-  const A_CHIN   = 4.85;     // Chinchilla: better allocation -> lower loss at same C
+  const A_CHIN   = 4.85;     // Chinchilla: better allocation, lower loss at the same C
   const C_MIN = 1, C_MAX = 1e5;
   const lossOf = (A, C) => A * Math.pow(C, -ALPHA);
 
@@ -32,8 +32,7 @@
     .sl-svg { display: block; width: 100%; height: auto; }
     .sl-axis { stroke: var(--rule-strong); stroke-width: 1; }
     .sl-grid { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 2 4; }
-    .sl-axis-label { font-family: var(--mono); font-size: 11px; fill: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.08em; }
+    .sl-axis-label { font-family: var(--mono); font-size: 11px; fill: var(--text-muted); }
     .sl-tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
     .sl-curve-k { fill: none; stroke: var(--accent); stroke-width: 2.5; opacity: 0.9; }
     .sl-curve-c { fill: none; stroke: var(--teal); stroke-width: 2.5; opacity: 0.95; }
@@ -53,8 +52,7 @@
       background: var(--bg-elevated); padding: 12px 14px;
     }
     .sl-card .sl-tag {
-      font-family: var(--mono); font-size: 10px;
-      text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 12px;
       color: var(--text-muted); margin-bottom: 4px;
     }
     .sl-card.k .sl-tag { color: var(--accent); }
@@ -64,8 +62,8 @@
 
     .sl-controls { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
     .sl-controls label {
-      font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--text-secondary);
+      font-family: var(--mono); font-size: 12px;
+      color: var(--text-secondary);
     }
     .sl-controls input[type=range] {
       flex: 1; min-width: 200px; accent-color: var(--accent);
@@ -149,12 +147,12 @@
     <div class="sl-readout">
       <div class="sl-card k">
         <div class="sl-tag">Kaplan allocation</div>
-        <div class="sl-loss" id="sl-loss-k">—</div>
+        <div class="sl-loss" id="sl-loss-k">-</div>
         <div class="sl-alloc">spend on N &gt;&gt; D</div>
       </div>
       <div class="sl-card c">
         <div class="sl-tag">Chinchilla (compute-optimal)</div>
-        <div class="sl-loss" id="sl-loss-c">—</div>
+        <div class="sl-loss" id="sl-loss-c">-</div>
         <div class="sl-alloc">scale N and D together</div>
       </div>
     </div>
@@ -184,7 +182,7 @@
     lossKEl.textContent = lk.toFixed(3);
     lossCEl.textContent = lc.toFixed(3);
     const saved = ((lk - lc) / lk * 100);
-    gapEl.innerHTML = `Same compute, two allocations - Chinchilla's curve lies <strong>${saved.toFixed(1)}% lower in loss</strong>. Or read it sideways: matching Kaplan's loss takes less compute when you scale data with params.`;
+    gapEl.innerHTML = `Same compute, two allocations: Chinchilla's curve lies <strong>${saved.toFixed(1)}% lower in loss</strong>. Read sideways: matching Kaplan's loss takes less compute when you scale data with params.`;
   }
   range.addEventListener('input', update);
   update();

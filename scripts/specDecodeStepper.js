@@ -77,8 +77,8 @@
     .sd-btn.primary:hover:not([disabled]) { background: var(--accent-hover); border-color: var(--accent-hover); }
     .sd-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
     .sd-round {
-      font-family: var(--mono); font-size: 11px; color: var(--text-muted);
-      margin-left: auto; letter-spacing: 0.06em; text-transform: uppercase;
+      font-family: var(--mono); font-size: 12px; color: var(--text-muted);
+      margin-left: auto;
     }
 
     .sd-stream {
@@ -141,8 +141,7 @@
       padding: 12px 14px;
     }
     .sd-stat .lbl {
-      font-family: var(--mono); font-size: 10px;
-      text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 11.5px;
       color: var(--text-muted); margin-bottom: 4px;
     }
     .sd-stat .val {
@@ -235,10 +234,10 @@
     let explainHtml = '';
     if (state.phase === 'idle') {
       explainHtml = `<b>Round 1 of ${ROUNDS.length}.</b> Press <b>Draft</b> to have the small model
-        propose ${K} tokens. It runs sequentially - ${K} cheap forward passes - and
+        propose ${K} tokens. It runs sequentially over ${K} cheap forward passes and
         writes them to the buffer without touching the big model yet.`;
     } else if (state.phase === 'drafted' && r) {
-      explainHtml = `The draft (small model) just proposed <code>${K}</code> tokens - shown
+      explainHtml = `The draft (small model) just proposed <code>${K}</code> tokens, shown
         greyed out. The big model has not seen them yet. Press <b>Verify</b> to run
         <em>one</em> parallel forward pass of the target model over all ${K + 1}
         positions and accept the longest prefix that matches its own greedy
@@ -249,7 +248,7 @@
            and this round terminates. The rejected draft tokens are discarded.`
         : `so the target also gets to sample one <em>bonus</em> token
            (<code>${escapeHtml((r.bonus || '').trim() || r.bonus)}</code>) from its own
-           distribution at the final position - k+1 tokens for the price of one
+           distribution at the final position: k+1 tokens for the price of one
            big-model forward pass.`;
       explainHtml = `Target accepted <b>${r.accepted} of ${K}</b> drafted tokens; ${bonusText}`;
     }
@@ -257,8 +256,8 @@
       const acceptRate = (state.tokensGenerated / (state.targetForwardCalls * (K + 1))) * 100;
       const speedup = state.tokensGenerated / state.targetForwardCalls;
       explainHtml = `<b>Done.</b> ${state.tokensGenerated} tokens generated with only
-        ${state.targetForwardCalls} target-model forward passes -
-        an effective <b>${speedup.toFixed(2)}&times;</b> decode speedup on this trace,
+        ${state.targetForwardCalls} target-model forward passes, giving an effective
+        <b>${speedup.toFixed(2)}&times;</b> decode speedup on this trace,
         with output identical (up to sampling) to running the target alone.
         Under lossless speculative decoding this is a pure win when the draft agrees
         often enough to amortize its own cost.`;
@@ -272,7 +271,7 @@
         <button class="sd-btn" id="sd-reset">Reset</button>
         <span class="sd-round">round ${Math.min(state.round + (state.phase === 'drafted' ? 1 : (state.phase === 'verified' ? 0 : 1)), ROUNDS.length)} / ${ROUNDS.length}</span>
       </div>
-      <div class="sd-stream">${streamHtml || '<span style="color:var(--text-muted); font-style:italic;">buffer empty - press Draft</span>'}</div>
+      <div class="sd-stream">${streamHtml || '<span style="color:var(--text-muted); font-style:italic;">buffer empty, press Draft</span>'}</div>
       <div class="sd-explain">${explainHtml}</div>
       <div class="sd-stats">
         <div class="sd-stat">

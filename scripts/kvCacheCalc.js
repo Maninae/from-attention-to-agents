@@ -86,8 +86,7 @@
     }
     .kvc-ctrl-block { display: flex; flex-direction: column; gap: 6px; }
     .kvc-ctrl-label {
-      font-family: var(--mono); font-size: 10.5px;
-      text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 11.5px;
       color: var(--text-muted);
     }
     .kvc-btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -112,8 +111,7 @@
     }
     .kvc-cell { background: var(--bg-surface); padding: 12px 14px; }
     .kvc-cell .lbl {
-      font-family: var(--mono); font-size: 10.5px;
-      text-transform: uppercase; letter-spacing: 0.08em;
+      font-family: var(--mono); font-size: 11.5px;
       color: var(--text-muted); margin-bottom: 4px;
     }
     .kvc-cell .val {
@@ -145,8 +143,7 @@
       vertical-align: middle;
     }
     .kvc-table th {
-      font-family: var(--mono); font-size: 10.5px;
-      text-transform: uppercase; letter-spacing: 0.08em;
+      font-family: var(--mono); font-size: 11.5px;
       color: var(--text-muted); font-weight: 500;
       border-bottom: 1px solid var(--rule-strong);
     }
@@ -310,7 +307,7 @@
 
       <p class="kvc-caption">
         Concurrent requests = floor((HBM - weights) / KV-per-seq). Paged assumes an average
-        request length of half the max context - a rough stand-in for the shape of chat +
+        request length of half the max context, a rough stand-in for the shape of chat +
         reasoning traffic where most turns are short. Actual numbers on a real deployment
         depend on the workload's length distribution and how much prefix is shared across
         callers.

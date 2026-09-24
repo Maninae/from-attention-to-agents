@@ -61,7 +61,6 @@
     .lv-sub { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .lv-toggle {
       font-family: var(--mono); font-size: 10px;
-      text-transform: uppercase; letter-spacing: 0.1em;
       color: var(--text-muted); margin-top: 3px;
     }
     .lv-row.on .lv-toggle { color: var(--pos); }
@@ -77,7 +76,6 @@
     }
     .lv-bar-head {
       font-family: var(--mono); font-size: 11px;
-      text-transform: uppercase; letter-spacing: 0.1em;
       color: var(--text-muted); margin-bottom: 8px;
     }
     .lv-bar-track {
@@ -105,7 +103,6 @@
     .lv-bar-total b { color: var(--text-primary); }
     .lv-caveat {
       font-family: var(--mono); font-size: 10px;
-      text-transform: uppercase; letter-spacing: 0.08em;
       color: var(--text-muted); margin-top: 8px;
       text-align: center;
     }
@@ -149,7 +146,7 @@
         <span class="lv-label">${l.label}</span>
         <span class="lv-sub">${l.sub}</span>
       </span>
-      <span class="lv-toggle">ON</span>
+      <span class="lv-toggle">on</span>
     `;
     row.addEventListener('click', () => {
       state[l.id] = !state[l.id];
@@ -178,7 +175,7 @@
       const on = state[id];
       row.classList.toggle('on', on);
       row.classList.toggle('off', !on);
-      row.querySelector('.lv-toggle').textContent = on ? 'ON' : 'OFF';
+      row.querySelector('.lv-toggle').textContent = on ? 'on' : 'off';
     });
 
     // bar — floor first, then levers in order of chapter

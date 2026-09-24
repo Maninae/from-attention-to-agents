@@ -1,5 +1,5 @@
 /* ============================================================
-   GRPO mechanics - one group of rollouts, three algorithms.
+   GRPO mechanics: one group of rollouts, three algorithms.
    Deterministic. No randomness. Reusable :root tokens only.
    Prefix: rlg-  (Ch7 "RL grows up").
    Mount: #rlg-demo.
@@ -59,7 +59,7 @@
       caption:
         'Same group-normalized advantage, but the loss is summed over ALL tokens in the batch ' +
         'and normalized once. A response of length |o_i| now contributes gradient proportional ' +
-        'to |o_i|. Long wrong rollouts get the LARGEST total penalty - the opposite of GRPO.',
+        'to |o_i|. Long wrong rollouts get the LARGEST total penalty, the opposite of GRPO.',
     },
   ];
 
@@ -109,8 +109,8 @@
       margin: 4px 0 12px; letter-spacing: 0.02em; }
     .rlg-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
     .rlg-panel { border-top: 1px solid var(--rule); padding-top: 12px; }
-    .rlg-method { font-family: var(--mono); font-size: 12px; color: var(--accent);
-      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
+    .rlg-method { font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--accent);
+      margin-bottom: 2px; }
     .rlg-sub { font-family: var(--mono); font-size: 11px; color: var(--text-muted);
       margin-bottom: 10px; letter-spacing: 0.02em; }
 
@@ -119,7 +119,7 @@
     @media (max-width: 640px) { .rlg-grid { grid-template-columns: 1fr; } }
 
     .rlg-col-title { font-family: var(--mono); font-size: 11px; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 6px; }
+      margin-bottom: 6px; }
 
     .rlg-row { display: grid;
       grid-template-columns: 28px 1fr 44px;

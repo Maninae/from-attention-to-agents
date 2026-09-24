@@ -38,11 +38,12 @@
         <h1><span class="section-number">2</span>Inside a modern pretraining run</h1>
         <p class="desc">
           Chinchilla told you how much to train. It did not tell you how to spend the money.
-          Between 2023 and 2026 the pretraining stack was quietly rebuilt from the ground up:
-          the data pipeline picks the tokens with a classifier, the block swapped LayerNorm
-          for RMSNorm and GELU for SwiGLU, attention learned to shrink its own KV cache,
-          most flagship weights now sleep as inactive experts, and the numerics run in
-          eight bits. Same objective. Different machine.
+          Between 2023 and 2026 the pretraining stack was rebuilt from the ground up: the
+          data pipeline picks the tokens with a classifier, the block swapped LayerNorm for
+          RMSNorm and GELU for SwiGLU, attention learned to shrink its own KV cache, most
+          flagship weights now sleep as inactive experts, and the numerics run in eight
+          bits. The objective on the loss curve is the same one from 2020; almost every
+          other part of the machine is new.
         </p>
       </header>
 
@@ -51,15 +52,15 @@
         <p class="lecture-roadmap">
           Chapter 1 closed with a budget calculator and a warning: Chinchilla is compute-optimal
           for <em>training</em>, not for deployment, so labs deliberately over-train small models
-          on more tokens than the ratio says. This chapter is the other axis. Same compute, same
-          token count - where does it actually go once it lands on the cluster? We walk the six
-          places a modern flagship has changed since GPT-3: the data (crawl to classifier to
-          synthetic), the block (norms, activation, positions), attention (a KV-cache story that
-          reshapes both training and inference), sparsity (MoE and multi-token prediction),
-          numerics (BF16 to FP8 with a new optimizer), and the tail (mid-training, distillation,
-          the one non-attention alternative that survived). By the end, the machine looks
-          modern - but the model it produces is still a document completer. That gap opens
-          Chapter 3.
+          on more tokens than the ratio says. This chapter is the other axis. Given a fixed
+          compute and token count, where does the money actually go once it lands on the
+          cluster? We walk the six places a modern flagship has changed since GPT-3: the data
+          (crawl to classifier to synthetic), the block (norms, activation, positions),
+          attention (a KV-cache story that reshapes both training and inference), sparsity
+          (MoE and multi-token prediction), numerics (BF16 to FP8 with a new optimizer), and
+          the tail (mid-training, distillation, the one non-attention alternative that
+          survived). The machine that comes out is modern; the model it produces is still a
+          document completer, and Chapter 3 is where that gap gets closed.
         </p>
 
         <h2><span class="section-number">1.</span> What a flagship run is actually buying</h2>
@@ -75,16 +76,16 @@
           <span class="gloss" data-gloss="aux-loss-free-balancing">auxiliary-loss-free load balancing</span>
           on the router, <span class="gloss" data-gloss="mtp">multi-token prediction</span> heads
           on top, <span class="gloss" data-gloss="fp8-training">FP8 mixed-precision training</span>
-          throughout, 14.8T pretraining tokens - and pretraining alone cost <strong>2.664 million
+          throughout, 14.8T pretraining tokens, and a pretraining bill of <strong>2.664 million
           H800 GPU-hours</strong> (2.788M total including long-context extension and post-training).
-          Every one of those choices is a lever you did not have five years ago.
+          None of those levers existed five years earlier.
         </p>
         <p>
-          The point of the chapter is not to catalog names. It is to see the shape of the machine
-          a working practitioner reasons about in 2026 - because every downstream chapter
-          (post-training, reasoning, inference, agents) inherits this substrate. Tokenization,
-          the seventh moving part, belongs one chapter back: Chapter 0 now teaches BPE, byte-level
-          BPE, and the vocab creep from 32k up to 128k-200k, so we do not re-teach it here.
+          The goal of the chapter is to see the shape of the machine a working practitioner
+          reasons about in 2026, since every downstream chapter (post-training, reasoning,
+          inference, agents) inherits this substrate. Tokenization, the seventh moving part,
+          belongs one chapter back: Chapter 0 teaches BPE, byte-level BPE, and the vocab
+          creep from 32k up to 128k-200k, so we do not re-teach it here.
         </p>
 
         <div class="callout note">
@@ -152,21 +153,21 @@
         </table>
 
         <p>
-          The Nemotron trick generalizes: <em>synthetic data is now first-class</em>. The most
-          public line of that argument is Microsoft's <em>phi</em> series -
+          The Nemotron trick generalizes: synthetic data is now first-class. The most public
+          line of that argument is Microsoft's <em>phi</em> series, starting with
           <a href="https://arxiv.org/abs/2306.11644" target="_blank" rel="noopener">phi-1</a>
-          (2023) trained on "textbooks are all you need" - and a 1B model that beat much
-          larger contemporaries on code. The result was not that synthetic beats real. It was
-          that a distribution shaped by <em>what a strong teacher would say next</em> was worth
-          more per token than raw crawl. Frontier runs now mix in curated math (proofs, solved
-          problems), code (repo-scale, unit-test-verified), instruction-shaped documents, and
-          machine-rewritten crawl.
+          (2023, "textbooks are all you need"), a 1B model that beat much larger
+          contemporaries on code. The takeaway was that a token distribution shaped by
+          <em>what a strong teacher would say next</em> is worth more per token than raw
+          crawl, whether or not the text is nominally synthetic. Frontier runs now mix in
+          curated math (proofs, solved problems), code (repo-scale, unit-test-verified),
+          instruction-shaped documents, and machine-rewritten crawl.
         </p>
         <p>
           The last data-side stage is the one everyone forgot to name until 2024:
           <span class="gloss" data-gloss="mid-training-annealing">mid-training</span>, also
-          called cooldown or annealing. Save your very-highest-quality tokens for the tail of
-          pretraining - math, code, textbooks, distilled reasoning traces - and warm the
+          called cooldown or annealing. Save your very-highest-quality tokens (math, code,
+          textbooks, distilled reasoning traces) for the tail of pretraining, then warm the
           learning rate down while feeding only that. OLMo 2's "Dolmino" mix
           (<a href="https://arxiv.org/abs/2501.00656" target="_blank" rel="noopener">Groeneveld et al. 2025</a>)
           is the cleanest public case study; the technique also shows up under names like
@@ -193,9 +194,9 @@
         <p>
           Chapter 0 walked you through the 2017 block: multi-head self-attention, position-wise
           feed-forward, LayerNorm, sinusoidal positions, ReLU/GELU somewhere in the middle. That
-          block is not what a 2025 flagship trains. Three swaps stuck, and they are boring in
-          the good way - each one gives up a small amount of expressivity for a lot of
-          stability, throughput, or generalization.
+          block is not what a 2025 flagship trains. Three swaps stuck, and each one gives up a
+          small amount of expressivity in exchange for a lot of stability, throughput, or
+          generalization.
         </p>
 
         <table style="width:100%; border-collapse: collapse; margin: 18px 0 28px; font-size: 15px;">
@@ -245,8 +246,8 @@
           by the SwiGLU activation function [...] introduced by Shazeer (2020). Rotary
           Embeddings [GPTNeo]. We remove the absolute positional embeddings and instead add
           rotary positional embeddings (RoPE), introduced by Su et al. (2021)." That short list
-          is the modern block. Every open flagship since - Llama 2/3, Mistral, Qwen, DeepSeek,
-          Gemma, Kimi - inherits the three swaps.
+          is the modern block. Every open flagship since (Llama 2/3, Mistral, Qwen, DeepSeek,
+          Gemma, Kimi) inherits the three swaps.
         </p>
         <p>
           Two things are worth pausing on. RoPE
@@ -255,7 +256,7 @@
           with token index and dimension frequency; the dot product then depends only on the
           relative offset. That relativity is what makes context extension possible at all
           (Section 5). And SwiGLU is a gated variant that multiplies two projections instead of
-          one - three matrices in the FFN instead of two - which is why frontier reports tend to
+          one (three matrices in the FFN instead of two), which is why frontier reports tend to
           quote FFN hidden width as <em>2/3</em> of the naive figure to keep the parameter count
           honest.
         </p>
@@ -263,12 +264,12 @@
         <h2 id="sec-attn"><span class="section-number">4.</span> Attention and the KV cache</h2>
         <p>
           At training time, standard multi-head attention costs $O(L^2 d)$ per layer. That has
-          not changed. What has changed is the cost people design against, which is not training
-          time - it is <em>inference</em> memory bandwidth. During autoregressive generation
-          the model reads its own KV cache once per token; the cache is per-layer, per-head,
-          per-token, and it grows with context length. At 128k context and dozens of layers a
-          dense-MHA cache is measured in tens of gigabytes per sequence. That is the number the
-          block is now optimized for.
+          not changed. What has changed is the cost people design against, which has moved
+          from training FLOPs to <em>inference</em> memory bandwidth. During autoregressive
+          generation the model reads its own KV cache once per token; the cache is per-layer,
+          per-head, per-token, and it grows with context length. At 128k context and dozens of
+          layers a dense-MHA cache is measured in tens of gigabytes per sequence. That is the
+          number the block is now optimized for.
         </p>
         <p>
           Three shrinks lived long enough to matter:
@@ -290,12 +291,12 @@
         </ul>
 
         <p>
-          The demo below runs the arithmetic on one reference shape - DeepSeek-V3's own
-          (128 heads, head_dim 128, 61 layers, BF16). Drag the context slider; the four
+          The demo below runs the arithmetic on one reference shape (DeepSeek-V3's own:
+          128 heads, head_dim 128, 61 layers, BF16). Drag the context slider; the four
           bars show per-sequence KV cache under MHA, GQA-8, MQA, and the actual MLA that
-          DeepSeek trained. MHA / GQA / MQA are the counterfactual dense-attention caches
-          on the SAME shape, so the numbers are apples-to-apples. This is the calculation
-          a serving team runs before quoting a token-per-dollar number.
+          DeepSeek trained. MHA / GQA / MQA here are the counterfactual dense-attention
+          caches on the SAME shape, so the comparison is apples-to-apples. This is the
+          calculation a serving team runs before quoting a token-per-dollar number.
         </p>
 
         <div class="demo-wrap">
@@ -312,22 +313,22 @@
           (Dao et al. 2022), extended by
           <a href="https://arxiv.org/abs/2307.08691" target="_blank" rel="noopener">FlashAttention-2</a>
           and <a href="https://arxiv.org/abs/2407.08608" target="_blank" rel="noopener">FlashAttention-3</a>,
-          is <em>exact</em> attention - same output as the naive matmul - but reordered to never
+          is <em>exact</em> attention (same output as the naive matmul) but reordered to never
           materialize the $L \times L$ score matrix in high-bandwidth memory. The algebra tiles
           the softmax so the score matrix lives only in on-chip SRAM. The word to remember is
-          IO-aware: it wins by moving fewer bytes, not by doing fewer FLOPs. Every modern trainer
-          uses it. It is the reason "attention is expensive" has stopped being the right mental
+          IO-aware: it wins by moving fewer bytes rather than by doing fewer FLOPs. Every modern
+          trainer uses it, and "attention is expensive" has stopped being the right mental
           model at the sizes anyone actually runs.
         </p>
 
         <div class="callout note">
-          <div class="callout-label">Why MoE reports quote MLA and MTP together</div>
+          <div class="callout-label">MoE and MLA are paired because they cut different bottlenecks</div>
           <p>
             DeepSeek-V2 and V3 pair MLA (cache shrink) with the MoE that dominates their
-            parameter count. The reason is symmetric: the router activates a small fraction of
-            experts per token, so per-token FLOPs are low; MLA drops per-token memory bandwidth
-            proportionally; both together make the model serveable. Take one away and the other
-            gains a large fraction of its benefit back as slack.
+            parameter count. The router activates a small fraction of experts per token, so
+            per-token FLOPs are low; MLA drops per-token memory bandwidth proportionally.
+            Together they keep the model serveable at scale; removing either one gives most of
+            the benefit back as slack.
           </p>
         </div>
 
@@ -343,8 +344,9 @@
           training length. That works but degrades short-context perplexity.
           <a href="https://arxiv.org/abs/2309.00071" target="_blank" rel="noopener">YaRN</a>
           (Peng et al. 2023) does the interpolation
-          <em>per frequency band</em> - leave high-frequency dimensions alone, stretch low-frequency
-          ones - and adds an attention-temperature term to keep the softmax well-scaled.
+          <em>per frequency band</em> (leave high-frequency dimensions alone, stretch
+          low-frequency ones) and adds an attention-temperature term to keep the softmax
+          well-scaled.
           <span class="gloss" data-gloss="yarn">YaRN</span> is what most public 128k-context
           fine-tunes ride on; DeepSeek-V3 uses it to reach 128k, and the Llama 3.1 herd extends
           to 128k with a related recipe.
@@ -378,8 +380,8 @@
           <p>
             Replace the position-wise FFN in a transformer block with $N$ parallel FFNs (the
             <em>experts</em>) and a small learned gate. For each token, the gate scores all
-            experts, top-$k$ are chosen ($k$ is small - 2 or 8), the token is routed to those
-            experts, and their outputs are combined by gate weight. Total parameters = $\Theta(N)$,
+            experts, top-$k$ are chosen ($k$ is small, usually 2 or 8), the token is routed to
+            those experts, and their outputs are combined by gate weight. Total parameters = $\Theta(N)$,
             active parameters per token = $\Theta(k)$. Only the active experts do work, so both
             training FLOPs per token and inference FLOPs per token stay near the dense-$k$-expert
             cost.
@@ -400,7 +402,7 @@
           <strong>Auxiliary-loss-free load balancing</strong>
           (DeepSeek-V3, following
           <a href="https://arxiv.org/abs/2408.15664" target="_blank" rel="noopener">Wang et al. 2024</a>):
-          the classical MoE trick was to add a load-balancing loss - a penalty that pushes
+          the classical MoE trick was to add a load-balancing loss, a penalty that pushes
           the router toward uniform expert usage. It works, but the penalty leaks into the
           language loss and slightly hurts quality. Aux-loss-free balancing instead maintains a
           per-expert <em>bias</em> that is adjusted online: if an expert is underused this step,
@@ -426,14 +428,14 @@
 
         <h3><span class="section-number">6.1</span> Multi-token prediction (MTP)</h3>
         <p>
-          A quieter DeepSeek-V3 innovation. Instead of a single next-token head, train several
-          shallow heads that predict the next $D$ tokens in parallel (each conditioned on the
-          previous head's prediction). The training loss becomes a sum over depth, and each token
-          contributes gradients from $D$ prediction sites instead of one. The paper reports the
-          quality gain and an under-appreciated bonus: the extra heads work as draft-token
-          producers for <em>speculative decoding</em> at inference time, so an MTP-trained model
-          gets a serving speedup for free. Chapter 8 will pick this up again from the inference
-          side.
+          A smaller DeepSeek-V3 change that mattered a lot. Instead of a single next-token
+          head, train several shallow heads that predict the next $D$ tokens in parallel (each
+          conditioned on the previous head's prediction). The training loss becomes a sum over
+          depth, and each token contributes gradients from $D$ prediction sites instead of
+          one. The paper reports the quality gain plus a second payoff: the extra heads work
+          as draft-token producers for <em>speculative decoding</em> at inference time, so an
+          MTP-trained model gets a serving speedup for the same training cost. Chapter 8 picks
+          this up from the inference side.
         </p>
 
         <h2><span class="section-number">7.</span> Numerics and the optimizer</h2>
@@ -446,8 +448,8 @@
           <a href="https://arxiv.org/abs/2209.05433" target="_blank" rel="noopener">FP8 (E4M3 / E5M2)</a>
           on Hopper tensor cores, with BF16 master weights and per-tile activation scaling to
           contain the numeric drift. The compute win is roughly 2&times; over BF16 at the same
-          hardware. The engineering cost is real - overflow behavior, gradient scaling, kernel
-          rewrites - but the FP8 recipe now lives in open trainers and other flagships
+          hardware. The engineering cost is real (overflow behavior, gradient scaling, kernel
+          rewrites), but the FP8 recipe now lives in open trainers and other flagships
           (Nemotron, Llama post-training) have followed.
         </p>
         <p>
@@ -461,9 +463,9 @@
           runs would spike. Kimi K2's
           <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">MuonClip</a>
           (July 2025) added a "QK-clip" that rescales attention query/key projections whenever
-          their logits blow up. Kimi K2 - 1T total, 32B active - was pretrained on 15.5T tokens
-          <em>with zero loss spikes</em>, per the release. That is the first published trillion-parameter
-          run to drop AdamW at frontier scale.
+          their logits blow up. Kimi K2 (1T total, 32B active) was pretrained on 15.5T tokens
+          <em>with zero loss spikes</em>, per the release. That is the first published
+          trillion-parameter run to drop AdamW at frontier scale.
         </p>
 
         <h2><span class="section-number">8.</span> How it fits on a cluster</h2>
@@ -510,8 +512,8 @@
           spends much of its infrastructure section on custom kernels that overlap EP all-to-all
           with computation, which is what keeps a heavily expert-parallel MoE from spending most
           of its wall-clock on networking. Chapter 0's parallelism demo shows the primitive that
-          makes any of this possible - transformer blocks compute across the sequence axis in
-          one pass, unlike an RNN - and this section is the industrial extension of that primitive.
+          makes any of this possible (transformer blocks compute across the sequence axis in
+          one pass, unlike an RNN); this section is the industrial extension of that primitive.
         </p>
 
         <h2><span class="section-number">9.</span> The tail: mid-training, distillation, the SSM aside</h2>
@@ -526,13 +528,14 @@
           <strong>Distillation as pretraining</strong> earned its own status with the Gemma line.
           <a href="https://arxiv.org/abs/2408.00118" target="_blank" rel="noopener">Gemma 2</a>
           (Google DeepMind 2024) trained a 27B teacher from scratch and then trained the 2B and
-          9B students on the teacher's <em>full soft distribution</em> over the next token, not
-          the one-hot label. Each token gives the small model a richer gradient - the entire
-          probability vector, not "yes / no." Gemma 3 continued the recipe. This is not the
+          9B students on the teacher's <em>full soft distribution</em> over the next token,
+          rather than the one-hot label. Each token then gives the small model a much richer
+          gradient: the entire probability vector, not a single index. Gemma 3 continued the
+          recipe. This is different from the
           <span class="gloss" data-gloss="reasoning-distillation">reasoning distillation</span>
-          you will meet in Chapter 6 (that copies traces, not logits); this is
-          <em>pretraining-time</em> logit distillation, and it is why small open-weights models
-          have gotten as good as they have.
+          you will meet in Chapter 6 (that one copies traces, not logits); this is
+          <em>pretraining-time</em> logit distillation, and it is a big reason small
+          open-weights models have gotten as good as they have.
         </p>
         <p>
           Finally, the one <strong>non-attention</strong> architecture that survived.
@@ -556,7 +559,7 @@
           Add it up. Run for a few million H100/H800-hours. Feed 10-20T tokens through a
           modernized MoE transformer with MLA and RoPE, in FP8, with Muon, on a cluster that
           overlaps expert parallelism with matmul, extend the context to 128k, mid-train on your
-          best tokens, distill down for the small sizes. The model that falls out is - still - a
+          best tokens, distill down for the small sizes. The model that falls out is still a
           document completer.
         </p>
         <p>
@@ -568,24 +571,26 @@
           table who wants an answer to a specific question. That is the
           <span class="gloss" data-gloss="intent-alignment-gap">intent-alignment gap</span>.
           Chapter 3 is where a small team at OpenAI closes it with a three-stage recipe called
-          RLHF, ships the result as ChatGPT, and quietly plants the seed of chain-of-thought.
+          RLHF, ships the result as ChatGPT, and plants the seed of chain-of-thought in the
+          same paper.
         </p>
 
         <div class="callout note">
           <div class="callout-label">The levers so far</div>
           <p>
-            Chapter 0 turned the <strong>architecture</strong> lever (attention). Chapter 1 turned
-            the <strong>scale</strong> lever (Kaplan, Chinchilla, over-train for deployment).
-            Chapter 2 turned the <strong>efficiency</strong> lever - same objective, machine
-            rebuilt from data pipeline through numerics. Chapter 3 turns the
-            <strong>alignment</strong> lever. Same weights. Different behavior.
+            Chapter 0 turned the <strong>architecture</strong> lever (attention). Chapter 1
+            turned the <strong>scale</strong> lever (Kaplan, Chinchilla, over-train for
+            deployment). Chapter 2 turned the <strong>efficiency</strong> lever, rebuilding
+            the machine from data pipeline through numerics against the same loss objective.
+            Chapter 3 turns the <strong>alignment</strong> lever, changing what the same
+            weights do without changing the weights much.
           </p>
         </div>
 
         <h2><span class="section-number">11.</span> What to take with you</h2>
         <ul>
           <li><strong>Data is a pipeline, not a corpus.</strong> Crawl, dedup, classifier-filter, decontaminate, mix in synthetic and code/math, save the best tokens for a cooldown stage. DCLM, FineWeb-Edu, Nemotron-CC are the 2024 reference filters.</li>
-          <li><strong>The 2017 block quietly grew up.</strong> Pre-norm RMSNorm, SwiGLU FFN, RoPE positions. Every flagship since Llama 1 uses that triple.</li>
+          <li><strong>The 2017 block grew up.</strong> Pre-norm RMSNorm, SwiGLU FFN, RoPE positions. Every flagship since Llama 1 uses that triple.</li>
           <li><strong>Attention now optimizes for inference memory.</strong> MQA / GQA / MLA all shrink the KV cache; FlashAttention makes exact attention IO-cheap. Long context is a rescale (YaRN) plus an extension stage.</li>
           <li><strong>Sparsity is the flagship default.</strong> MoE separates total from active parameters. Fine-grained + shared experts, aux-loss-free balancing, and multi-token prediction are the 2024-25 refinements that made it stable.</li>
           <li><strong>Numerics dropped a step.</strong> BF16 became FP8 for matmuls (DeepSeek-V3); AdamW got a real challenger (Muon / MuonClip on Kimi K2).</li>

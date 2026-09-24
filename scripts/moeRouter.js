@@ -1,9 +1,9 @@
 /* ============================================================
-   MoE router miniature - total vs active params, with balancing
+   MoE router miniature: total vs active params, with balancing.
    8 routed experts + 1 shared expert, top-2 gating over a fixed
    stream of 32 tokens. Deterministic (mulberry32 seed 0xBEEF).
    Balancing toggle: aux-loss-free style expert bias vs off.
-   Off => one expert absorbs a growing share of traffic.
+   With balancing off, one expert absorbs a growing share of traffic.
    Mounts on #moe-demo.
    ============================================================ */
 (function () {
@@ -67,7 +67,7 @@
       border: 1px solid var(--rule); border-radius: 8px;
       background: var(--bg-elevated);
     }
-    .mo-stat-lbl { font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .mo-stat-lbl { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
     .mo-stat-val { font-family: var(--sans); font-size: 20px; font-weight: 700; color: var(--text-primary); margin-top: 2px; }
     .mo-stat-val .u { font-family: var(--mono); font-size: 12px; color: var(--text-muted); font-weight: 400; margin-left: 2px; }
     .mo-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 14px; }

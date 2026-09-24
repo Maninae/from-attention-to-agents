@@ -1,5 +1,5 @@
 /* ============================================================
-   KV cache calculator - MHA vs MQA vs GQA vs MLA
+   KV cache calculator: MHA vs MQA vs GQA vs MLA
    Deterministic. No PRNG. One reference model, shared across
    all four variants: DeepSeek-V3-shape (128 attention heads,
    head_dim 128, 61 layers, BF16). This is the architecture MLA

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chapter 4 - The recipe gets cheaper · From Attention to Agents</title>
-<meta name="description" content="2023-2026: DPO drops the reward model and the PPO loop, its variants (KTO/IPO/SimPO/ORPO) prune it further, GRPO drops the critic; LLaMA cracks open the weights, LoRA/QLoRA shrink the compute, and once verifiable rewards arrived the frontier came back to online RL - Tulu 3 coining the term RLVR. The alignment recipe gets steadily cheaper, and the open-weights wave catches up through gpt-oss and Kimi K2.">
+<meta name="description" content="2023-2026: DPO drops the reward model and the PPO loop, its variants (KTO/IPO/SimPO/ORPO) prune it further, GRPO drops the critic; LLaMA cracks open the weights, LoRA/QLoRA shrink the compute, and once verifiable rewards arrived the frontier came back to online RL, with Tulu 3 coining the term RLVR. The alignment recipe gets steadily cheaper, and the open-weights wave catches up through gpt-oss and Kimi K2.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -39,39 +39,38 @@
 
         <p class="lecture-roadmap">
           RLHF worked, but the recipe was expensive. From 2023 through 2026 it was taken apart
-          in two directions at once. The <strong>alignment algorithm</strong> shed pieces - DPO
+          in two directions at once. The <strong>alignment algorithm</strong> shed pieces: DPO
           dropped the reward model and the RL loop, its variants pruned it further, GRPO dropped
-          the critic. The <strong>base model</strong> stopped being a secret - LLaMA leaked the
-          weights into the open, and Alpaca and Vicuna showed you could fine-tune a respectable
-          assistant on a credit card. The <strong>compute</strong> stopped being a wall - LoRA,
-          then QLoRA, fit a 65B fine-tune onto a single GPU. Same destination as Chapter 3, an
-          order of magnitude cheaper at every step. And then, once <em>verifiable</em> rewards
-          arrived at the end of 2024, the field walked half of that back: strong open recipes
-          returned to online RL, and the open-weights wave rolled forward through Kimi K2 and
-          gpt-oss.
+          the critic. The <strong>base model</strong> stopped being a secret once LLaMA leaked
+          into the open, and Alpaca and Vicuna showed you could fine-tune a respectable assistant
+          on a credit card. The <strong>compute</strong> came down too: LoRA, then QLoRA, fit a
+          65B fine-tune onto a single GPU. Same destination as Chapter 3, an order of magnitude
+          cheaper at every step. Then, once <em>verifiable</em> rewards arrived at the end of 2024,
+          the field walked half of that back: strong open recipes returned to online RL, and the
+          open-weights wave rolled forward through Kimi K2 and gpt-oss.
         </p>
 
         <p>
-          The Chapter 3 recipe - supervised fine-tuning, then a reward model, then PPO - works,
-          and ChatGPT was the proof. But running it required keeping four models resident at
-          once (policy, reference, reward, critic), and PPO is notoriously finicky to tune. Most
-          of the next two years is the same field <em>removing</em> moving parts from that recipe,
+          The Chapter 3 recipe (supervised fine-tuning, then a reward model, then PPO) works, and
+          ChatGPT was the proof. But running it required keeping four models resident at once
+          (policy, reference, reward, critic), and PPO is finicky to tune in practice. Most of
+          the next two years is the same field <em>removing</em> moving parts from that recipe,
           while a parallel democratization wave brings the base models and the compute within
           reach of anyone with a single GPU and a weekend.
         </p>
 
-        <h2><span class="section-number">4.1</span>DPO - your LM is secretly a reward model</h2>
+        <h2><span class="section-number">4.1</span>DPO folds the reward model into the policy</h2>
 
         <p>
           The <span class="gloss" data-gloss="dpo">DPO</span> paper, posted to arXiv in May 2023
-          and a NeurIPS 2023 Outstanding Main Track Runner-Up, has the best title in the field -
+          and a NeurIPS 2023 Outstanding Main Track Runner-Up, has the best title in the field:
           "<em>Your Language Model is Secretly a Reward Model</em>." The idea: under the
           KL-constrained RL objective that <span class="gloss" data-gloss="rlhf">RLHF</span>
           actually optimizes, the optimal policy is related to the reference policy through the
           reward in closed form. Invert that mapping and the reward function disappears into the
-          policy itself. You can train directly on pairwise preference data - a "chosen" answer
-          and a "rejected" answer - with a single classification loss. No reward model. No PPO
-          rollouts. No critic.
+          policy itself. You can train directly on pairwise preference data (a "chosen" answer
+          and a "rejected" answer) with a single classification loss, with no reward model, no
+          PPO rollouts, and no critic.
           (<a href="https://arxiv.org/abs/2305.18290" target="_blank" rel="noopener">Rafailov et al., 2023</a>;
           <a href="https://blog.neurips.cc/2023/12/11/announcing-the-neurips-2023-paper-awards/" target="_blank" rel="noopener">NeurIPS award</a>.)
         </p>
@@ -148,21 +147,21 @@
         </div>
 
         <p>
-          The moral of the family is that DPO is one point in a small design space. What you drop -
-          the reference policy, the pair structure, the log-sigmoid, the separate SFT stage - is up
-          to your data and your budget. What you keep is the core move: <em>no reward model, no
-          online rollouts</em>.
+          The moral of the family is that DPO is one point in a small design space. What you drop
+          (the reference policy, the pair structure, the log-sigmoid, the separate SFT stage) is
+          up to your data and your budget. What you keep is the core move: <em>no reward model,
+          no online rollouts</em>.
         </p>
 
-        <h2><span class="section-number">4.3</span>GRPO - the group is its own baseline</h2>
+        <h2><span class="section-number">4.3</span>GRPO uses a group of samples as its own baseline</h2>
 
         <p>
           DPO took alignment <em>out</em> of reinforcement learning. <span class="gloss" data-gloss="grpo">GRPO</span>
           stayed in, and shed something different. Introduced by DeepSeek in February 2024 inside
           the DeepSeekMath paper, GRPO drops the <span class="gloss" data-gloss="ppo">PPO</span>
-          critic - the value head that estimates expected return. The critic is roughly as big as
-          the policy and has to be held in memory alongside it; killing it frees a significant
-          chunk of compute.
+          critic (the value head that estimates expected return). The critic is roughly as big as
+          the policy and has to be held in memory alongside it; killing it frees a large chunk of
+          compute.
           (<a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener">Shao et al., 2024</a>;
           PPO baseline: <a href="https://arxiv.org/abs/1707.06347" target="_blank" rel="noopener">Schulman et al., 2017</a>.)
         </p>
@@ -186,13 +185,13 @@
 
         <p>
           That's the whole change. Policy and reference model still live in memory. Reward model
-          still scores. PPO's clipped surrogate update still applies. Only the critic - a
-          second model-sized set of activations and optimizer state - is gone. The same GRPO
-          comes back in Chapter 6: it is the algorithm DeepSeek uses to train R1, the open
-          reasoning model that rivals o1. GRPO also, it turns out, has its own failure modes -
-          length bias, entropy collapse, off-policy drift under long rollouts - and the 2025
-          successors (Dr. GRPO, DAPO, GSPO, CISPO, VAPO) fix them one by one. That whole zoo is
-          Chapter 7's subject; here it is enough to know GRPO was the on-ramp.
+          still scores. PPO's clipped surrogate update still applies. Only the critic (a second
+          model-sized set of activations and optimizer state) is gone. The same GRPO comes back
+          in Chapter 6: it is the algorithm DeepSeek uses to train R1, the open reasoning model
+          that rivals o1. GRPO has its own failure modes (length bias, entropy collapse,
+          off-policy drift under long rollouts), and the 2025 successors (Dr. GRPO, DAPO, GSPO,
+          CISPO, VAPO) fix them one by one. That whole zoo is Chapter 7's subject; here it is
+          enough to know GRPO was the on-ramp.
         </p>
 
         <h3>Three recipes, side by side</h3>
@@ -235,8 +234,8 @@
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">On-policy sampling?</td>
               <td style="padding:9px 12px"><span class="pos">Yes</span></td>
-              <td style="padding:9px 12px"><span class="neg">No</span> - static pairs</td>
-              <td style="padding:9px 12px"><span class="pos">Yes</span> - group of $G$</td>
+              <td style="padding:9px 12px"><span class="neg">No</span>, static pairs</td>
+              <td style="padding:9px 12px"><span class="pos">Yes</span>, group of $G$</td>
             </tr>
             <tr>
               <td style="padding:9px 12px; color:var(--text-muted)">Baseline for advantage</td>
@@ -249,30 +248,29 @@
         </div>
 
         <p>
-          Two different ways to shrink the same recipe - and a hint of what's coming. DPO showed
-          you could align without RL at all. GRPO showed you could keep RL but drop the most
-          expensive piece. By Chapter 6 the second lane reaches its logical end: reasoning models
-          trained with <em>verifiable</em> rewards, where the human-labeled reward model is gone
-          too.
+          Two different ways to shrink the same recipe. DPO showed you could align without RL at
+          all; GRPO showed you could keep RL but drop the most expensive piece. By Chapter 6 the
+          second lane reaches its logical end: reasoning models trained with <em>verifiable</em>
+          rewards, where the human-labeled reward model is gone too.
         </p>
 
         <h2><span class="section-number">4.4</span>What happened next: back to online RL</h2>
 
         <p>
-          The neat DPO-vs-GRPO framing above is where the story stood in late 2024. What actually
-          happened over the following year is more interesting: <em>the open community walked
-          DPO's dominance partly back</em>. Once verifiable rewards for math and code showed up
-          as a reliable reward signal, the frontier of open post-training shifted the last stage
-          from an offline preference loss to an online RL loop again - not the human-labeled PPO
-          of 2022, but a GRPO-family run against automatic verifiers.
+          The neat DPO-vs-GRPO framing above is where the story stood in late 2024. Over the
+          following year, <em>the open community walked DPO's dominance partly back</em>. Once
+          verifiable rewards for math and code showed up as a reliable reward signal, the frontier
+          of open post-training shifted the last stage from an offline preference loss to an
+          online RL loop again. Not the human-labeled PPO of 2022, but a GRPO-family run against
+          automatic verifiers.
         </p>
 
         <p>
           The clearest inflection is Ai2's <span class="gloss" data-gloss="tulu3">Tulu 3</span>
-          in November 2024. Tulu 3 published a four-stage open recipe - data curation, SFT,
-          preference optimization (DPO), and a final stage the paper introduces as
+          in November 2024. Tulu 3 published a four-stage open recipe (data curation, SFT,
+          preference optimization via DPO, and a final stage the paper introduces as
           <em>"a novel method we call <span class="gloss" data-gloss="rlvr">Reinforcement Learning
-          with Verifiable Rewards (RLVR)</span>."</em> The term
+          with Verifiable Rewards (RLVR)</span>"</em>). The term
           <span class="gloss" data-gloss="rlvr">RLVR</span> was coined here. The recipe hit or
           exceeded closed-model baselines like Claude 3.5 Haiku and GPT-4o-mini at its scale, and
           the paper's headline result is the clean SFT &rarr; DPO &rarr; RLVR pipeline that most
@@ -284,25 +282,25 @@
         <p>
           Once verifiable rewards worked, everything downstream leaned back into online RL.
           DeepSeek-R1 (January 2025) built on GRPO with rule-based rewards. The 2025 successor
-          zoo - DAPO, Dr. GRPO, GSPO, CISPO, VAPO - all live in the online-RL lane. Kimi K2's
+          zoo (DAPO, Dr. GRPO, GSPO, CISPO, VAPO) all live in the online-RL lane. Kimi K2's
           post-training (July 2025) is on-policy RL over verifiable and self-critique signals.
           Qwen3's post-training (April 2025) is a four-stage pipeline that ends in RL over
           verifiable rewards, then general rewards, in that order. The DPO-only frontier lasted
-          about a year. Chapter 7 opens exactly on that pivot.
+          about a year, and Chapter 7 opens on the pivot.
           (DeepSeek-R1 <a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">Guo et al., 2025</a>;
           Qwen3 <a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener">Yang et al., 2025</a>;
           Kimi K2 <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener">Team, 2025</a>.)
         </p>
 
         <div class="callout note">
-          <div class="callout-label">Where DPO still lives</div>
+          <div class="callout-label">DPO is now the middle stage of the modern open recipe</div>
           <p>
             None of this makes DPO obsolete. As the middle stage of a modern open recipe (SFT
             &rarr; DPO &rarr; RLVR), it still does the load-bearing preference work on tasks
-            without cheap verifiers - style, safety, tone, refusals. And on a small team's budget
-            it is still the simplest thing that works. DPO's story is not "beaten" - it is
-            "sandwiched" between an SFT stage that teaches format and an RL stage that chases the
-            things a verifier can actually measure.
+            without cheap verifiers: style, safety, tone, refusals. On a small team's budget it
+            is also still the simplest thing that works. DPO was sandwiched, not beaten, between
+            an SFT stage that teaches format and an RL stage that chases the things a verifier
+            can actually measure.
           </p>
         </div>
 
@@ -310,12 +308,12 @@
 
         <p>
           The other half of this chapter isn't about algorithms. It's about who gets to run them.
-          In February 2023, Meta released <span class="gloss" data-gloss="llama">LLaMA</span> - 
+          In February 2023, Meta released <span class="gloss" data-gloss="llama">LLaMA</span>:
           seven, thirteen, thirty-three, and sixty-five-billion-parameter base models under a
           non-commercial research license, available to approved researchers. The headline claim
-          in the paper was already a shock: LLaMA-13B outperforms the 175B GPT-3 on most
-          benchmarks, and the 65B sits in the same league as Chinchilla-70B and PaLM-540B.
-          A 13B model wasn't supposed to be able to do that.
+          in the paper was already a shock. LLaMA-13B outperforms the 175B GPT-3 on most
+          benchmarks, and the 65B sits in the same league as Chinchilla-70B and PaLM-540B, at
+          scales the community had not seen open before.
           (<a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener">Touvron et al., 2023</a>;
           <a href="https://ai.meta.com/blog/large-language-model-llama-meta-ai/" target="_blank" rel="noopener">Meta announcement</a>.)
         </p>
@@ -326,8 +324,8 @@
           takedowns the leak was already everywhere. From that moment forward, "open-weights
           LLaMA derivatives" were a fact on the ground regardless of the license.
           (<a href="https://en.wikipedia.org/wiki/Llama_(language_model)" target="_blank" rel="noopener">Timeline</a>.)
-          When Meta released LLaMA 2 in July 2023 under a commercial-permissive license - with one
-          carve-out for licensees above 700M monthly active users - the
+          When Meta released LLaMA 2 in July 2023 under a commercial-permissive license (with one
+          carve-out for licensees above 700M monthly active users), the
           <span class="gloss" data-gloss="open-weights">open-weights</span> wave stopped being
           gray-zone leakage and became official Meta strategy.
           (<a href="https://ai.meta.com/llama/license/" target="_blank" rel="noopener">LLaMA 2 license</a>.)
@@ -354,8 +352,8 @@
             Take LLaMA, fine-tune on ~70K real ChatGPT conversations from
             <span class="gloss" data-gloss="sharegpt">ShareGPT</span>. LMSYS reported ~$300 for
             the 13B run and used GPT-4 as a judge to call Vicuna-13B "more than 90% of the quality
-            of ChatGPT and Bard." Their own blog post flagged the eval as "fun and non-scientific"
-            - a useful reminder that an LLM judge can be Goodharted long before the underlying
+            of ChatGPT and Bard." Their own blog post flagged the eval as "fun and non-scientific",
+            a useful reminder that an LLM judge can be Goodharted long before the underlying
             model actually catches up.
             (<a href="https://lmsys.org/blog/2023-03-30-vicuna/" target="_blank" rel="noopener">LMSYS</a>.)
           </p>
@@ -396,7 +394,7 @@
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; white-space:nowrap">Jul 2024</td>
               <td style="padding:9px 12px"><a href="https://arxiv.org/abs/2407.21783" target="_blank" rel="noopener">Llama 3.1 405B</a></td>
-              <td style="padding:9px 12px">First open ~GPT-4-tier flagship (the herd's 8B and 70B, also over-Chinchilla at ~15T tokens - the deliberate over-training move from Ch 1).</td>
+              <td style="padding:9px 12px">First open ~GPT-4-tier flagship (the herd's 8B and 70B, also over-Chinchilla at ~15T tokens, the deliberate over-training move from Ch 1).</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; white-space:nowrap">Dec 2024</td>
@@ -460,18 +458,18 @@
         <p>
           The through-line is that the open-weights wave stopped being a research toy and became
           the plurality of the frontier. A working ML engineer in late 2026 can pick a fully open
-          MoE flagship, fine-tune it against a written spec, and serve it - without a phone call
-          to a research lab. That is the point on the map where the "fine-tune it in my voice"
-          idea from the intro has both the base model and the recipe within reach.
+          MoE flagship, fine-tune it against a written spec, and serve it without a phone call to
+          a research lab. That is the point on the map where the "fine-tune it in my voice" idea
+          from the intro has both the base model and the recipe within reach.
         </p>
 
-        <h2><span class="section-number">4.6</span>PEFT - the compute wall comes down</h2>
+        <h2><span class="section-number">4.6</span>PEFT drops the compute wall</h2>
 
         <p>
           Alpaca and Vicuna were still <em>full</em> fine-tunes, which is why they leaned on the
-          7B and 13B sizes. To touch 65B you needed a small cluster. The fix was already
-          waiting: <span class="gloss" data-gloss="peft">parameter-efficient fine-tuning</span> - 
-          freeze the pretrained weights and train a small adapter beside them.
+          7B and 13B sizes. To touch 65B you needed a small cluster. The fix was already waiting:
+          <span class="gloss" data-gloss="peft">parameter-efficient fine-tuning</span>, which
+          freezes the pretrained weights and trains a small adapter beside them.
         </p>
 
         <p>
@@ -479,9 +477,10 @@
           version that won. The pretrained weight matrix $W$ stays frozen; the update is
           constrained to a low-rank factorization $\Delta W = BA$, where $A \in \mathbb{R}^{r\times k}$,
           $B \in \mathbb{R}^{d \times r}$, and the rank $r$ is much smaller than $\min(d, k)$. Train
-          only $A$ and $B$. At inference, merge $BA$ back into $W$ - no extra latency. Vs full
-          Adam fine-tuning of GPT-3 175B, the paper reports <strong>~10,000× fewer trainable
-          parameters</strong> and <strong>~3× less GPU memory</strong>, with no quality drop.
+          only $A$ and $B$. At inference, merge $BA$ back into $W$ so there is no extra latency.
+          Vs full Adam fine-tuning of GPT-3 175B, the paper reports <strong>~10,000× fewer
+          trainable parameters</strong> and <strong>~3× less GPU memory</strong>, with no quality
+          drop.
           (<a href="https://arxiv.org/abs/2106.09685" target="_blank" rel="noopener">Hu et al., 2021</a>.)
         </p>
 
@@ -489,12 +488,12 @@
           <span class="gloss" data-gloss="qlora">QLoRA</span> (Dettmers et al., May 2023) took
           the next step: keep LoRA's frozen-base / trainable-adapter idea, but
           <em>also</em> quantize the frozen base to 4-bit. Three new tricks made it work without
-          degradation. <span class="gloss" data-gloss="nf4">NF4</span> - a 4-bit NormalFloat data
+          degradation. <span class="gloss" data-gloss="nf4">NF4</span> is a 4-bit NormalFloat data
           type, information-theoretically optimal for normally distributed weights.
-          <span class="gloss" data-gloss="double-quantization">Double quantization</span> - 
-          quantizing the quantization constants themselves, saving another ~0.4 bits per parameter
+          <span class="gloss" data-gloss="double-quantization">Double quantization</span>
+          quantizes the quantization constants themselves, saving another ~0.4 bits per parameter
           on average. <span class="gloss" data-gloss="paged-optimizers">Paged optimizers</span>
-          using NVIDIA unified memory to spill optimizer state to CPU during the gradient spikes
+          use NVIDIA unified memory to spill optimizer state to CPU during the gradient spikes
           that would otherwise OOM. The payoff: fine-tuning a 65B model on a single 48 GB GPU,
           24 hours of training, matching 16-bit full fine-tuning quality. The Guanaco family that
           came out of this hit 99.3% of ChatGPT on the Vicuna benchmark.
@@ -510,15 +509,14 @@
         </div>
 
         <div class="callout insight">
-          <div class="callout-label">A node on the map - you are here</div>
+          <div class="callout-label">This is the node where a personal voice fine-tune lives</div>
           <p>
             If you've been ML-literate since 2019 and you've been scoping a "fine-tune a small
-            model on my own writing in my own voice" project, this is exactly the node where that
-            plan lives. QLoRA on a single consumer-ish GPU was the credible 2023-vintage path to
-            personal fine-tuning, and it is a real one. Hold onto it - the Chapter 11 capstone
-            returns to it and argues, with a course's worth of evidence, that for <em>style</em>
-            specifically the prompt lane (Chapter 5) is the better path. Plant the seed; we'll
-            resolve it.
+            model on my own writing in my own voice" project, this is the node where that plan
+            lives. QLoRA on a single consumer-ish GPU was the credible 2023-vintage path to
+            personal fine-tuning, and it is a real one. Hold onto it. The Chapter 11 capstone
+            returns to this thread and argues, with a course's worth of evidence, that for
+            <em>style</em> specifically the prompt lane (Chapter 5) is the better path.
           </p>
         </div>
 
@@ -535,7 +533,7 @@
             <th style="padding:9px 12px">2022 baseline</th>
             <th style="padding:9px 12px">2023</th>
             <th style="padding:9px 12px">2024</th>
-            <th style="padding:9px 12px">2025 - 2026</th>
+            <th style="padding:9px 12px">2025-2026</th>
           </tr></thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--rule)">
@@ -566,25 +564,25 @@
         <p>
           Every row is the same gesture: keep what you're trying to do, drop something the
           previous generation needed. None of this changed the <em>shape</em> of the alignment
-          recipe Chapter 3 laid out. Better algorithms, more open weights, smaller GPUs - the
-          map is just being filled in cheaper.
+          recipe Chapter 3 laid out. Better algorithms, more open weights, and smaller GPU
+          footprints just filled in the same map more cheaply.
         </p>
 
-        <h2><span class="section-number">4.8</span>What this chapter didn't touch</h2>
+        <h2><span class="section-number">4.8</span>What this chapter left aside</h2>
 
         <p>
-          Two things, on purpose. The PEFT family is wider than just LoRA and QLoRA - adapters,
-          prefix-tuning, IA³, others - and they all live in the weights lane. The PEFT survey is
-          the place to go if you want the taxonomy.
+          Two things, on purpose. The PEFT family is wider than LoRA and QLoRA (adapters,
+          prefix-tuning, IA³, others), and they all live in the weights lane. The PEFT survey is
+          the place to go for the taxonomy.
           (<a href="https://arxiv.org/abs/2403.14608" target="_blank" rel="noopener">Han et al., 2024</a>.)
         </p>
 
         <p>
-          And note what every method in this chapter still does: it touches the weights. DPO,
-          GRPO, LoRA, QLoRA - cheaper at every step, but still gradient descent into parameters.
-          The next chapter asks a stranger question. What if you never touch the weights at all,
+          Every method in this chapter still touches the weights. DPO, GRPO, LoRA, and QLoRA are
+          cheaper at every step, but they are all still gradient descent into parameters. The
+          next chapter asks the opposite question: what if you never touch the weights at all,
           freeze the model entirely, and treat the prompt as the thing you optimize? That move
-          turns out to rebuild this entire RL machinery out of language.
+          turns out to rebuild much of this RL machinery out of language.
         </p>
 
         <nav class="lecture-nav" aria-label="Chapter navigation">

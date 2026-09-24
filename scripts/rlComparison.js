@@ -27,11 +27,6 @@
       border-top: 1px solid var(--rule);
       padding-top: 18px;
     }
-    .rl-method {
-      font-family: var(--mono); font-size: 12px;
-      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
-      margin-bottom: 4px;
-    }
     .rl-caption {
       font-family: var(--sans); font-size: 16px;
       color: var(--text-primary); margin: 0 0 18px;
@@ -70,8 +65,7 @@
       color: var(--text-muted); line-height: 1.45;
     }
     .rl-comp-tag {
-      font-family: var(--mono); font-size: 10px;
-      letter-spacing: 0.08em; text-transform: uppercase;
+      font-family: var(--mono); font-size: 11px;
       margin-top: auto; padding-top: 8px;
     }
     .rl-comp.on  .rl-comp-tag { color: var(--accent); }
@@ -85,8 +79,8 @@
       background: var(--bg-surface);
     }
     .rl-count-label {
-      font-family: var(--mono); font-size: 11px;
-      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 12px;
+      color: var(--text-muted);
     }
     .rl-count-n {
       font-family: var(--sans); font-weight: 700;
@@ -125,14 +119,14 @@
     dpo: {
       label: 'DPO',
       on: { policy: true, reference: true, reward: false, critic: false },
-      caption: 'No reward model, no RL loop — learn straight from preference pairs.',
+      caption: 'No reward model, no RL loop: learn straight from preference pairs.',
       count: 2,
       countNote: 'policy + reference only; trained with a classification loss on chosen vs rejected',
     },
     grpo: {
       label: 'GRPO',
       on: { policy: true, reference: true, reward: true, critic: false },
-      caption: 'Drops the critic — the group is its own baseline.',
+      caption: 'Drops the critic; the group is its own baseline.',
       count: 2,
       countNote: 'policy + reference held in memory, plus a reward signal; advantage = (r − mean) / std across a sampled group',
     },
@@ -157,12 +151,11 @@
       <div class="demo-controls" role="tablist" aria-label="RLHF method">${btnRow}</div>
       <p class="rl-frame">Each step removed a moving part.</p>
       <div class="rl-panel">
-        <div class="rl-method" id="rl-method">PPO</div>
         <p class="rl-caption" id="rl-caption"></p>
         <div class="rl-grid" id="rl-grid">${compCells}</div>
         <div class="rl-count">
           <span class="rl-count-label">Models in play</span>
-          <span class="rl-count-n" id="rl-count">—</span>
+          <span class="rl-count-n" id="rl-count">–</span>
           <span class="rl-count-note" id="rl-count-note"></span>
         </div>
       </div>
@@ -175,7 +168,6 @@
   // ---------- interaction ----------
   const btns = Array.from(mount.querySelectorAll('.demo-btn[data-method]'));
   const cells = Array.from(mount.querySelectorAll('.rl-comp'));
-  const methodEl = mount.querySelector('#rl-method');
   const captionEl = mount.querySelector('#rl-caption');
   const countEl = mount.querySelector('#rl-count');
   const countNoteEl = mount.querySelector('#rl-count-note');
@@ -190,7 +182,6 @@
       b.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
 
-    methodEl.textContent = m.label;
     captionEl.textContent = m.caption;
     countEl.textContent = m.count;
     countNoteEl.textContent = m.countNote;

@@ -74,8 +74,8 @@
       min-height: 88px;
     }
     .mb-detail .lbl {
-      font-family: var(--mono); font-size: 11px;
-      color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 12px;
+      color: var(--accent);
       margin-bottom: 6px;
     }
     .mb-detail .body {
@@ -112,7 +112,7 @@
       sub: 'rank-r adapters',
       gb: 260,
       label: '~3× less GPU mem',
-      detail: 'The base 65B weights stay frozen — but they still sit in 16-bit. Only the low-rank update <strong>ΔW = BA</strong> trains, with rank r ≪ min(d, k). LoRA reports <strong>~10,000× fewer trainable parameters</strong> and <strong>~3× less GPU memory</strong> than full Adam fine-tuning of GPT-3 175B; the same ratio gets you down here on 65B.',
+      detail: 'The base 65B weights stay frozen but still sit in 16-bit. Only the low-rank update <strong>ΔW = BA</strong> trains, with rank r ≪ min(d, k). LoRA reports <strong>~10,000× fewer trainable parameters</strong> and <strong>~3× less GPU memory</strong> than full Adam fine-tuning of GPT-3 175B; the same ratio gets you down here on 65B.',
     },
     {
       id: 'qlora',
@@ -120,7 +120,7 @@
       sub: '4-bit base + LoRA',
       gb: 48,
       label: '48 GB',
-      detail: 'The frozen base weights are quantized to <strong>NF4</strong> (4-bit), constants are double-quantized, and optimizer state pages out via paged memory. The LoRA adapters above it train in BF16. The whole 65B fine-tune fits on a single <strong>48 GB</strong> GPU — and Guanaco hit <strong>99.3%</strong> of ChatGPT on the Vicuna benchmark in 24 hours.',
+      detail: 'The frozen base weights are quantized to <strong>NF4</strong> (4-bit), constants are double-quantized, and optimizer state pages out via paged memory. The LoRA adapters above it train in BF16. The whole 65B fine-tune fits on a single <strong>48 GB</strong> GPU, and Guanaco hit <strong>99.3%</strong> of ChatGPT on the Vicuna benchmark in 24 hours.',
     },
   ];
 

@@ -91,6 +91,12 @@
 .hero-stat .l { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
 
 /* ---------- Part cards (landing) ---------- */
+/* Wide screens: the landing gets a wider column and a 2-up card grid (0 1 / 2 3 / ...). */
+@media (min-width: 1100px) {
+  .container.landing { max-width: 1060px; }
+  .container.landing .hero-lede { max-width: 72ch; }
+  .container.landing .parts-grid { grid-template-columns: 1fr 1fr; }
+}
 .parts-grid { display: grid; gap: 18px; margin: 36px 0 80px; }
 .part-card {
   display: block;

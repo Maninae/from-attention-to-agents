@@ -31,7 +31,7 @@
       display: flex; align-items: center; justify-content: center;
     }
     .rc-cycle svg { width: 100%; max-width: 220px; height: auto; display: block; }
-    .rc-cycle .lbl { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; fill: var(--text-muted); }
+    .rc-cycle .lbl { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
     .rc-cycle .node text { font-family: var(--sans); font-size: 13px; fill: var(--text-secondary); }
     .rc-cycle .node.on text { fill: var(--text-primary); font-weight: 600; }
     .rc-cycle .ring { fill: var(--bg-surface); stroke: var(--rule-strong); stroke-width: 1.4; transition: fill 0.2s, stroke 0.2s; }
@@ -47,10 +47,6 @@
       border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-elevated);
       padding: 14px 16px; min-height: 280px;
     }
-    .rc-q {
-      font-family: var(--mono); font-size: 12px; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
-    }
     .rc-qtext { font-size: 15px; color: var(--text-primary); margin: 0 0 14px; line-height: 1.55; border-bottom: 1px dashed var(--rule); padding-bottom: 12px; }
 
     .rc-step {
@@ -60,7 +56,7 @@
     }
     .rc-step:first-of-type { border-top: none; padding-top: 4px; }
     .rc-tag {
-      font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 11px;
       padding: 2px 8px; border-radius: 999px; align-self: start;
       display: inline-block; height: fit-content;
     }
@@ -114,9 +110,8 @@
     </div>
 
     <div class="rc-pad">
-      <div class="rc-q">Question</div>
-      <p class="rc-qtext">What’s the capital of the country where the 2018 Winter Olympics were held?</p>
-      <div class="rc-trace"><p class="rc-empty">Press <strong>step</strong> to watch the agent reason, act, and observe — one turn at a time.</p></div>
+      <p class="rc-qtext"><em>Question:</em> what’s the capital of the country where the 2018 Winter Olympics were held?</p>
+      <div class="rc-trace"><p class="rc-empty">Press <strong>step</strong> to watch the agent reason, act, and observe, one turn at a time.</p></div>
       <div class="rc-controls">
         <button class="demo-btn primary rc-step-btn">step ›</button>
         <button class="demo-btn rc-reset-btn">reset</button>
@@ -147,7 +142,7 @@
 
   function render() {
     if (i === 0) {
-      trace.innerHTML = `<p class="rc-empty">Press <strong>step</strong> to watch the agent reason, act, and observe — one turn at a time.</p>`;
+      trace.innerHTML = `<p class="rc-empty">Press <strong>step</strong> to watch the agent reason, act, and observe, one turn at a time.</p>`;
       return;
     }
     trace.innerHTML = TRACE.slice(0, i).map(step => `

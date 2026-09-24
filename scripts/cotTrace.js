@@ -3,7 +3,7 @@
    A pre-canned reasoning trace on a simple combinatorics problem.
    The model takes a wrong path, hits the "Wait..." moment, backs
    up, and finishes correctly. Highlights the self-correction
-   cell — the canonical "aha" behavior R1 reports under pure RL.
+   cell, the canonical "aha" behavior R1 reports under pure RL.
    No live LLM. The trace is illustrative, not lifted from the
    R1 paper verbatim (the paper's example is paraphrased on
    readability grounds; the SHAPE matches the documented behavior:
@@ -22,17 +22,17 @@
     { kind: 'draft',
       text: 'Count multiples of 7 below 1000. The largest is 994 = 7 × 142. So there are 142 multiples of 7 in [1, 999].' },
     { kind: 'draft',
-      text: 'Now subtract the ones that are also multiples of 11. Those are multiples of 7·11 = 77. The largest under 1000 is 7·11·13 = 1001 — too big — so use 7·11·12 = 924. That gives 12 multiples of 77 below 1000.' },
+      text: 'Now subtract the ones that are also multiples of 11. Those are multiples of 7·11 = 77. The largest under 1000 is 7·11·13 = 1001 (too big), so use 7·11·12 = 924. That gives 12 multiples of 77 below 1000.' },
     { kind: 'draft',
       text: 'Answer: 142 − 12 = 133.' },
     { kind: 'wait',
-      text: 'Wait — 142 − 12. Let me redo the arithmetic slowly. 142 − 10 = 132, then − 2 more = 130. Not 133.' },
+      text: 'Wait. 142 − 12. Let me redo the arithmetic slowly. 142 − 10 = 132, then − 2 more = 130. Not 133.' },
     { kind: 'revise',
       text: 'And re-check the counts themselves. 7 · 142 = 994 ✓, 7 · 143 = 1001 ✗ (over 999). So floor(999/7) = 142 stands.' },
     { kind: 'revise',
       text: '77 · 12 = 924 ✓, 77 · 13 = 1001 ✗. So floor(999/77) = 12 stands.' },
     { kind: 'verify',
-      text: 'Cross-check by inclusion–exclusion: |A \\ B| = |A| − |A ∩ B| = 142 − 12 = 130. Consistent — the earlier 133 was an arithmetic slip.' },
+      text: 'Cross-check by inclusion–exclusion: |A \\ B| = |A| − |A ∩ B| = 142 − 12 = 130. Consistent: the earlier 133 was an arithmetic slip.' },
     { kind: 'answer',
       text: 'Final answer: 130.' },
   ];
@@ -50,8 +50,8 @@
       margin-bottom: 16px;
     }
     .cot-problem .cot-tag {
-      font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--teal); margin-bottom: 6px;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--teal); margin-bottom: 6px;
     }
 
     .cot-stream {
@@ -71,8 +71,8 @@
     }
     .cot-step.shown { opacity: 1; transform: translateY(0); }
     .cot-step .cot-kind {
-      font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--text-muted); margin-right: 8px;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--text-muted); margin-right: 8px;
     }
     .cot-step.wait {
       background: color-mix(in srgb, var(--accent) 12%, var(--bg-elevated));
@@ -141,7 +141,7 @@
 
   const labelFor = (kind) => {
     if (kind === 'draft') return 'draft';
-    if (kind === 'wait') return 'Wait —';
+    if (kind === 'wait') return 'Wait.';
     if (kind === 'revise') return 'revise';
     if (kind === 'verify') return 'verify';
     if (kind === 'answer') return 'final';

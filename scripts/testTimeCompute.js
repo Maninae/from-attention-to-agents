@@ -1,5 +1,5 @@
 /* ============================================================
-   Test-time compute — the AIME 2024 step curve.
+   Test-time compute: the AIME 2024 step curve.
    o1's own headline numbers: 74 (pass@1) -> 83 (cons@64) ->
    93 (re-ranked@1000). Same weights every step; the only thing
    that changes is how much compute is spent at inference.
@@ -19,7 +19,7 @@
       label: 'pass@1',
       cost: '1 sample',
       score: 74,
-      detail: 'One reasoning trace, one answer. The first knob is just letting the model think — no test-time search, no voting. 74% on AIME 2024 already exceeds most pre-o1 model families combined.',
+      detail: 'One reasoning trace, one answer. The first knob is letting the model think, with no test-time search and no voting. 74% on AIME 2024 already exceeds most pre-o1 model families combined.',
     },
     {
       id: 'cons64',
@@ -33,7 +33,7 @@
       label: 're-ranked@1000',
       cost: '1000 samples · learned scorer',
       score: 93,
-      detail: '1,000 candidates ranked by a learned scoring function. The model still hasn’t changed — but the inference compute is now ~1000× a single pass-through, and the curve hasn’t flattened. This is what "test-time compute is a scaling axis" looks like as a picture.',
+      detail: '1,000 candidates ranked by a learned scoring function. The model still hasn’t changed, and the inference compute is now ~1000× a single pass-through, yet the curve hasn’t flattened. This is what "test-time compute is a scaling axis" looks like as a picture.',
     },
   ];
 
@@ -43,8 +43,7 @@
     .ttc-axis { stroke: var(--rule-strong); stroke-width: 1; }
     .ttc-grid { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 2 4; }
     .ttc-tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
-    .ttc-axis-label { font-family: var(--mono); font-size: 11px; fill: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.08em; }
+    .ttc-axis-label { font-family: var(--mono); font-size: 11px; fill: var(--text-muted); }
 
     .ttc-bar {
       cursor: pointer;
@@ -69,11 +68,8 @@
       padding-top: 14px;
       min-height: 80px;
     }
-    .ttc-detail .ttc-eyebrow {
-      font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--accent);
-    }
-    .ttc-detail h4 { margin: 4px 0 6px; font-size: 17px; color: var(--text-primary); }
+    .ttc-detail h4 { margin: 0 0 6px; font-size: 17px; color: var(--text-primary); }
+    .ttc-detail h4 .cost { color: var(--text-muted); font-weight: 400; font-size: 14px; }
     .ttc-detail p { margin: 0; color: var(--text-secondary); font-size: 15px; }
     .ttc-detail .placeholder { color: var(--text-muted); font-style: italic; }
   `;
@@ -146,7 +142,7 @@
   mount.innerHTML =
     `<div class="ttc-root">${s}
       <div class="ttc-detail" id="ttc-detail">
-        <p class="placeholder">Click a regime above. Same model, same problem set; only the inference budget changes.</p>
+        <p class="placeholder">Click a regime above. Same model, same problem set, only the inference budget changes.</p>
       </div>
     </div>`;
 
@@ -157,8 +153,7 @@
     mount.querySelectorAll('.ttc-bar').forEach(g =>
       g.classList.toggle('sel', g.dataset.id === id));
     detail.innerHTML =
-      `<div class="ttc-eyebrow">${r.cost}</div>
-       <h4>${r.label} &middot; ${r.score}% on AIME 2024</h4>
+      `<h4>${r.label} &middot; ${r.score}% on AIME 2024 <span class="cost">(${r.cost})</span></h4>
        <p>${r.detail}</p>`;
   };
   mount.querySelectorAll('.ttc-bar').forEach(g => {

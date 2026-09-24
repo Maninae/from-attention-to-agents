@@ -1,5 +1,5 @@
 /* ============================================================
-   R1 training pipeline — V3-Base through to R1.
+   R1 training pipeline: V3-Base through to R1.
    The full DeepSeek-R1 paper (arXiv 2501.12948) describes a
    multi-stage recipe: cold-start SFT, reasoning RL with a
    verifier + language-consistency reward, then SFT, then
@@ -19,14 +19,14 @@
       label: 'V3-Base',
       sub: '671B MoE · ~37B active',
       kind: 'base',
-      detail: 'DeepSeek-V3-Base — the pretrained Mixture-of-Experts foundation. Trained with no human-labeled reasoning data; pure next-token prediction. Capable but not a reasoner yet.',
+      detail: 'DeepSeek-V3-Base: the pretrained Mixture-of-Experts foundation. Trained with no human-labeled reasoning data; pure next-token prediction. Capable but not a reasoner yet.',
     },
     {
       id: 'sft1',
       label: 'Cold-start SFT',
       sub: 'curated CoT traces',
       kind: 'sft',
-      detail: 'A small supervised fine-tune on a few thousand long-CoT examples — just enough structure to stop RL from collapsing into junk format. R1-Zero skips this step and shows reasoning emerges anyway, but pays in legibility (language mixing, repetition).',
+      detail: 'A small supervised fine-tune on a few thousand long-CoT examples: enough structure to stop RL from collapsing into junk format. R1-Zero skips this step and shows reasoning emerges anyway, but pays in legibility (language mixing, repetition).',
     },
     {
       id: 'rl1',
@@ -54,7 +54,7 @@
       label: 'R1',
       sub: 'MIT-licensed, open weights',
       kind: 'final',
-      detail: 'DeepSeek-R1 — released January 22, 2025 with full weights on HuggingFace. Distilled siblings (1.5B / 7B / 14B / 32B / 70B on Qwen2.5 and Llama-3 bases) ship the recipe to consumer hardware within the same week.',
+      detail: 'DeepSeek-R1: released January 22, 2025 with full weights on HuggingFace. Distilled siblings (1.5B / 7B / 14B / 32B / 70B on Qwen2.5 and Llama-3 bases) ship the recipe to consumer hardware within the same week.',
     },
   ];
 
@@ -83,11 +83,8 @@
       padding-top: 14px;
       min-height: 72px;
     }
-    .pipe-detail .pipe-eyebrow {
-      font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--accent);
-    }
-    .pipe-detail h4 { margin: 4px 0 6px; font-size: 17px; color: var(--text-primary); }
+    .pipe-detail h4 { margin: 0 0 6px; font-size: 17px; color: var(--text-primary); }
+    .pipe-detail h4 .sub { color: var(--text-muted); font-weight: 400; font-size: 14px; font-family: var(--mono); }
     .pipe-detail p { margin: 0; color: var(--text-secondary); font-size: 15px; }
     .pipe-detail .placeholder { color: var(--text-muted); font-style: italic; }
   `;
@@ -142,8 +139,7 @@
       <text class="pipe-label" x="${bx + BOX_W / 2}" y="${Y + 32}" text-anchor="middle">${st.label}</text>
       <text class="pipe-sub" x="${bx + BOX_W / 2}" y="${Y + 54}" text-anchor="middle">${st.sub}</text>
       <text class="pipe-sub" x="${bx + BOX_W / 2}" y="${Y + 72}" text-anchor="middle"
-            font-size="9.5" fill="var(--text-muted)" text-transform="uppercase"
-            letter-spacing="0.08em">step ${i + 1}</text>
+            font-size="9.5" fill="var(--text-muted)">step ${i + 1}</text>
     </g>`;
   });
 
@@ -178,8 +174,7 @@
     mount.querySelectorAll('.pipe-stage').forEach(g =>
       g.classList.toggle('sel', g.dataset.id === id));
     detail.innerHTML =
-      `<div class="pipe-eyebrow">${st.sub}</div>
-       <h4>${st.label}</h4>
+      `<h4>${st.label} <span class="sub">(${st.sub})</span></h4>
        <p>${st.detail}</p>`;
   };
   mount.querySelectorAll('.pipe-stage').forEach(g => {

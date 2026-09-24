@@ -27,8 +27,8 @@
     .ps-meta {
       display: flex; align-items: baseline; justify-content: space-between;
       gap: 12px; flex-wrap: wrap;
-      font-family: var(--mono); font-size: 11px;
-      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 12px;
+      color: var(--text-muted);
       margin-bottom: 14px;
     }
     .ps-meta .ps-gen { color: var(--accent); }
@@ -50,8 +50,7 @@
       transition: border-color 0.2s, background 0.2s, transform 0.2s;
     }
     .ps-card .ps-tag {
-      font-family: var(--mono); font-size: 10px;
-      text-transform: uppercase; letter-spacing: 0.1em;
+      font-family: var(--mono); font-size: 11px;
       color: var(--text-muted);
     }
     .ps-card .ps-prompt {
@@ -97,9 +96,8 @@
       padding-top: 14px;
     }
     .ps-spark-label {
-      font-family: var(--mono); font-size: 11px;
+      font-family: var(--mono); font-size: 12px;
       color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.1em;
       margin-bottom: 8px;
     }
     .ps-spark svg { display: block; width: 100%; height: 70px; overflow: visible; }
@@ -336,7 +334,7 @@
           them, the best survive. This is <strong>APE</strong>, <strong>OPRO</strong>,
           and <strong>EvoPrompt</strong> in one loop.
         </p>
-        <p class="ps-note">illustrative &mdash; scores are simulated to make the climb visible</p>
+        <p class="ps-note">illustrative: scores are simulated to make the climb visible</p>
       </div>
     `;
 

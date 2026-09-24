@@ -14,9 +14,9 @@
   const CANDIDATES = [
     { id: 'corp',  label: 'Corporate', text: 'Please be advised the project has reached completion ahead of the projected timeline.' },
     { id: 'acad',  label: 'Academic',  text: 'The project was concluded in advance of its scheduled completion date.' },
-    { id: 'warm',  label: 'Warm',      text: 'Good news — we wrapped the project early!' },
+    { id: 'warm',  label: 'Warm',      text: 'Good news, we wrapped the project early!' },
     { id: 'terse', label: 'Terse',     text: "Project's done, ahead of schedule." },
-    { id: 'owen',  label: 'Owen-ish',  text: "Heads up: project's done — and we beat the deadline." },
+    { id: 'owen',  label: 'Owen-ish',  text: "Heads up: project's done, and we beat the deadline." },
   ];
 
   // ---- fixed matchup order (round-robin-ish, 9 pairs) ---------------------
@@ -51,8 +51,8 @@
     }
     .el-base b { color: var(--text-secondary); font-weight: 600; }
     .el-prompt {
-      font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--teal);
+      font-family: var(--mono); font-size: 12px;
+      color: var(--teal);
       margin: 0 0 10px;
     }
     .el-round { font-family: var(--mono); font-size: 11px; color: var(--text-muted); float: right; }
@@ -76,8 +76,8 @@
     .el-card:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
     .el-card:active { transform: translateY(1px); }
     .el-card .el-side {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+      font-family: var(--mono); font-size: 11px;
+      color: var(--accent); margin-bottom: 6px;
     }
     .el-card .el-rewrite {
       font-family: var(--serif, var(--sans)); font-size: 15px; line-height: 1.45;
@@ -98,8 +98,8 @@
       margin-bottom: 10px;
     }
     .el-board-title {
-      font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--text-secondary);
+      font-family: var(--mono); font-size: 12px;
+      color: var(--text-secondary);
     }
     .el-tally { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
     .el-row {
@@ -175,7 +175,7 @@
     <div id="el-stage"></div>
     <div class="el-board" aria-live="polite">
       <div class="el-board-head">
-        <span class="el-board-title">Leaderboard — Elo rating</span>
+        <span class="el-board-title">Leaderboard: Elo rating</span>
         <span class="el-tally" id="el-tally">0 votes</span>
       </div>
       <div id="el-rows"></div>

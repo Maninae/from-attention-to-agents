@@ -36,9 +36,7 @@
     }
     .ev-panel-label {
       font-family: var(--mono);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      font-size: 12px;
       color: var(--teal);
       margin-bottom: 10px;
     }
@@ -71,9 +69,7 @@
     }
     .ev-reflect .ev-reflect-label {
       font-family: var(--mono);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      font-size: 11px;
       color: var(--purple);
       margin-right: 6px;
     }
@@ -92,8 +88,7 @@
     }
     .ev-plot .ev-front-line { transition: stroke-dashoffset 0.6s ease-out; }
     .ev-plot .ev-front-label {
-      font-size: 10px; fill: var(--accent); font-family: var(--mono);
-      text-transform: uppercase; letter-spacing: 0.08em;
+      font-size: 10.5px; fill: var(--accent); font-family: var(--mono);
     }
     .ev-plot .ev-dot-label { font-size: 9.5px; fill: var(--text-muted); }
 
@@ -156,31 +151,31 @@
   const BASE_PROMPT = 'You are a helpful assistant. Answer the user\'s question.';
   const STEPS = [
     {
-      reflection: 'Outputs ramble before answering — add: state the answer first.',
+      reflection: 'Outputs ramble before answering; add: state the answer first.',
       add: 'Give the final answer in the first sentence; then explain.',
       cand: { x: 0.52, y: 0.41, label: 'c1' },
       rollouts: 4,
     },
     {
-      reflection: 'Math steps are skipped — add: show each arithmetic step.',
+      reflection: 'Math steps are skipped; add: show each arithmetic step.',
       add: 'For any calculation, show each arithmetic step on its own line.',
       cand: { x: 0.46, y: 0.66, label: 'c2' },
       rollouts: 5,
     },
     {
-      reflection: 'Tone is too stiff — soften with one warm opening sentence.',
+      reflection: 'Tone is too stiff; soften with one warm opening sentence.',
       add: 'Open with one warm, plain sentence before the answer.',
       cand: { x: 0.38, y: 0.58, label: 'c3' },
       rollouts: 4,
     },
     {
-      reflection: 'Long examples bury the point — cap them at two sentences.',
+      reflection: 'Long examples bury the point; cap them at two sentences.',
       add: 'Keep any worked example to at most two sentences.',
       cand: { x: 0.71, y: 0.74, label: 'c4' },
       rollouts: 5,
     },
     {
-      reflection: 'Edge cases missed — add a one-line check before finishing.',
+      reflection: 'Edge cases missed; add a one-line check before finishing.',
       add: 'End with a one-line sanity check: does the answer fit the question?',
       cand: { x: 0.78, y: 0.88, label: 'c5' },
       rollouts: 6,
@@ -223,10 +218,10 @@
       </div>
 
       <p class="ev-caption">
-        Each step reads <em>why</em> the last attempt fell short and edits the prompt to fix exactly that.
-        A sentence of feedback carries far more signal than a single number &mdash; which is why reflective
-        evolution needs so few tries. GEPA matches reinforcement learning with up to <strong>35&times;</strong>
-        fewer rollouts (Agrawal et al., 2026).
+        Each step reads <em>why</em> the last attempt fell short and edits the prompt to fix
+        exactly that. A sentence of feedback carries many more bits than a single scalar reward.
+        GEPA matches reinforcement learning with up to <strong>35&times;</strong> fewer rollouts
+        (Agrawal et al., 2026).
       </p>
     </div>
   `;

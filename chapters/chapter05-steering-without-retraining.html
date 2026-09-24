@@ -35,8 +35,8 @@
       <header class="lecture-header">
         <h1><span class="section-number">5</span>Steering without retraining</h1>
         <p class="desc">
-          The other lane. Freeze the model, search over the words in front of it,
-          and by 2026 catch the methods that update weights - with a fraction of the rollouts.
+          The other lane. Freeze the model, search over the words in front of it, and by 2026
+          catch the methods that update weights, at a fraction of the rollouts.
         </p>
       </header>
 
@@ -56,36 +56,35 @@
 
         <h2><span class="section-number">5.1</span>Two ways to change a mind</h2>
         <p>
-          A language model has exactly two surfaces you can move. The weights - what Ch&nbsp;3
-          and Ch&nbsp;4 spent the whole alignment recipe optimizing. And the context - the
-          tokens you put in front of it at inference time. Pick one and you have picked your lane.
+          A language model has exactly two surfaces you can move. The weights, which Ch&nbsp;3 and
+          Ch&nbsp;4 spent the whole alignment recipe optimizing. And the context: the tokens you
+          put in front of it at inference time. Pick one and you have picked your lane.
         </p>
         <p>
           The reason the second lane exists at all goes back to GPT-3. A frozen model could
-          perform a brand-new task purely from a few examples placed in its prompt - 
-          <span class="gloss" data-gloss="icl">in-context learning</span>, no gradient steps
+          perform a brand-new task purely from a few examples placed in its prompt, called
+          <span class="gloss" data-gloss="icl">in-context learning</span>, with no gradient steps
           (<a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">Brown et al., 2020</a>).
           If behavior can be steered by what sits in the context window, then <em>optimizing
           the context</em> is a real alternative, not a workaround.
         </p>
         <p>
           The second hint landed two years later. Prompt a large model to "think step by step"
-          and its accuracy on multi-step problems jumps - not because the weights changed,
-          but because the intermediate tokens give it room to compute.
+          and its accuracy on multi-step problems jumps, not because the weights changed, but
+          because the intermediate tokens give it room to compute.
           <strong><span class="gloss" data-gloss="cot">Chain-of-thought</span></strong>
           (<a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener">Wei et al., 2022</a>)
-          turned the prompt from a question into a small program the model runs on itself. It
-          was the first loud proof that <em>how you phrase a prompt</em> is worth measurable
-          accuracy - and once phrasing is worth points, it becomes something worth optimizing.
+          turned the prompt from a question into a small program the model runs on itself. Once
+          phrasing was worth measurable accuracy, phrasing became something worth optimizing.
         </p>
         <div class="callout example">
-          <div class="callout-label">The scoreboard you'll see everywhere</div>
+          <div class="callout-label">Almost every paper here reports "+X% on BBH"</div>
           <p>
-            Almost every paper in this chapter reports "+X% on <span class="gloss" data-gloss="bbh">BBH</span>."
-            <strong>BIG-Bench Hard</strong> is a suite of <strong>23</strong> tasks chosen because
-            pre-2022 models <em>failed</em> to beat the average human on them. With plain prompting
-            models lagged; add chain-of-thought and PaLM exceeded the average human rater on 10/23
-            and code-davinci-002 on <strong>17/23</strong>. Same weights, different prompt
+            <strong>BIG-Bench Hard</strong> (<span class="gloss" data-gloss="bbh">BBH</span>) is
+            a suite of <strong>23</strong> tasks chosen because pre-2022 models <em>failed</em>
+            to beat the average human on them. With plain prompting models lagged; add
+            chain-of-thought and PaLM exceeded the average human rater on 10/23 and
+            code-davinci-002 on <strong>17/23</strong>. Same weights, different prompt
             (<a href="https://arxiv.org/abs/2210.09261" target="_blank" rel="noopener">Suzgun et al., 2022</a>).
             BBH is the eval shadow over this whole chapter.
           </p>
@@ -93,10 +92,10 @@
 
         <h3>One name, two different methods</h3>
         <p>
-          "Prompt tuning" refers to two methods that share nothing but a name - and the
-          mix-up derails almost everyone arriving from classical ML. One uses gradients on
-          continuous vectors and is really a member of the PEFT family from Ch&nbsp;4. The other,
-          this chapter's subject, searches over actual words and never touches a gradient.
+          "Prompt tuning" refers to two methods that share nothing but a name, and the mix-up
+          derails almost everyone arriving from classical ML. One uses gradients on continuous
+          vectors and is really a member of the PEFT family from Ch&nbsp;4. The other, this
+          chapter's subject, searches over actual words and never touches a gradient.
         </p>
         <div style="overflow-x:auto">
         <table style="width:100%; border-collapse:collapse; margin:18px 0; font-size:15px">
@@ -113,18 +112,18 @@
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">How</td>
-              <td style="padding:9px 12px">Gradient descent - a <span class="gloss" data-gloss="peft">PEFT</span> method</td>
-              <td style="padding:9px 12px">Search; an LLM proposes edits - <strong>no gradients</strong></td>
+              <td style="padding:9px 12px">Gradient descent (a <span class="gloss" data-gloss="peft">PEFT</span> method)</td>
+              <td style="padding:9px 12px">Search; an LLM proposes edits, <strong>no gradients</strong></td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">Touches weights?</td>
               <td style="padding:9px 12px"><span class="pos">Yes</span> (a few learned vectors)</td>
-              <td style="padding:9px 12px"><span class="neg">No</span> - the model is fully frozen</td>
+              <td style="padding:9px 12px"><span class="neg">No</span>, the model is fully frozen</td>
             </tr>
             <tr style="border-bottom:1px solid var(--rule)">
               <td style="padding:9px 12px; color:var(--text-muted)">Readable result?</td>
               <td style="padding:9px 12px"><span class="neg">No</span> (opaque vectors)</td>
-              <td style="padding:9px 12px"><span class="pos">Yes</span> - you can read and edit the prompt</td>
+              <td style="padding:9px 12px"><span class="pos">Yes</span>, you can read and edit the prompt</td>
             </tr>
             <tr>
               <td style="padding:9px 12px; color:var(--text-muted)">Examples</td>
@@ -141,7 +140,7 @@
         </div>
         <p>
           Soft tuning is a legitimate cousin and lives in the weights lane we just left. From
-          here on, "prompt optimization" means the right-hand column - 
+          here on, "prompt optimization" means the right-hand column:
           <span class="gloss" data-gloss="discrete-prompt-optimization">discrete prompt
           optimization</span>, words only, weights frozen.
         </p>
@@ -150,18 +149,18 @@
         <p>
           The lane opens in late 2022 with the <strong>Automatic Prompt Engineer</strong>
           (<a href="https://arxiv.org/abs/2211.01910" target="_blank" rel="noopener">Zhou et al., 2022</a>,
-          ICLR&nbsp;2023). The setup is almost embarrassingly simple. Show an LLM a few input/output
-          examples and ask it to <em>infer the instruction</em> that would produce them. Score each
-          candidate by how well it performs on a held-out batch. Keep the best. The paper's title
-          was the thesis - "Large Language Models Are Human-Level Prompt Engineers" - and
-          the receipts backed it up: APE-found instructions matched or beat human-engineered
-          prompts on <strong>19 of 24</strong> NLP tasks.
+          ICLR&nbsp;2023). The setup is simple. Show an LLM a few input/output examples and ask it
+          to <em>infer the instruction</em> that would produce them. Score each candidate by how
+          well it performs on a held-out batch. Keep the best. The paper's title was the thesis
+          ("Large Language Models Are Human-Level Prompt Engineers"), and the receipts backed it
+          up: APE-found instructions matched or beat human-engineered prompts on <strong>19 of
+          24</strong> NLP tasks.
         </p>
         <p>
-          What APE quietly proposed was a frame the rest of this chapter inherits. The instruction
-          is the <em>program</em>. The benchmark score is the <em>fitness</em>. The LLM is the
-          <em>operator</em> that proposes new programs. Once you accept that frame, every classical
-          optimization technique comes back on the table - in text.
+          APE proposed a frame the rest of this chapter inherits. The instruction is the
+          <em>program</em>. The benchmark score is the <em>fitness</em>. The LLM is the
+          <em>operator</em> that proposes new programs. Once you accept that frame, every
+          classical optimization technique comes back on the table, written in text.
         </p>
 
         <div class="demo-wrap">
@@ -174,37 +173,37 @@
 
         <h2><span class="section-number">5.3</span>OPRO, EvoPrompt, PromptBreeder: the loop tightens</h2>
         <p>
-          A year later, <strong><span class="gloss" data-gloss="opro">OPRO</span></strong> - Optimization by PROmpting - made the
-          search trajectory explicit. Feed the optimizer-LLM a running history of
-          <code>(prompt, score)</code> pairs and ask it to propose a better one. The score
-          functions as the gradient; the LLM functions as the optimizer. This is also where the
-          now-famous line <em>"Take a deep breath and work on this problem step by step"</em>
-          was surfaced - an instruction no human wrote, and one that bought OPRO up to
-          <strong>+8%</strong> over human prompts on GSM8K and up to <strong>+50%</strong> on
+          A year later, <strong><span class="gloss" data-gloss="opro">OPRO</span></strong>
+          (Optimization by PROmpting) made the search trajectory explicit. Feed the optimizer-LLM
+          a running history of <code>(prompt, score)</code> pairs and ask it to propose a better
+          one. The score functions as the gradient; the LLM functions as the optimizer. This is
+          also where the now-famous line <em>"Take a deep breath and work on this problem step
+          by step"</em> was surfaced, an instruction no human wrote, and one that bought OPRO up
+          to <strong>+8%</strong> over human prompts on GSM8K and up to <strong>+50%</strong> on
           BIG-Bench Hard tasks
           (<a href="https://arxiv.org/abs/2309.03409" target="_blank" rel="noopener">Yang et al., 2023</a>,
           ICLR&nbsp;2024).
         </p>
         <p>
           <strong><span class="gloss" data-gloss="evoprompt">EvoPrompt</span></strong> wrapped the
-          whole machine in a genetic algorithm - a population of prompts, with the LLM acting
-          as both the mutation and the crossover operator. Across 31 datasets it beat
+          whole machine in a genetic algorithm: a population of prompts, with the LLM acting as
+          both the mutation and the crossover operator. Across 31 datasets it beat
           human-engineered prompts, with headline gains up to <strong>+25%</strong> on BBH
           (<a href="https://arxiv.org/abs/2309.08532" target="_blank" rel="noopener">Guo et al., 2023</a>,
           ICLR&nbsp;2024). A week or two later DeepMind's <strong><span class="gloss" data-gloss="promptbreeder">PromptBreeder</span></strong>
-          went one level meta and evolved not just the task-prompts but the <em>mutation-prompts</em>
-          that mutate them - self-referential evolution that beat vanilla chain-of-thought on
+          went one level meta and evolved both the task-prompts and the <em>mutation-prompts</em>
+          that mutate them, self-referential evolution that beat vanilla chain-of-thought on
           reasoning tasks
           (<a href="https://arxiv.org/abs/2309.16797" target="_blank" rel="noopener">Fernando et al., 2023</a>).
         </p>
         <div class="callout insight">
           <div class="callout-label">CoT seed, second growth</div>
           <p>
-            Chain-of-thought arrived in Ch&nbsp;3 as a <em>prompt trick</em> - a hand-written
-            line that made the model show its work. Here it becomes a <em>target</em>: APE, OPRO,
-            and EvoPrompt all search over CoT-style instructions, and PromptBreeder explicitly
-            evolves them. The same idea - make the model think before it answers - gets
-            mechanized. In Ch&nbsp;6 it grows once more, and this time it ends up in the weights.
+            Chain-of-thought arrived in Ch&nbsp;3 as a <em>prompt trick</em>: a hand-written line
+            that made the model show its work. Here it becomes a <em>target</em>. APE, OPRO, and
+            EvoPrompt all search over CoT-style instructions, and PromptBreeder explicitly evolves
+            them. The instruction to make the model think before it answers gets mechanized. In
+            Ch&nbsp;6 the same idea grows once more, this time directly into the weights.
           </p>
         </div>
 
@@ -213,7 +212,7 @@
           Up to this point we've been searching for a single magic string. <strong>DSPy</strong>
           changed the unit of work
           (<a href="https://arxiv.org/abs/2310.03714" target="_blank" rel="noopener">Khattab et al., 2023</a>).
-          Its slogan is "<em>program, don't prompt</em>" - you write a small program of
+          Its slogan is "<em>program, don't prompt</em>": you write a small program of
           declarative modules (<code>generate_query</code> &rarr; <code>retrieve</code> &rarr;
           <code>answer</code>) and a compiler figures out the actual prompts. The reported gain
           was substantial: compact DSPy programs beat standard few-shot prompting by
@@ -223,11 +222,11 @@
           The workhorse optimizer behind it is <strong><span class="gloss" data-gloss="miprov2">MIPROv2</span></strong>
           (<a href="https://arxiv.org/abs/2406.11695" target="_blank" rel="noopener">Opsahl-Ong et al., EMNLP&nbsp;2024</a>;
           the paper introduces "MIPRO," and "v2" is the implementation name shipped in DSPy).
-          The crucial design choice is that MIPROv2 jointly optimizes the
-          <em>instructions</em> and the <em>few-shot demonstrations</em> of every module - 
-          which matters more than it sounds, because in practice the demonstrations usually carry
-          more of the signal than the instruction wording. Up to <strong>+13%</strong> over baseline
-          optimizers on diverse tasks with Llama-3-8B.
+          The important design choice is that MIPROv2 jointly optimizes the <em>instructions</em>
+          and the <em>few-shot demonstrations</em> of every module, which matters more than it
+          sounds because in practice the demonstrations usually carry more of the signal than the
+          instruction wording. Up to <strong>+13%</strong> over baseline optimizers on diverse
+          tasks with Llama-3-8B.
         </p>
         <div class="callout definition">
           <div class="callout-label">What MIPROv2 is optimizing, in symbols</div>
@@ -247,57 +246,58 @@
 
         <h2><span class="section-number">5.5</span>DRPO and SPO: lose the human, lose the labels</h2>
         <p>
-          <strong><span class="gloss" data-gloss="drpo">DRPO</span></strong> - Dynamic Rewarding
-          with Prompt Optimization - is the moment the prompt lane stops being a productivity
-          aid and starts looking like an alignment method. It performs <em>tuning-free
-          self-alignment</em>: the model adaptively rewards-and-edits its own alignment instructions
-          via search, with no SFT and no RLHF anywhere in the pipeline. Base models steered by DRPO
-          outperformed their own SFT- and RLHF-tuned counterparts, and the auto-found prompts beat
-          ones written by human experts
+          <strong><span class="gloss" data-gloss="drpo">DRPO</span></strong> (Dynamic Rewarding
+          with Prompt Optimization) is the moment the prompt lane stops being a productivity aid
+          and starts looking like an alignment method. It performs <em>tuning-free
+          self-alignment</em>: the model adaptively rewards-and-edits its own alignment
+          instructions via search, with no SFT and no RLHF anywhere in the pipeline. Base models
+          steered by DRPO outperformed their own SFT- and RLHF-tuned counterparts, and the
+          auto-found prompts beat ones written by human experts
           (<a href="https://arxiv.org/abs/2411.08733" target="_blank" rel="noopener">Singla et al., EMNLP&nbsp;2024</a>).
-          Read that again: <span class="pos">aligning by prompt</span>,
-          <span class="pos">beating aligning by training</span>. The lanes are now racing.
+          Aligning by prompt was, in the DRPO experiments, beating aligning by training. The lanes
+          are now racing.
         </p>
         <p>
-          <strong><span class="gloss" data-gloss="spo">SPO</span></strong> - Self-Supervised
-          Prompt Optimization - cut the next dependency. Earlier methods needed ground-truth
-          labels or human judgments to score candidates. SPO instead lets the model compare its own
-          outputs against each other, with no external supervision, and still landed top-2 across
-          benchmarks at <strong>1.1 &ndash; 5.6%</strong> of the cost of the next-best methods
+          <strong><span class="gloss" data-gloss="spo">SPO</span></strong> (Self-Supervised
+          Prompt Optimization) cut the next dependency. Earlier methods needed ground-truth
+          labels or human judgments to score candidates. SPO instead lets the model compare its
+          own outputs against each other, with no external supervision, and still landed top-2
+          across benchmarks at <strong>1.1&ndash;5.6%</strong> of the cost of the next-best
+          methods
           (<a href="https://arxiv.org/abs/2502.06855" target="_blank" rel="noopener">Xiang et al., 2025</a>).
           Look back at what each step deleted. APE needed a labeled task. OPRO needed only the
-          trajectory. DRPO needed no alignment training data - no SFT pairs, no preference
-          set. SPO needs no ground truth at all.
+          trajectory. DRPO dropped the alignment training data (no SFT pairs, no preference
+          set). SPO needs no ground truth at all.
         </p>
         <div class="callout note">
-          <div class="callout-label">The same machine, written in text</div>
+          <div class="callout-label">The prompt lane has rebuilt RL in language</div>
           <p>
-            The prompt lane has quietly rebuilt reinforcement learning out of language. The
-            <em>reward</em> is a metric or an <span class="gloss" data-gloss="llm-as-judge">LLM
+            The <em>reward</em> is a metric or an <span class="gloss" data-gloss="llm-as-judge">LLM
             judge</span>. The <em>policy gradient</em> is an LLM proposing an edit. The
-            <em>rollouts</em> are candidate prompts. If it's the same machine, can it win?
+            <em>rollouts</em> are candidate prompts. It is the same machine, written in words.
+            Once it is the same machine, the question is whether it can win.
           </p>
         </div>
 
         <h2><span class="section-number">5.6</span>GEPA: reflection beats a scalar reward</h2>
         <p>
           The answer, as of ICLR&nbsp;2026, is <span class="pos">yes</span>.
-          <strong>GEPA</strong> - Genetic-Pareto - is a prompt optimizer with two
-          deliberate departures from blind evolution
+          <strong>GEPA</strong> (Genetic-Pareto) is a prompt optimizer with two deliberate
+          departures from blind evolution
           (<a href="https://arxiv.org/abs/2507.19457" target="_blank" rel="noopener">Agrawal et al., ICLR&nbsp;2026 oral</a>).
         </p>
         <p>
-          First, it <strong><span class="gloss" data-gloss="reflective-evolution">reflects</span></strong>. After each system-level rollout, GEPA asks the LLM
-          to read its own attempt and write a natural-language diagnosis of <em>why</em> the output
-          fell short - then proposes a targeted edit aimed at exactly that failure. A scalar
-          reward says only "that was a 0.3." A sentence of feedback - "you rambled before
-          stating the answer; lead with the conclusion" - carries vastly more bits and points
-          straight at the fix.
+          First, it <strong><span class="gloss" data-gloss="reflective-evolution">reflects</span></strong>.
+          After each system-level rollout, GEPA asks the LLM to read its own attempt and write a
+          natural-language diagnosis of <em>why</em> the output fell short, then proposes a
+          targeted edit aimed at that failure. A scalar reward says only "that was a 0.3."
+          A sentence of feedback ("you rambled before stating the answer; lead with the
+          conclusion") carries many more bits and points straight at the fix.
         </p>
         <p>
           Second, it keeps a <strong><span class="gloss" data-gloss="pareto">Pareto frontier</span></strong>
-          of candidates over the task distribution - the best prompt for math may be a different
-          prompt than the best one for code - so the search never collapses to a single brittle
+          of candidates over the task distribution (the best prompt for math may be a different
+          prompt than the best one for code), so the search never collapses to a single brittle
           winner and can combine complementary lessons.
         </p>
         <div class="callout insight">
@@ -321,19 +321,19 @@
 
         <h2><span class="section-number">5.7</span>The eval shadow: who judges the judge?</h2>
         <p>
-          We've buried something quietly across the whole chapter. Every method here needs a way
-          to <em>score</em> a candidate. For APE on a labeled task that's accuracy. For DRPO it's
-          win-rate against a baseline. For SPO and increasingly for everything else it's an
-          <span class="gloss" data-gloss="llm-as-judge">LLM acting as judge</span>. And the
-          moment your fitness function is itself a model, you have a Goodhart problem - the
-          search will happily find prompts the judge loves and humans don't.
+          One question sits under every method in this chapter: how do you <em>score</em> a
+          candidate? For APE on a labeled task that's accuracy. For DRPO it's win-rate against a
+          baseline. For SPO and increasingly for everything else it's an
+          <span class="gloss" data-gloss="llm-as-judge">LLM acting as judge</span>. The moment
+          your fitness function is itself a model, you have a Goodhart problem: the search will
+          happily find prompts the judge loves and humans don't.
         </p>
         <p>
-          One robust fix is to refuse to score on an absolute scale at all. Ask only the easier
-          pairwise question - "which of these two is better?" - and let Elo turn those
-          choices into a ranking. Pairwise is what reward models from Ch&nbsp;3 were trained on, and
-          it travels: a calibrated LLM judge plus a thin layer of human pairwise feedback is a
-          surprisingly hard signal to game.
+          One durable fix is to refuse to score on an absolute scale at all. Ask only the easier
+          pairwise question ("which of these two is better?") and let Elo turn those choices into
+          a ranking. Pairwise is what reward models from Ch&nbsp;3 were trained on, and it
+          travels: a calibrated LLM judge plus a thin layer of human pairwise feedback is a
+          hard signal to game.
         </p>
 
         <div class="demo-wrap">
@@ -345,16 +345,16 @@
         </div>
 
         <p>
-          The capstone in Ch&nbsp;11 makes this concrete - the voice-rewriter we'll build there
-          uses pairwise clicks &rarr; Elo as its fitness signal precisely to keep the judge honest.
-          Park that thought.
+          The capstone in Ch&nbsp;11 makes this concrete. The voice-rewriter we'll build there
+          uses pairwise clicks &rarr; Elo as its fitness signal, precisely to keep the judge
+          honest.
         </p>
 
         <h2><span class="section-number">5.8</span>Where this leaves us</h2>
         <p>
           By 2025 the picture is clean enough to summarize in a small table. The methods of this
-          chapter are not variations on one trick - they each delete a different dependency
-          the previous one assumed you'd keep.
+          chapter are not variations on one trick. Each deletes a different dependency the
+          previous one assumed you'd keep.
         </p>
         <div style="overflow-x:auto">
         <table style="width:100%; border-collapse:collapse; margin:18px 0; font-size:14px">
@@ -412,29 +412,29 @@
         </div>
 
         <p>
-          Three honest caveats keep this from being a romance. A long evolved prompt rides along
-          as inference-time context cost on every request. The whole game leans on an already-capable
-          base model - you cannot prompt-optimize knowledge that isn't latent in the weights.
-          And a search that optimizes against a judge can corrupt it - the Goodhart villain
-          from earlier chapters, still lurking.
+          Three caveats keep this from being a romance. A long evolved prompt rides along as
+          inference-time context cost on every request. The whole game leans on an already-capable
+          base model, since you cannot prompt-optimize knowledge that isn't latent in the weights.
+          And a search that optimizes against a judge can corrupt it, the Goodhart problem from
+          earlier chapters showing up again.
         </p>
 
         <div class="callout note">
-          <div class="callout-label">The whole chapter in one sentence</div>
+          <div class="callout-label">The chapter in one sentence</div>
           <p>
             For three years we aligned models by training them; somewhere between APE and GEPA we
-            discovered we could often get there by searching over the words instead - faster,
-            cheaper, and with the optimization left in a form a human can still read.
+            found we could often get there by searching over the words instead, faster, cheaper,
+            and with the optimization left in a form a human can still read.
           </p>
         </div>
 
         <h3>Handoff to Chapter 6</h3>
         <p>
-          We have done as much as freezing the model lets us do. The next move is the one that
-          unfreezes it again, but on purpose. Chain-of-thought entered as a prompt trick (Ch&nbsp;3),
-          became something prompt search could optimize (this chapter), and is about to be trained
-          directly into the weights via RL on verifiable rewards - the o1 and DeepSeek-R1 line
-          of work. Same idea, third life. The model is about to learn to <em>think</em>.
+          We have done as much as freezing the model lets us do. The next move unfreezes it
+          again, on purpose. Chain-of-thought entered as a prompt trick (Ch&nbsp;3), became
+          something prompt search could optimize (this chapter), and is about to be trained
+          directly into the weights via RL on verifiable rewards, the o1 and DeepSeek-R1 line of
+          work. The same idea, at its third life. The model is about to learn to <em>think</em>.
         </p>
 
       </article>
